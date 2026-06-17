@@ -420,6 +420,12 @@
             background: #1a5f7a;
         }
 
+        .upload-info {
+            font-size: 11px;
+            color: #8895a4;
+            margin-top: 4px;
+        }
+
         @media (max-width: 480px) {
             .form-card {
                 padding: 20px;
@@ -480,6 +486,7 @@
                     <p id="idUploadText">Click to upload Aadhar Card</p>
                     <div class="file-name" id="idFileName"></div>
                     <img id="idPreview" class="image-preview" alt="ID Preview">
+                    <div class="upload-info" id="idUploadInfo"></div>
                 </div>
                 <input type="file" id="idInput" accept="image/*" style="display: none;">
                 <div id="idError" class="error-message hidden">
@@ -496,6 +503,7 @@
                     <p>Click to upload certificate</p>
                     <div class="file-name" id="certificateFileName"></div>
                     <img id="certificatePreview" class="image-preview" alt="Certificate Preview">
+                    <div class="upload-info" id="certificateUploadInfo"></div>
                 </div>
                 <input type="file" id="certificateInput" accept="image/*,.pdf" style="display: none;">
             </div>
@@ -587,11 +595,13 @@
         const idPreview = document.getElementById('idPreview');
         const idUploadIcon = document.getElementById('idUploadIcon');
         const idUploadText = document.getElementById('idUploadText');
+        const idUploadInfo = document.getElementById('idUploadInfo');
 
         const certificateUpload = document.getElementById('certificateUpload');
         const certificateInput = document.getElementById('certificateInput');
         const certificateFileName = document.getElementById('certificateFileName');
         const certificatePreview = document.getElementById('certificatePreview');
+        const certificateUploadInfo = document.getElementById('certificateUploadInfo');
 
         const termsCheckbox = document.getElementById('termsCheckbox');
         const continueBtn = document.getElementById('continueBtn');
@@ -613,6 +623,7 @@
                 idPreview.classList.remove('show');
                 idPreview.src = '';
                 idUpload.classList.remove('has-image');
+                idUploadInfo.textContent = '';
                 document.getElementById('idError').classList.add('hidden');
             });
         });
@@ -656,7 +667,7 @@
         }
 
         // ==========================================
-        // UPLOAD TO FIREBASE - FIXED
+        // UPLOAD TO FIREBASE - USING PUTSTRING
         // ==========================================
         async function uploadToFirebase(file, folder) {
             if (!currentUser) {
@@ -671,13 +682,20 @@
                 const path = `providers/${currentUser.uid}/${folder}/${fileName}`;
                 const fileRef = storage.ref(path);
                 
-                // Upload
+                // Upload using put (not putString)
                 const snapshot = await fileRef.put(compressed);
                 const url = await snapshot.ref.getDownloadURL();
                 
                 return url;
             } catch (error) {
                 console.error('Upload error:', error);
+                
+                // If CORS error, try alternative method
+                if (error.message && error.message.includes('CORS')) {
+                    showToast('CORS error. Please run: gsutil cors set cors.json gs://quickfix-907c0.firebasestorage.app', true);
+                    return null;
+                }
+                
                 return null;
             }
         }
@@ -685,7 +703,7 @@
         // ==========================================
         // SETUP UPLOAD
         // ==========================================
-        function setupUpload(uploadElement, fileInput, fileNameSpan, previewImg, storeKey, folder, uploadIcon, uploadText, errorId) {
+        function setupUpload(uploadElement, fileInput, fileNameSpan, previewImg, storeKey, folder, uploadIcon, uploadText, uploadInfo, errorId) {
             uploadElement.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -709,6 +727,7 @@
                 
                 fileNameSpan.textContent = '⏳ Uploading...';
                 fileNameSpan.className = 'file-name uploading';
+                if (uploadInfo) uploadInfo.textContent = '⏳ Uploading to cloud...';
                 
                 // Upload
                 const url = await uploadToFirebase(file, folder);
@@ -717,6 +736,7 @@
                     uploads[storeKey] = url;
                     fileNameSpan.textContent = '✅ Uploaded!';
                     fileNameSpan.className = 'file-name uploaded';
+                    if (uploadInfo) uploadInfo.textContent = '✅ Uploaded successfully!';
                     if (errorId) {
                         document.getElementById(errorId).classList.add('hidden');
                     }
@@ -724,16 +744,17 @@
                 } else {
                     fileNameSpan.textContent = '❌ Failed, retry';
                     fileNameSpan.className = 'file-name failed';
+                    if (uploadInfo) uploadInfo.textContent = '❌ Upload failed. Please try again.';
                     showToast('❌ Upload failed. Please try again.', true);
                 }
             });
         }
 
         // Setup ID Upload
-        setupUpload(idUpload, idInput, idFileName, idPreview, 'idProof', 'id_proof', idUploadIcon, idUploadText, 'idError');
+        setupUpload(idUpload, idInput, idFileName, idPreview, 'idProof', 'id_proof', idUploadIcon, idUploadText, idUploadInfo, 'idError');
 
         // Setup Certificate Upload
-        setupUpload(certificateUpload, certificateInput, certificateFileName, certificatePreview, 'certificate', 'certificates');
+        setupUpload(certificateUpload, certificateInput, certificateFileName, certificatePreview, 'certificate', 'certificates', null, null, certificateUploadInfo);
 
         // ==========================================
         // TOAST
@@ -746,7 +767,7 @@
             toast.className = 'toast ' + (isError ? 'error' : 'success');
             toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(() => toast.remove(), 4000);
         }
 
         // ==========================================
@@ -771,6 +792,7 @@
                         idUploadIcon.style.display = 'none';
                         idUploadText.style.display = 'none';
                         idUpload.classList.add('has-image');
+                        idUploadInfo.textContent = '✅ Uploaded';
                     }
                     
                     if (data.certificateUrl) {
@@ -780,6 +802,7 @@
                         certificatePreview.src = data.certificateUrl;
                         certificatePreview.classList.add('show');
                         certificateUpload.classList.add('has-image');
+                        certificateUploadInfo.textContent = '✅ Uploaded';
                     }
                     
                     if (data.termsAccepted) {
@@ -864,10 +887,10 @@
         continueBtn.addEventListener('click', continueToStep4);
         backBtn.addEventListener('click', goBack);
 
-        console.log('%c🔥 Step 3: Verification - Fixed Upload!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
+        console.log('%c🔥 Step 3: Verification', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
         console.log('✅ Aadhar/PAN (mandatory)');
         console.log('✅ Certificate (optional)');
-        console.log('✅ Upload now working properly');
+        console.log('ℹ️ If CORS error, run: gsutil cors set cors.json gs://quickfix-907c0.firebasestorage.app');
     </script>
 </body>
 </html>
