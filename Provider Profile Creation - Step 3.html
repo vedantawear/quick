@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>QuickFix - Provider Profile | Documents & Verification</title>
+    <title>QuickFix - Provider Verification</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -214,8 +214,7 @@
             margin-right: 12px;
         }
 
-        .input-wrapper input,
-        .input-wrapper textarea {
+        .input-wrapper input {
             flex: 1;
             padding: 14px 0;
             border: none;
@@ -227,6 +226,7 @@
             font-family: inherit;
         }
 
+        /* UPLOAD AREA WITH PREVIEW */
         .upload-area {
             background: #f5f7fb;
             border: 2px dashed #cbd5e1;
@@ -235,6 +235,12 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .upload-area:hover {
@@ -260,71 +266,137 @@
             font-weight: 500;
         }
 
-        .upload-status {
-            display: inline-block;
-            margin-top: 8px;
+        /* Image Preview */
+        .image-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #e2e8f0;
+            background: white;
+            padding: 5px;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        /* Upload Progress Bar */
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .upload-progress.show {
+            display: block;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1a5f7a, #00ffcc);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .upload-status-text {
             font-size: 11px;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-
-        .upload-status.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .pincode-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .pincode-tag {
-            background: #e8f0fe;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
             color: #1a5f7a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 6px;
+            display: none;
         }
 
-        .pincode-tag i {
-            cursor: pointer;
-            font-size: 12px;
-            color: #dc3545;
+        .upload-status-text.show {
+            display: block;
         }
 
-        .pincode-input-group {
+        /* Document Type Selection */
+        .doc-type-selector {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
-        .pincode-input-group input {
-            flex: 1;
-            padding: 12px;
+        .doc-type-btn {
+            padding: 8px 20px;
             border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            outline: none;
-            font-size: 14px;
+            border-radius: 40px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8895a4;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .pincode-input-group input:focus {
+        .doc-type-btn.active {
+            border-color: #1a5f7a;
+            background: #1a5f7a;
+            color: white;
+        }
+
+        .doc-type-btn:hover {
             border-color: #1a5f7a;
         }
 
-        .pincode-input-group button {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #1a5f7a, #0f2b3d);
-            color: white;
+        /* Live Selfie */
+        .selfie-container {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .selfie-container.show {
+            display: block;
+        }
+
+        #selfieVideo {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .selfie-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .selfie-controls button {
+            padding: 10px 20px;
             border: none;
-            border-radius: 16px;
+            border-radius: 40px;
             font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-capture {
+            background: #ff0066;
+            color: white;
+        }
+
+        .btn-capture:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-cancel-selfie {
+            background: #e2e8f0;
+            color: #333;
         }
 
         .checkbox-group {
@@ -447,8 +519,12 @@
             .form-card {
                 padding: 20px;
             }
-            .pincode-input-group {
-                flex-direction: column;
+            .doc-type-selector {
+                gap: 8px;
+            }
+            .doc-type-btn {
+                padding: 6px 14px;
+                font-size: 12px;
             }
         }
     </style>
@@ -486,90 +562,102 @@
                 <p>Customers trust verified professionals 3x more</p>
             </div>
 
-            <!-- 1. Aadhar Card / Govt ID -->
+            <!-- 1. ID Proof - Aadhar or PAN (Mandatory) -->
             <div class="form-group">
-                <label>Government ID (Aadhar/PAN/Driving License) <span class="required">*</span></label>
-                <div class="upload-area" id="aadharUpload">
-                    <i class="fas fa-id-card"></i>
-                    <p>Click to upload front side of ID</p>
-                    <div class="file-name" id="aadharFileName"></div>
+                <label>ID Proof <span class="required">*</span> (Aadhar or PAN)</label>
+                <div class="doc-type-selector" id="docTypeSelector">
+                    <button class="doc-type-btn active" data-type="aadhar">🪪 Aadhar Card</button>
+                    <button class="doc-type-btn" data-type="pan">📄 PAN Card</button>
                 </div>
-                <input type="file" id="aadharInput" accept="image/*" style="display: none;">
-                <div id="aadharError" class="error-message hidden">
+                
+                <div class="upload-area" id="idUpload">
+                    <i class="fas fa-id-card" id="idUploadIcon"></i>
+                    <p id="idUploadText">Click to upload Aadhar Card</p>
+                    <div class="file-name" id="idFileName"></div>
+                    <img id="idPreview" class="image-preview" alt="ID Preview">
+                    <div class="upload-progress" id="idProgress">
+                        <div class="upload-progress-bar" id="idProgressBar"></div>
+                    </div>
+                    <div class="upload-status-text" id="idStatusText">Uploading...</div>
+                </div>
+                <input type="file" id="idInput" accept="image/*" style="display: none;">
+                <div id="idError" class="error-message hidden">
                     <i class="fas fa-exclamation-circle"></i>
-                    <span>Please upload your government ID</span>
+                    <span>Please upload your ID proof (Aadhar or PAN)</span>
                 </div>
             </div>
 
-            <!-- 2. Back side of ID -->
+            <!-- 2. Profile Photo -->
             <div class="form-group">
-                <label>ID Back Side <span class="required">*</span></label>
-                <div class="upload-area" id="aadharBackUpload">
-                    <i class="fas fa-id-card"></i>
-                    <p>Click to upload back side of ID</p>
-                    <div class="file-name" id="aadharBackFileName"></div>
+                <label>Profile Photo <span class="required">*</span></label>
+                <div class="upload-area" id="profileUpload">
+                    <i class="fas fa-user-circle" id="profileUploadIcon"></i>
+                    <p id="profileUploadText">Click to upload profile photo</p>
+                    <div class="file-name" id="profileFileName"></div>
+                    <img id="profilePreview" class="image-preview" alt="Profile Preview">
+                    <div class="upload-progress" id="profileProgress">
+                        <div class="upload-progress-bar" id="profileProgressBar"></div>
+                    </div>
+                    <div class="upload-status-text" id="profileStatusText">Uploading...</div>
                 </div>
-                <input type="file" id="aadharBackInput" accept="image/*" style="display: none;">
+                <input type="file" id="profileInput" accept="image/*" style="display: none;">
             </div>
 
-            <!-- 3. Professional Certificate -->
+            <!-- 3. Live Selfie -->
             <div class="form-group">
-                <label>Professional Certificate / Experience Proof <span class="optional">(recommended)</span></label>
+                <label>Live Selfie <span class="required">*</span></label>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="doc-type-btn" id="startSelfieBtn" style="border-color: #1a5f7a; color: #1a5f7a;">
+                        <i class="fas fa-camera"></i> Take Live Selfie
+                    </button>
+                    <button class="doc-type-btn" id="uploadSelfieBtn" style="border-color: #1a5f7a; color: #1a5f7a;">
+                        <i class="fas fa-upload"></i> Upload Photo
+                    </button>
+                </div>
+                
+                <div class="selfie-container" id="selfieContainer">
+                    <video id="selfieVideo" autoplay playsinline></video>
+                    <div class="selfie-controls">
+                        <button class="btn-capture" id="captureSelfieBtn"><i class="fas fa-camera"></i> Capture</button>
+                        <button class="btn-cancel-selfie" id="cancelSelfieBtn"><i class="fas fa-times"></i> Cancel</button>
+                    </div>
+                </div>
+
+                <div class="upload-area" id="selfieUploadArea" style="display: none;">
+                    <i class="fas fa-user" id="selfieUploadIcon"></i>
+                    <p id="selfieUploadText">Click to upload selfie photo</p>
+                    <div class="file-name" id="selfieFileName"></div>
+                    <img id="selfiePreview" class="image-preview" alt="Selfie Preview">
+                    <div class="upload-progress" id="selfieProgress">
+                        <div class="upload-progress-bar" id="selfieProgressBar"></div>
+                    </div>
+                    <div class="upload-status-text" id="selfieStatusText">Uploading...</div>
+                </div>
+                <input type="file" id="selfieInput" accept="image/*" style="display: none;">
+                
+                <div id="selfieError" class="error-message hidden">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Please add a live selfie</span>
+                </div>
+            </div>
+
+            <!-- 4. Professional Certificate (Optional) -->
+            <div class="form-group">
+                <label>Professional Certificate <span class="optional">(optional - ITI/Diploma/Degree)</span></label>
                 <div class="upload-area" id="certificateUpload">
                     <i class="fas fa-certificate"></i>
-                    <p>Upload certificate, diploma, or experience letter</p>
+                    <p>Click to upload certificate (ITI, Diploma, Degree, etc.)</p>
                     <div class="file-name" id="certificateFileName"></div>
+                    <img id="certificatePreview" class="image-preview" alt="Certificate Preview">
+                    <div class="upload-progress" id="certificateProgress">
+                        <div class="upload-progress-bar" id="certificateProgressBar"></div>
+                    </div>
+                    <div class="upload-status-text" id="certificateStatusText">Uploading...</div>
                 </div>
                 <input type="file" id="certificateInput" accept="image/*,.pdf" style="display: none;">
             </div>
 
-            <!-- 4. Bank Account Details -->
-            <div class="form-group">
-                <label>Bank Account Details <span class="required">*</span></label>
-                <div class="input-wrapper">
-                    <i class="fas fa-university"></i>
-                    <input type="text" id="accountHolder" placeholder="Account holder name">
-                </div>
-                <div class="input-wrapper" style="margin-top: 12px;">
-                    <i class="fas fa-credit-card"></i>
-                    <input type="text" id="accountNumber" placeholder="Account number">
-                </div>
-                <div class="input-wrapper" style="margin-top: 12px;">
-                    <i class="fas fa-code-branch"></i>
-                    <input type="text" id="ifscCode" placeholder="IFSC code">
-                </div>
-                <div id="bankError" class="error-message hidden">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span>Please fill all bank details</span>
-                </div>
-            </div>
-
-            <!-- 5. Service Area Pincodes -->
-            <div class="form-group">
-                <label>Service Area (Pincodes where you work) <span class="required">*</span></label>
-                <div class="pincode-input-group">
-                    <input type="text" id="pincodeInput" placeholder="Enter pincode (e.g., 110001)" maxlength="6">
-                    <button id="addPincodeBtn"><i class="fas fa-plus"></i> Add</button>
-                </div>
-                <div class="pincode-container" id="pincodeContainer"></div>
-                <div id="pincodeError" class="error-message hidden">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span>Please add at least one service area pincode</span>
-                </div>
-            </div>
-
-            <!-- 6. Work Video/Portfolio -->
-            <div class="form-group">
-                <label>Work Portfolio (Video/Images) <span class="optional">(optional - boosts bookings)</span></label>
-                <div class="upload-area" id="portfolioUpload">
-                    <i class="fas fa-video"></i>
-                    <p>Upload your best work sample (video or images)</p>
-                    <div class="file-name" id="portfolioFileName"></div>
-                </div>
-                <input type="file" id="portfolioInput" accept="image/*,video/*" multiple style="display: none;">
-            </div>
-
-            <!-- 7. Terms & Conditions -->
+            <!-- 5. Terms & Conditions -->
             <div class="checkbox-group">
                 <input type="checkbox" id="termsCheckbox">
                 <label for="termsCheckbox">
@@ -626,9 +714,9 @@
 
         console.log('✅ Firebase initialized successfully!');
 
-        // ========================
+        // ==========================================
         // CHECK AUTH STATUS
-        // ========================
+        // ==========================================
         let currentUser = null;
         let verificationData = {};
 
@@ -647,74 +735,198 @@
             }
         });
 
-        // ========================
+        // ==========================================
         // DOM ELEMENTS
-        // ========================
-        let pincodes = [];
+        // ==========================================
         let uploads = {
-            aadharFront: null,
-            aadharBack: null,
-            certificate: null,
-            portfolio: []
+            idProof: null,
+            profilePhoto: null,
+            selfie: null,
+            certificate: null
         };
-        
-        const aadharUpload = document.getElementById('aadharUpload');
-        const aadharInput = document.getElementById('aadharInput');
-        const aadharFileName = document.getElementById('aadharFileName');
-        
-        const aadharBackUpload = document.getElementById('aadharBackUpload');
-        const aadharBackInput = document.getElementById('aadharBackInput');
-        const aadharBackFileName = document.getElementById('aadharBackFileName');
-        
+
+        let docType = 'aadhar';
+
+        // ID Upload
+        const idUpload = document.getElementById('idUpload');
+        const idInput = document.getElementById('idInput');
+        const idFileName = document.getElementById('idFileName');
+        const idPreview = document.getElementById('idPreview');
+        const idProgress = document.getElementById('idProgress');
+        const idProgressBar = document.getElementById('idProgressBar');
+        const idStatusText = document.getElementById('idStatusText');
+        const idUploadIcon = document.getElementById('idUploadIcon');
+        const idUploadText = document.getElementById('idUploadText');
+
+        // Profile Upload
+        const profileUpload = document.getElementById('profileUpload');
+        const profileInput = document.getElementById('profileInput');
+        const profileFileName = document.getElementById('profileFileName');
+        const profilePreview = document.getElementById('profilePreview');
+        const profileProgress = document.getElementById('profileProgress');
+        const profileProgressBar = document.getElementById('profileProgressBar');
+        const profileStatusText = document.getElementById('profileStatusText');
+        const profileUploadIcon = document.getElementById('profileUploadIcon');
+        const profileUploadText = document.getElementById('profileUploadText');
+
+        // Selfie
+        const startSelfieBtn = document.getElementById('startSelfieBtn');
+        const uploadSelfieBtn = document.getElementById('uploadSelfieBtn');
+        const selfieContainer = document.getElementById('selfieContainer');
+        const selfieVideo = document.getElementById('selfieVideo');
+        const captureSelfieBtn = document.getElementById('captureSelfieBtn');
+        const cancelSelfieBtn = document.getElementById('cancelSelfieBtn');
+        const selfieUploadArea = document.getElementById('selfieUploadArea');
+        const selfieInput = document.getElementById('selfieInput');
+        const selfieFileName = document.getElementById('selfieFileName');
+        const selfiePreview = document.getElementById('selfiePreview');
+        const selfieProgress = document.getElementById('selfieProgress');
+        const selfieProgressBar = document.getElementById('selfieProgressBar');
+        const selfieStatusText = document.getElementById('selfieStatusText');
+        const selfieUploadIcon = document.getElementById('selfieUploadIcon');
+        const selfieUploadText = document.getElementById('selfieUploadText');
+
+        // Certificate
         const certificateUpload = document.getElementById('certificateUpload');
         const certificateInput = document.getElementById('certificateInput');
         const certificateFileName = document.getElementById('certificateFileName');
-        
-        const portfolioUpload = document.getElementById('portfolioUpload');
-        const portfolioInput = document.getElementById('portfolioInput');
-        const portfolioFileName = document.getElementById('portfolioFileName');
-        
-        const accountHolder = document.getElementById('accountHolder');
-        const accountNumber = document.getElementById('accountNumber');
-        const ifscCode = document.getElementById('ifscCode');
-        
-        const pincodeInput = document.getElementById('pincodeInput');
-        const addPincodeBtn = document.getElementById('addPincodeBtn');
-        const pincodeContainer = document.getElementById('pincodeContainer');
-        
+        const certificatePreview = document.getElementById('certificatePreview');
+        const certificateProgress = document.getElementById('certificateProgress');
+        const certificateProgressBar = document.getElementById('certificateProgressBar');
+        const certificateStatusText = document.getElementById('certificateStatusText');
+
         const termsCheckbox = document.getElementById('termsCheckbox');
         const continueBtn = document.getElementById('continueBtn');
         const backBtn = document.getElementById('backBtn');
         const saveDraftBtn = document.getElementById('saveDraftBtn');
 
-        // ========================
-        // UPLOAD TO FIREBASE STORAGE
-        // ========================
-        async function uploadFileToFirebase(file, folder, fileName) {
+        let selfieStream = null;
+        let selfieCaptured = false;
+
+        // ==========================================
+        // DOCUMENT TYPE SELECTION
+        // ==========================================
+        document.querySelectorAll('.doc-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.closest('#docTypeSelector')) {
+                    document.querySelectorAll('#docTypeSelector .doc-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    docType = this.dataset.type;
+                    idUploadText.textContent = `Click to upload ${docType === 'aadhar' ? 'Aadhar Card' : 'PAN Card'}`;
+                    idUploadIcon.className = docType === 'aadhar' ? 'fas fa-id-card' : 'fas fa-file-alt';
+                    // Reset upload
+                    uploads.idProof = null;
+                    idFileName.textContent = '';
+                    idPreview.classList.remove('show');
+                    idPreview.src = '';
+                }
+            });
+        });
+
+        // ==========================================
+        // OPTIMIZED UPLOAD FUNCTION
+        // ==========================================
+        function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        if (height > maxHeight) {
+                            width = (width * maxHeight) / height;
+                            height = maxHeight;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', quality);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function uploadFileToFirebase(file, folder, progressBar, statusText) {
             if (!currentUser) {
                 showToast('Please login first', true);
                 return null;
             }
 
             try {
+                // Compress image first
+                const compressedBlob = await compressImage(file);
+                const fileName = `${Date.now()}_${file.name.replace(/\.[^/.]+$/, '')}.jpg`;
                 const storageRef = storage.ref();
-                const fileRef = storageRef.child(`providers/${currentUser.uid}/${folder}/${fileName || file.name}`);
+                const fileRef = storageRef.child(`providers/${currentUser.uid}/${folder}/${fileName}`);
                 
-                const snapshot = await fileRef.put(file);
-                const downloadUrl = await snapshot.ref.getDownloadURL();
+                const uploadTask = fileRef.put(compressedBlob);
                 
-                return downloadUrl;
+                // Show progress
+                if (progressBar && statusText) {
+                    progressBar.parentElement.classList.add('show');
+                    statusText.classList.add('show');
+                    statusText.textContent = 'Uploading...';
+                }
+                
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            if (progressBar) {
+                                progressBar.style.width = progress + '%';
+                            }
+                            if (statusText) {
+                                statusText.textContent = `Uploading ${Math.round(progress)}%`;
+                            }
+                        },
+                        (error) => {
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+                            if (statusText) {
+                                statusText.textContent = '✅ Uploaded!';
+                                setTimeout(() => {
+                                    statusText.classList.remove('show');
+                                    if (progressBar) {
+                                        progressBar.parentElement.classList.remove('show');
+                                        progressBar.style.width = '0%';
+                                    }
+                                }, 1500);
+                            }
+                            resolve(downloadUrl);
+                        }
+                    );
+                });
             } catch (error) {
                 console.error('Error uploading file:', error);
                 showToast('Error uploading file: ' + error.message, true);
+                if (statusText) {
+                    statusText.textContent = '❌ Failed';
+                    statusText.style.color = '#dc3545';
+                }
                 return null;
             }
         }
 
-        // ========================
-        // SETUP UPLOAD HANDLERS WITH FIREBASE
-        // ========================
-        function setupUpload(uploadElement, fileInput, fileNameSpan, storeKey, folder) {
+        // ==========================================
+        // SETUP UPLOAD HANDLERS
+        // ==========================================
+        function setupUpload(uploadElement, fileInput, fileNameSpan, previewImg, progressBar, statusText, storeKey, folder, uploadIcon, uploadText) {
             uploadElement.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -724,18 +936,26 @@
                         return;
                     }
                     
-                    fileNameSpan.textContent = 'Uploading...';
-                    fileNameSpan.style.color = '#ff9800';
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.classList.add('show');
+                        if (uploadIcon) uploadIcon.style.display = 'none';
+                        if (uploadText) uploadText.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
                     
-                    const url = await uploadFileToFirebase(file, folder);
+                    fileNameSpan.textContent = file.name;
+                    
+                    // Upload to Firebase
+                    const url = await uploadFileToFirebase(file, folder, progressBar, statusText);
                     
                     if (url) {
                         uploads[storeKey] = url;
                         verificationData[storeKey + 'Url'] = url;
-                        fileNameSpan.textContent = file.name + ' ✅';
-                        fileNameSpan.style.color = '#4caf50';
-                        showToast('File uploaded successfully!');
                         console.log(`✅ ${storeKey} uploaded to Firebase Storage`);
+                        showToast('✅ File uploaded successfully!');
                     } else {
                         fileNameSpan.textContent = 'Upload failed';
                         fileNameSpan.style.color = '#dc3545';
@@ -743,95 +963,103 @@
                 }
             });
         }
-        
-        // Setup all uploads
-        setupUpload(aadharUpload, aadharInput, aadharFileName, 'aadharFront', 'aadhar');
-        setupUpload(aadharBackUpload, aadharBackInput, aadharBackFileName, 'aadharBack', 'aadhar');
-        setupUpload(certificateUpload, certificateInput, certificateFileName, 'certificate', 'certificates');
-        
-        // Portfolio multiple files
-        portfolioUpload.addEventListener('click', () => portfolioInput.click());
-        portfolioInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length > 0) {
-                portfolioFileName.textContent = 'Uploading...';
-                portfolioFileName.style.color = '#ff9800';
+
+        // Setup ID Upload
+        setupUpload(idUpload, idInput, idFileName, idPreview, idProgressBar, idStatusText, 'idProof', 'id_proof', idUploadIcon, idUploadText);
+
+        // Setup Profile Upload
+        setupUpload(profileUpload, profileInput, profileFileName, profilePreview, profileProgressBar, profileStatusText, 'profilePhoto', 'profile_photos', profileUploadIcon, profileUploadText);
+
+        // Setup Selfie Upload
+        setupUpload(selfieUploadArea, selfieInput, selfieFileName, selfiePreview, selfieProgressBar, selfieStatusText, 'selfie', 'selfies', selfieUploadIcon, selfieUploadText);
+
+        // Setup Certificate Upload (Optional)
+        setupUpload(certificateUpload, certificateInput, certificateFileName, certificatePreview, certificateProgressBar, certificateStatusText, 'certificate', 'certificates');
+
+        // ==========================================
+        // LIVE SELFIE
+        // ==========================================
+        startSelfieBtn.addEventListener('click', async () => {
+            try {
+                selfieContainer.classList.add('show');
+                selfieUploadArea.style.display = 'none';
+                selfieCaptured = false;
                 
-                let uploadedUrls = [];
-                for (const file of files) {
-                    if (file.size > 10 * 1024 * 1024) {
-                        showToast('File size should be less than 10MB', true);
-                        continue;
-                    }
-                    const url = await uploadFileToFirebase(file, 'portfolio');
-                    if (url) {
-                        uploadedUrls.push(url);
-                    }
-                }
-                
-                if (uploadedUrls.length > 0) {
-                    uploads.portfolio = uploadedUrls;
-                    verificationData.portfolioUrls = uploadedUrls;
-                    portfolioFileName.textContent = `${uploadedUrls.length} file(s) uploaded ✅`;
-                    portfolioFileName.style.color = '#4caf50';
-                    showToast(`${uploadedUrls.length} file(s) uploaded successfully!`);
-                } else {
-                    portfolioFileName.textContent = 'Upload failed';
-                    portfolioFileName.style.color = '#dc3545';
-                }
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 300, height: 300 } });
+                selfieStream = stream;
+                selfieVideo.srcObject = stream;
+                await selfieVideo.play();
+            } catch (error) {
+                console.error('Camera error:', error);
+                showToast('Unable to access camera. Please upload a photo instead.', true);
+                selfieContainer.classList.remove('show');
+                selfieUploadArea.style.display = 'block';
             }
         });
 
-        // ========================
-        // PINCODE MANAGEMENT
-        // ========================
-        function renderPincodes() {
-            pincodeContainer.innerHTML = '';
-            pincodes.forEach((pin, index) => {
-                const tag = document.createElement('div');
-                tag.className = 'pincode-tag';
-                tag.innerHTML = `
-                    <i class="fas fa-map-marker-alt"></i>
-                    ${pin}
-                    <i class="fas fa-times-circle" data-pin="${pin}" style="cursor:pointer"></i>
-                `;
-                pincodeContainer.appendChild(tag);
-            });
+        captureSelfieBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(selfieVideo, 0, 0, 300, 300);
             
-            document.querySelectorAll('.fa-times-circle').forEach(icon => {
-                icon.addEventListener('click', (e) => {
-                    const pin = e.target.getAttribute('data-pin');
-                    pincodes = pincodes.filter(p => p !== pin);
-                    verificationData.servicePincodes = pincodes;
-                    renderPincodes();
-                });
-            });
-        }
-        
-        addPincodeBtn.addEventListener('click', () => {
-            const pin = pincodeInput.value.trim();
-            if (pin && /^\d{6}$/.test(pin)) {
-                if (!pincodes.includes(pin)) {
-                    pincodes.push(pin);
-                    verificationData.servicePincodes = pincodes;
-                    renderPincodes();
-                    pincodeInput.value = '';
-                    document.getElementById('pincodeError').classList.add('hidden');
-                } else {
-                    showToast('Pincode already added', true);
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selfiePreview.src = e.target.result;
+                    selfiePreview.classList.add('show');
+                    selfieUploadIcon.style.display = 'none';
+                    selfieUploadText.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+                
+                selfieFileName.textContent = 'selfie.jpg';
+                selfieCaptured = true;
+                
+                // Upload to Firebase
+                const url = await uploadFileToFirebase(file, 'selfies', selfieProgressBar, selfieStatusText);
+                if (url) {
+                    uploads.selfie = url;
+                    verificationData.selfieUrl = url;
+                    showToast('✅ Selfie uploaded successfully!');
+                    document.getElementById('selfieError').classList.add('hidden');
                 }
-            } else {
-                showToast('Please enter a valid 6-digit pincode', true);
-            }
-        });
-        
-        pincodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addPincodeBtn.click();
+                
+                // Stop camera
+                if (selfieStream) {
+                    selfieStream.getTracks().forEach(track => track.stop());
+                    selfieStream = null;
+                }
+                selfieContainer.classList.remove('show');
+                selfieUploadArea.style.display = 'block';
+            }, 'image/jpeg', 0.8);
         });
 
-        // ========================
+        cancelSelfieBtn.addEventListener('click', () => {
+            if (selfieStream) {
+                selfieStream.getTracks().forEach(track => track.stop());
+                selfieStream = null;
+            }
+            selfieContainer.classList.remove('show');
+        });
+
+        uploadSelfieBtn.addEventListener('click', () => {
+            if (selfieStream) {
+                selfieStream.getTracks().forEach(track => track.stop());
+                selfieStream = null;
+            }
+            selfieContainer.classList.remove('show');
+            selfieUploadArea.style.display = 'block';
+            selfieInput.click();
+        });
+
+        // ==========================================
         // TOAST FUNCTION
-        // ========================
+        // ==========================================
         function showToast(message, isError = false) {
             const oldToasts = document.querySelectorAll('.toast');
             oldToasts.forEach(t => t.remove());
@@ -844,31 +1072,29 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // ========================
+        // ==========================================
         // VALIDATE FORM
-        // ========================
+        // ==========================================
         function validateForm() {
             let isValid = true;
             
-            if (!uploads.aadharFront) {
-                document.getElementById('aadharError').classList.remove('hidden');
+            if (!uploads.idProof) {
+                document.getElementById('idError').classList.remove('hidden');
                 isValid = false;
             } else {
-                document.getElementById('aadharError').classList.add('hidden');
+                document.getElementById('idError').classList.add('hidden');
             }
             
-            if (!accountHolder.value.trim() || !accountNumber.value.trim() || !ifscCode.value.trim()) {
-                document.getElementById('bankError').classList.remove('hidden');
+            if (!uploads.profilePhoto) {
+                showToast('Please upload a profile photo', true);
                 isValid = false;
-            } else {
-                document.getElementById('bankError').classList.add('hidden');
             }
             
-            if (pincodes.length === 0) {
-                document.getElementById('pincodeError').classList.remove('hidden');
+            if (!uploads.selfie) {
+                document.getElementById('selfieError').classList.remove('hidden');
                 isValid = false;
             } else {
-                document.getElementById('pincodeError').classList.add('hidden');
+                document.getElementById('selfieError').classList.add('hidden');
             }
             
             if (!termsCheckbox.checked) {
@@ -881,9 +1107,9 @@
             return isValid;
         }
 
-        // ========================
+        // ==========================================
         // LOAD SAVED DATA FROM FIRESTORE
-        // ========================
+        // ==========================================
         async function loadSavedDataFromFirestore() {
             if (!currentUser) return;
 
@@ -894,91 +1120,68 @@
                 if (docSnap.exists) {
                     const data = docSnap.data();
                     
-                    // Load bank details
-                    if (data.bankDetails) {
-                        accountHolder.value = data.bankDetails.accountHolder || '';
-                        accountNumber.value = data.bankDetails.accountNumber || '';
-                        ifscCode.value = data.bankDetails.ifscCode || '';
-                        verificationData.bankDetails = data.bankDetails;
+                    // Load ID proof
+                    if (data.idProofUrl) {
+                        uploads.idProof = data.idProofUrl;
+                        verificationData.idProofUrl = data.idProofUrl;
+                        idFileName.textContent = '✅ Uploaded';
+                        idFileName.style.color = '#4caf50';
+                        idPreview.src = data.idProofUrl;
+                        idPreview.classList.add('show');
+                        idUploadIcon.style.display = 'none';
+                        idUploadText.style.display = 'none';
                     }
                     
-                    // Load pincodes
-                    if (data.servicePincodes && data.servicePincodes.length) {
-                        pincodes = data.servicePincodes;
-                        verificationData.servicePincodes = pincodes;
-                        renderPincodes();
+                    // Load profile photo
+                    if (data.profilePhotoUrl) {
+                        uploads.profilePhoto = data.profilePhotoUrl;
+                        verificationData.profilePhotoUrl = data.profilePhotoUrl;
+                        profileFileName.textContent = '✅ Uploaded';
+                        profileFileName.style.color = '#4caf50';
+                        profilePreview.src = data.profilePhotoUrl;
+                        profilePreview.classList.add('show');
+                        profileUploadIcon.style.display = 'none';
+                        profileUploadText.style.display = 'none';
                     }
                     
-                    // Load terms acceptance
+                    // Load selfie
+                    if (data.selfieUrl) {
+                        uploads.selfie = data.selfieUrl;
+                        verificationData.selfieUrl = data.selfieUrl;
+                        selfieFileName.textContent = '✅ Uploaded';
+                        selfieFileName.style.color = '#4caf50';
+                        selfiePreview.src = data.selfieUrl;
+                        selfiePreview.classList.add('show');
+                        selfieUploadIcon.style.display = 'none';
+                        selfieUploadText.style.display = 'none';
+                        selfieUploadArea.style.display = 'block';
+                    }
+                    
+                    // Load certificate
+                    if (data.certificateUrl) {
+                        uploads.certificate = data.certificateUrl;
+                        verificationData.certificateUrl = data.certificateUrl;
+                        certificateFileName.textContent = '✅ Uploaded';
+                        certificateFileName.style.color = '#4caf50';
+                        certificatePreview.src = data.certificateUrl;
+                        certificatePreview.classList.add('show');
+                    }
+                    
                     if (data.termsAccepted) {
                         termsCheckbox.checked = true;
                         verificationData.termsAccepted = true;
-                    }
-                    
-                    // Load uploaded files info
-                    if (data.aadharFrontUrl) {
-                        aadharFileName.textContent = '✅ Uploaded';
-                        aadharFileName.style.color = '#4caf50';
-                        uploads.aadharFront = data.aadharFrontUrl;
-                        verificationData.aadharFrontUrl = data.aadharFrontUrl;
-                    }
-                    if (data.aadharBackUrl) {
-                        aadharBackFileName.textContent = '✅ Uploaded';
-                        aadharBackFileName.style.color = '#4caf50';
-                        uploads.aadharBack = data.aadharBackUrl;
-                        verificationData.aadharBackUrl = data.aadharBackUrl;
-                    }
-                    if (data.certificateUrl) {
-                        certificateFileName.textContent = '✅ Uploaded';
-                        certificateFileName.style.color = '#4caf50';
-                        uploads.certificate = data.certificateUrl;
-                        verificationData.certificateUrl = data.certificateUrl;
-                    }
-                    if (data.portfolioUrls && data.portfolioUrls.length) {
-                        portfolioFileName.textContent = `${data.portfolioUrls.length} file(s) uploaded ✅`;
-                        portfolioFileName.style.color = '#4caf50';
-                        uploads.portfolio = data.portfolioUrls;
-                        verificationData.portfolioUrls = data.portfolioUrls;
                     }
                     
                     console.log('✅ Loaded verification data from Firestore');
                 }
             } catch (error) {
                 console.error('Error loading from Firestore:', error);
-                loadSavedDataFromLocalStorage();
             }
         }
 
-        // ========================
-        // LOAD SAVED DATA FROM LOCALSTORAGE (Fallback)
-        // ========================
-        function loadSavedDataFromLocalStorage() {
-            const savedData = localStorage.getItem('quickfix_provider_verification');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    if (data.bankDetails) {
-                        accountHolder.value = data.bankDetails.accountHolder || '';
-                        accountNumber.value = data.bankDetails.accountNumber || '';
-                        ifscCode.value = data.bankDetails.ifscCode || '';
-                        verificationData.bankDetails = data.bankDetails;
-                    }
-                    if (data.servicePincodes && data.servicePincodes.length) {
-                        pincodes = data.servicePincodes;
-                        verificationData.servicePincodes = pincodes;
-                        renderPincodes();
-                    }
-                    if (data.termsAccepted) {
-                        termsCheckbox.checked = true;
-                        verificationData.termsAccepted = true;
-                    }
-                } catch(e) { console.warn(e); }
-            }
-        }
-
-        // ========================
+        // ==========================================
         // SAVE TO FIRESTORE
-        // ========================
+        // ==========================================
         async function saveToFirestore() {
             if (!currentUser) {
                 showToast('Please login first', true);
@@ -986,27 +1189,18 @@
             }
 
             try {
-                // Update verificationData with latest values
-                verificationData.aadharFrontUrl = uploads.aadharFront || '';
-                verificationData.aadharBackUrl = uploads.aadharBack || '';
+                verificationData.idProofUrl = uploads.idProof || '';
+                verificationData.profilePhotoUrl = uploads.profilePhoto || '';
+                verificationData.selfieUrl = uploads.selfie || '';
                 verificationData.certificateUrl = uploads.certificate || '';
-                verificationData.portfolioUrls = uploads.portfolio || [];
-                verificationData.bankDetails = {
-                    accountHolder: accountHolder.value.trim(),
-                    accountNumber: accountNumber.value.trim(),
-                    ifscCode: ifscCode.value.trim()
-                };
-                verificationData.servicePincodes = pincodes;
                 verificationData.termsAccepted = termsCheckbox.checked;
                 verificationData.step3Completed = true;
                 verificationData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
                 verificationData.verificationStatus = 'pending';
 
-                // Save to Firestore
                 await db.collection('providers').doc(currentUser.uid).set(verificationData, { merge: true });
-                console.log('✅ Verification data saved to Firestore:', verificationData);
+                console.log('✅ Verification data saved to Firestore');
 
-                // Also save to localStorage for fallback
                 localStorage.setItem('quickfix_provider_verification', JSON.stringify(verificationData));
                 localStorage.setItem('quickfix_provider_step3_complete', 'true');
 
@@ -1019,9 +1213,9 @@
             }
         }
 
-        // ========================
+        // ==========================================
         // CONTINUE BUTTON
-        // ========================
+        // ==========================================
         async function continueToStep4() {
             if (!validateForm()) {
                 showToast('Please fill all required fields before continuing', true);
@@ -1034,7 +1228,7 @@
             const saved = await saveToFirestore();
             
             if (saved) {
-                showToast('✅ Verification details saved successfully! Redirecting to Availability page...');
+                showToast('✅ Verification details saved successfully! Redirecting...');
                 setTimeout(() => {
                     window.location.href = 'Provider Profile Creation - Step 4.html';
                 }, 800);
@@ -1044,38 +1238,23 @@
             }
         }
 
-        // ========================
+        // ==========================================
         // BACK BUTTON
-        // ========================
+        // ==========================================
         async function goBack() {
-            // Update verificationData before going back
-            verificationData.aadharFrontUrl = uploads.aadharFront || '';
-            verificationData.aadharBackUrl = uploads.aadharBack || '';
-            verificationData.certificateUrl = uploads.certificate || '';
-            verificationData.portfolioUrls = uploads.portfolio || [];
-            verificationData.bankDetails = {
-                accountHolder: accountHolder.value.trim(),
-                accountNumber: accountNumber.value.trim(),
-                ifscCode: ifscCode.value.trim()
-            };
-            verificationData.servicePincodes = pincodes;
-            verificationData.termsAccepted = termsCheckbox.checked;
-            verificationData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-            
             if (currentUser) {
                 try {
-                    await db.collection('providers').doc(currentUser.uid).set(verificationData, { merge: true });
+                    await saveToFirestore();
                 } catch (e) {
                     console.warn('Could not save before going back:', e);
                 }
             }
-            
             window.location.href = 'Provider Profile Creation - Step 2.html';
         }
 
-        // ========================
+        // ==========================================
         // SAVE DRAFT
-        // ========================
+        // ==========================================
         async function saveDraft() {
             continueBtn.disabled = true;
             saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -1090,48 +1269,30 @@
             saveDraftBtn.innerHTML = '<i class="fas fa-save"></i> Save as Draft';
         }
 
-        // ========================
+        // ==========================================
         // EVENT LISTENERS
-        // ========================
+        // ==========================================
         continueBtn.addEventListener('click', continueToStep4);
         backBtn.addEventListener('click', goBack);
         saveDraftBtn.addEventListener('click', saveDraft);
-
-        // ========================
-        // BANK DETAILS REAL-TIME UPDATE
-        // ========================
-        accountHolder.addEventListener('input', () => {
-            verificationData.bankDetails = verificationData.bankDetails || {};
-            verificationData.bankDetails.accountHolder = accountHolder.value.trim();
-        });
-        
-        accountNumber.addEventListener('input', () => {
-            verificationData.bankDetails = verificationData.bankDetails || {};
-            verificationData.bankDetails.accountNumber = accountNumber.value.trim();
-        });
-        
-        ifscCode.addEventListener('input', () => {
-            verificationData.bankDetails = verificationData.bankDetails || {};
-            verificationData.bankDetails.ifscCode = ifscCode.value.trim();
-        });
 
         termsCheckbox.addEventListener('change', () => {
             verificationData.termsAccepted = termsCheckbox.checked;
         });
 
-        // ========================
+        // ==========================================
         // LOAD SAVED DATA ON PAGE LOAD
-        // ========================
+        // ==========================================
         if (auth.currentUser) {
             currentUser = auth.currentUser;
             loadSavedDataFromFirestore();
         }
 
-        console.log('%c🔥 Step 3: Verification & Documents - Firebase Integrated!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
-        console.log('✅ All verification details will be saved to Firestore');
-        console.log('✅ Fields saved: Aadhar Front/Back, Certificate, Bank Details, Pincodes, Portfolio, Terms');
-        console.log('✅ Files upload to Firebase Storage');
-        console.log('✅ Clicking "Continue to Availability" saves all data and opens Step 4');
+        console.log('%c🔥 Step 3: Verification - Fast Upload with Preview!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
+        console.log('✅ Images compressed before upload (fast)');
+        console.log('✅ Live selfie with camera');
+        console.log('✅ ID Proof: Aadhar or PAN (mandatory)');
+        console.log('✅ Certificate: Optional');
     </script>
 </body>
 </html>
