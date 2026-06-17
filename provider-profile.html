@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NEBULA ASCEND | AI Provider Profile 2035</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #000000;
+      background-image: radial-gradient(circle at 80% 10%, rgba(0, 40, 70, 0.9) 0%, #010003 100%);
+      font-family: 'Inter', 'Poppins', system-ui, -apple-system, 'SF Pro Display', sans-serif;
+      color: white;
+      overflow-x: hidden;
+      padding-bottom: 90px;
+      position: relative;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px 14px 90px 14px;
+    }
+
+    .glass-card {
+      background: rgba(8, 12, 22, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 2rem;
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(0, 255, 255, 0.1) inset;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, rgba(0, 30, 60, 0.8), rgba(30, 0, 70, 0.8));
+      backdrop-filter: blur(20px);
+      border-radius: 2rem;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 255, 255, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0,255,255,0.15), transparent);
+      animation: rotateGlow 14s linear infinite;
+    }
+    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 12px;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #0af, #b624ff);
+      padding: 3px;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 60px;
+      background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover;
+      box-shadow: 0 0 20px cyan;
+    }
+    .online-pulse-lg { position: relative; top: -20px; left: 70px; width: 18px; height: 18px; background: #0f6; border-radius: 50%; box-shadow: 0 0 12px #0f6; animation: pulse-green 1.2s infinite; display: inline-block; border: 2px solid black; z-index: 2; }
+    @keyframes pulse-green { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+    .verified-badge { background: #0af; border-radius: 60px; padding: 4px 12px; font-size: 0.7rem; display: inline-block; margin-left: 8px; box-shadow: 0 0 10px cyan; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin: 24px 0;
+    }
+    .stat-card {
+      padding: 14px 12px;
+      border-radius: 28px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      transition: 0.25s;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    .stat-card:hover { transform: translateY(-5px); border-color: #0af; box-shadow: 0 12px 28px -8px rgba(0,150,255,0.4);}
+    .stat-number { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #fff, #aaffff); -webkit-background-clip: text; background-clip: text; color: transparent;}
+
+    .service-card {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 16px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      transition: 0.2s;
+    }
+    .service-img { width: 60px; height: 60px; border-radius: 20px; background-size: cover; box-shadow: 0 0 10px cyan;}
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .portfolio-item {
+      border-radius: 24px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background-size: cover;
+      transition: 0.3s;
+      border: 1px solid rgba(0,255,255,0.4);
+      cursor: pointer;
+    }
+    .portfolio-item:hover { transform: scale(1.02); box-shadow: 0 0 20px cyan; }
+
+    .toggle-switch {
+      width: 50px;
+      height: 26px;
+      background: #333;
+      border-radius: 30px;
+      position: relative;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .toggle-switch.active { background: #0af; box-shadow: 0 0 12px cyan; }
+    .toggle-knob { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.3s; }
+    .toggle-switch.active .toggle-knob { left: 25px; }
+
+    .review-card {
+      background: rgba(10, 20, 35, 0.6);
+      border-radius: 28px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #0af;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 460px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(28px);
+      border-radius: 48px;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 255, 255, 0.7);
+      z-index: 100;
+    }
+    .nav-item {
+      text-align: center;
+      padding: 10px 0;
+      flex: 1;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: 0.2s;
+      border-radius: 60px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+    .nav-item.active { 
+      background: rgba(0, 255, 255, 0.2); 
+      text-shadow: 0 0 8px cyan; 
+      color: white;
+    }
+    .post-btn {
+      background: linear-gradient(45deg, #00c6ff, #b624ff) !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px cyan;
+      color: white !important;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .post-btn:hover {
+      transform: scale(1.15);
+    }
+    button, .action-chip, .settings-item {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid cyan;
+      border-radius: 40px;
+      padding: 8px 16px;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    button:active, .action-chip:active { transform: scale(0.96); background: cyan; color: black; }
+    h3, h4 { letter-spacing: -0.3px; margin-bottom: 12px; font-weight: 500; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(20px);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: rgba(10,15,30,0.95);
+      border-radius: 2rem;
+      padding: 24px;
+      width: 85%;
+      max-width: 380px;
+      border: 1px solid cyan;
+      box-shadow: 0 0 40px rgba(0,255,255,0.3);
+    }
+    .modal-content h3 { margin-bottom: 8px; }
+    .modal-content .modal-buttons { display: flex; gap: 12px; margin-top: 18px; justify-content: center; }
+    .modal-content .modal-buttons button { 
+      padding: 10px 24px; 
+      border-radius: 40px; 
+      border: none; 
+      font-weight: 600; 
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .modal-content .modal-buttons button:active { transform: scale(0.96); }
+    .btn-confirm { background: linear-gradient(135deg, #0af, #b624ff); color: white; }
+    .btn-cancel { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3) !important; }
+    .progress-track { background: #222; border-radius: 30px; height: 6px; overflow: hidden; margin: 8px 0; }
+    .progress-fill { height: 6px; background: linear-gradient(90deg, #0af, #f0f); border-radius: 30px; width: 0%; }
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(12px);
+      padding: 12px 24px;
+      border-radius: 60px;
+      border: 1px solid cyan;
+      z-index: 150;
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: cyan;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .switch-mode-btn {
+      background: linear-gradient(135deg, #f7971e, #ffd200) !important;
+      border: none !important;
+      color: #000 !important;
+      font-weight: 700 !important;
+      padding: 10px 20px !important;
+      border-radius: 40px !important;
+      box-shadow: 0 0 20px rgba(255, 210, 0, 0.4) !important;
+      transition: 0.3s !important;
+      width: 100%;
+      margin-top: 4px;
+    }
+    .switch-mode-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(255, 210, 0, 0.6) !important;
+    }
+    .switch-mode-btn:active {
+      transform: scale(0.96);
+    }
+    .mode-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #ffd200;
+    }
+    .mode-indicator .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot.provider { background: #0af; box-shadow: 0 0 8px #0af; }
+    .dot.user { background: #ffd200; box-shadow: 0 0 8px #ffd200; }
+  </style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+<div class="app-container">
+
+  <div class="profile-header">
+    <div class="profile-avatar" id="avatarClick">
+      <div class="avatar-inner" id="profileAvatar"></div>
+      <div class="online-pulse-lg"></div>
+    </div>
+    <div style="text-align: center; position: relative; z-index: 1;">
+      <h1 id="providerName">Loading... <span class="verified-badge">✓ Verified Pro</span></h1>
+      <div>⭐ <span id="providerRating">4.98</span> · AI Trust Score <span id="trustScore">99</span>% · <span id="aiBadge">Platinum Elite</span></div>
+      <div style="font-size:0.85rem; margin: 6px 0;" id="providerBio">Loading profile...</div>
+      <div id="providerLocation">📍 Loading location...</div>
+      
+      <div style="margin-top: 16px;">
+        <button class="switch-mode-btn" id="switchToUserBtn">
+          🔄 Switch to User Mode
+        </button>
+        <div class="mode-indicator" style="justify-content: center; margin-top: 6px;">
+          <span class="dot provider"></span> Currently: <strong>Provider Mode</strong>
+        </div>
+      </div>
+
+      <div class="flex-between" style="margin-top: 12px; gap: 12px;">
+        <button id="editProfileBtn">✎ Edit Profile</button>
+        <button id="shareProfileBtn">🔗 Share</button>
+        <button id="supportBtn" style="background:#ff336630;">🛡️ Support</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding: 18px; margin-bottom: 20px;">
+    <div class="flex-between"><h4>📊 Profile Strength</h4><span id="profileStrength">0%</span></div>
+    <div class="progress-track"><div id="strengthFill" style="width:0%;"></div></div>
+    <div style="font-size:0.75rem;">✨ <span id="aiProfileTip">Loading profile data...</span></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"><div class="loading-spinner" style="margin: 20px auto;"></div></div>
+
+  <div class="flex-between"><h3>🛠️ My Services · AI Pricing</h3><button id="addServiceBtn">+ Add New</button></div>
+  <div id="servicesContainer"><div class="loading-spinner"></div> Loading services...</div>
+
+  <div class="flex-between"><h3>🎨 Portfolio · AI Enhanced</h3><button id="uploadImageBtn">+ Upload Media</button></div>
+  <div class="portfolio-grid" id="portfolioGrid"><div class="loading-spinner"></div></div>
+
+  <div class="glass-card" style="padding: 18px; margin: 20px 0;">
+    <h4>⚡ Neural Availability Command</h4>
+    <div class="flex-between" style="margin-bottom: 12px;"><span>🟢 Online Status · Accepting Jobs</span><div id="onlineToggle" class="toggle-switch active"><div class="toggle-knob"></div></div></div>
+    <div class="flex-between"><span>🤖 Auto-Accept AI Jobs (Trust>95%)</span><div id="autoAcceptToggle" class="toggle-switch"><div class="toggle-knob"></div></div></div>
+    <div class="flex-between" style="margin-top: 12px;"><span>📍 Service Radius (km)</span><input type="range" min="1" max="25" value="10" id="radiusSlider" style="width:60%; background:cyan;"></div>
+    <div class="flex-between"><span>🌙 Vacation Mode / Unavailable</span><div id="vacationToggle" class="toggle-switch"><div class="toggle-knob"></div></div></div>
+  </div>
+
+  <div class="glass-card" style="padding: 18px; margin-bottom: 20px;">
+    <h4>💰 Neural Wallet · Quantum Ledger</h4>
+    <div class="flex-between"><span>Wallet Balance</span><span style="font-size:1.8rem; font-weight:700;" id="walletBalance">$0</span></div>
+    <div class="flex-between"><span>💎 Withdrawable</span><span id="withdrawableAmount">$0</span><button id="withdrawBtn">Instant Withdraw</button></div>
+    <canvas id="earningsSparkline" width="300" height="50" style="width:100%; height:50px; margin:12px 0; background:#0a0f1a; border-radius:20px;"></canvas>
+    <div id="transactionHistory" style="font-size:0.7rem; max-height:100px; overflow-y:auto;"></div>
+    <div class="flex-between" style="margin-top:8px;"><span>🏦 Bank: ****6789</span><span>📱 UPI: provider@pay</span><button id="manageBankBtn">Manage</button></div>
+  </div>
+
+  <h3>⭐ Real Reviews · AI Sentiment Matrix</h3>
+  <div id="reviewsContainer"><div class="loading-spinner"></div></div>
+
+  <div class="glass-card" style="padding: 18px; margin: 18px 0;">
+    <h4>🔒 Security Nexus · Score <span id="securityScore">0</span>% (Platinum Shield)</h4>
+    <div class="flex-between" id="verificationStatus">
+      <span>🔄 Loading...</span>
+    </div>
+    <div class="flex-between" style="margin-top:8px;"><span>🛡️ Background Check: Pending</span><span>🔐 2FA Disabled</span><button id="verifyNowBtn">Enhance Security</button></div>
+  </div>
+
+  <div class="glass-card" style="padding: 18px; margin-bottom: 18px; background: linear-gradient(145deg, #0a0f2a, #010105);">
+    <h4>🧠 AI Hyperion · Predictive Intelligence</h4>
+    <div id="aiAssistantMsg">⚡ Loading AI insights...</div>
+    <div class="flex-between" style="margin-top:12px;"><button id="aiAdviceBtn">💡 AI Pricing Optimizer</button><button id="aiJobScannerBtn">📍 Scan Nearby Jobs</button></div>
+  </div>
+
+  <div class="glass-card" style="padding: 18px; margin-bottom: 18px;">
+    <h4>⚙️ Core Settings & Support Hub</h4>
+    <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 12px;">
+      <div class="action-chip" id="settingsProfile">👤 Edit Profile</div>
+      <div class="action-chip" id="settingsNotif">🔔 Notifications</div>
+      <div class="action-chip" id="settingsLanguage">🌐 Language (EN)</div>
+      <div class="action-chip" id="settingsPrivacy">🔒 Privacy</div>
+      <div class="action-chip" id="supportCenterBtn">🆘 Help Center</div>
+      <div class="action-chip" id="liveChatBtn">💬 Live Chat</div>
+      <div class="action-chip" id="faqBtn">📘 FAQ</div>
+      <div class="action-chip" id="reportIssueBtn">⚠️ Report Issue</div>
+    </div>
+    <div class="flex-between" style="margin-top: 16px; border-top: 1px solid rgba(0,255,255,0.3); padding-top: 14px;">
+      <span>🚪 Logout from all devices</span>
+      <button id="logoutBtn" style="background:#ff3366;">Logout →</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="handleNavClick('home')">🏠 Home</button>
+  <button class="nav-item" onclick="handleNavClick('orders')">📦 Orders</button>
+  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
+  <button class="nav-item active" onclick="handleNavClick('profile')">👤 Profile</button>
+</div>
+
+<!-- Support Modal -->
+<div id="supportModal" class="modal">
+  <div class="modal-content">
+    <h3>🛡️ Customer Support · AI Concierge</h3>
+    <p>⚡ Priority Support (Response < 2min)</p>
+    <button id="closeModalBtn" style="margin-top: 16px; cursor: pointer;">Close</button>
+  </div>
+</div>
+
+<!-- Switch to User Mode Confirmation Modal -->
+<div id="switchModal" class="modal">
+  <div class="modal-content">
+    <div style="font-size: 3rem; text-align: center;">🔄</div>
+    <h3 style="text-align: center;">Switch to User Mode?</h3>
+    <p style="text-align: center; opacity: 0.8; margin: 8px 0;">You will be redirected to the user homepage where you can browse and book services.</p>
+    <div class="modal-buttons">
+      <button class="btn-cancel" id="cancelSwitchBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmSwitchBtn">✅ Switch Now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // GLOBAL NAVIGATION FUNCTION
+  window.handleNavClick = function(type) {
+    console.log('Navigation clicked:', type);
+    
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.remove('active');
+    });
+    
+    switch(type) {
+      case 'home':
+        showToastMessage('🏠 Going to Home...');
+        setTimeout(() => {
+          window.location.href = 'provider-dashboard.html';
+        }, 300);
+        break;
+      case 'orders':
+        showToastMessage('📦 Opening Orders...');
+        setTimeout(() => {
+          window.location.href = 'provider-orders.html';
+        }, 300);
+        break;
+      case 'post':
+        showToastMessage('✨ Opening Post Job...');
+        setTimeout(() => {
+          window.location.href = 'provider-postjob.html';
+        }, 300);
+        break;
+      case 'profile':
+        document.querySelectorAll('.nav-item').forEach(el => {
+          if(el.textContent.includes('Profile')) {
+            el.classList.add('active');
+          }
+        });
+        showToastMessage('👤 Profile Dashboard');
+        break;
+      default:
+        showToastMessage('📍 ' + type + ' page coming soon');
+    }
+  };
+
+  function showToastMessage(message, isError = false) {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  // ===== SWITCH TO USER MODE =====
+  document.addEventListener('DOMContentLoaded', function() {
+    const switchBtn = document.getElementById('switchToUserBtn');
+    const switchModal = document.getElementById('switchModal');
+    const cancelBtn = document.getElementById('cancelSwitchBtn');
+    const confirmBtn = document.getElementById('confirmSwitchBtn');
+
+    if(switchBtn) {
+      switchBtn.addEventListener('click', function() {
+        switchModal.style.display = 'flex';
+      });
+    }
+
+    if(cancelBtn) {
+      cancelBtn.addEventListener('click', function() {
+        switchModal.style.display = 'none';
+      });
+    }
+
+    if(confirmBtn) {
+      confirmBtn.addEventListener('click', function() {
+        switchModal.style.display = 'none';
+        showToastMessage('🔄 Switching to User Mode...');
+        setTimeout(() => {
+          window.location.href = 'user-homepage.html';
+        }, 500);
+      });
+    }
+
+    window.addEventListener('click', function(e) {
+      if(e.target === switchModal) {
+        switchModal.style.display = 'none';
+      }
+    });
+  });
+</script>
+
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+<script type="module">
+  // ==========================================
+  // FIREBASE CONFIG
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+    authDomain: "quickfix-907c0.firebaseapp.com",
+    projectId: "quickfix-907c0",
+    storageBucket: "quickfix-907c0.firebasestorage.app",
+    messagingSenderId: "539102384460",
+    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+    measurementId: "G-B548C8R9WV"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  console.log('✅ Firebase initialized successfully!');
+
+  // Particle background
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  for(let i=0;i<100;i++){ particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, rad:Math.random()*2+1, dx:(Math.random()-0.5)*0.2, dy:(Math.random()-0.5)*0.2, color:`hsl(${Math.random()*60+180},80%,60%)`});}
+  function animateParticles() { if(!ctx) return; ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; if(p.x<0) p.x=canvas.width; if(p.x>canvas.width) p.x=0; if(p.y<0) p.y=canvas.height; if(p.y>canvas.height) p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2); ctx.fillStyle=p.color; ctx.shadowBlur=6; ctx.fill(); }); requestAnimationFrame(animateParticles);}
+  animateParticles();
+
+  let currentUser = null;
+  let providerData = null;
+
+  function showToast(message, isError = false) {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function animateNumber(el, target, suffix='') {
+    let curr = 0, step = target/35;
+    let interval = setInterval(() => {
+      curr += step;
+      if(curr >= target) {
+        el.innerText = target.toFixed(0) + suffix;
+        clearInterval(interval);
+      } else {
+        el.innerText = Math.floor(curr) + suffix;
+      }
+    }, 20);
+  }
+
+  // ==========================================
+  // LOAD PROVIDER PROFILE FROM FIRESTORE
+  // ==========================================
+  async function loadProviderProfile(uid) {
+    try {
+      const providerRef = db.collection("providers").doc(uid);
+      const docSnap = await providerRef.get();
+      
+      if(docSnap.exists) {
+        providerData = docSnap.data();
+        
+        document.getElementById('providerName').innerHTML = `${providerData.displayName || providerData.fullName || 'Provider'} <span class="verified-badge">✓ Verified Pro</span>`;
+        document.getElementById('providerRating').innerText = providerData.rating || providerData.averageRating || '4.98';
+        document.getElementById('trustScore').innerText = providerData.trustScore || '99';
+        document.getElementById('providerBio').innerHTML = providerData.bio || providerData.serviceTitle || 'Professional Service Provider';
+        document.getElementById('providerLocation').innerHTML = `📍 ${providerData.location || providerData.city || 'Your City'} · Member since ${providerData.memberSince || '2024'}`;
+        document.getElementById('walletBalance').innerText = `$${providerData.walletBalance || 0}`;
+        document.getElementById('withdrawableAmount').innerText = `$${providerData.withdrawable || 0}`;
+        
+        const profileStrength = providerData.profileStrength || 65;
+        document.getElementById('profileStrength').innerText = `${profileStrength}%`;
+        document.getElementById('strengthFill').style.width = `${profileStrength}%`;
+        document.getElementById('securityScore').innerText = providerData.securityScore || '85';
+        
+        if(providerData.profilePhotoUrl || providerData.photoURL || providerData.avatarUrl) {
+          document.querySelector('.avatar-inner').style.background = `url('${providerData.profilePhotoUrl || providerData.photoURL || providerData.avatarUrl}') center/cover`;
+        }
+        
+        if(profileStrength < 70) {
+          document.getElementById('aiProfileTip').innerHTML = '✨ AI Tip: Complete your profile for +30% more bookings';
+        } else if(profileStrength < 90) {
+          document.getElementById('aiProfileTip').innerHTML = '✨ AI Tip: Add portfolio images to boost trust score';
+        } else {
+          document.getElementById('aiProfileTip').innerHTML = '✨ Excellent profile! You\'re getting maximum visibility';
+        }
+        
+        return true;
+      } else {
+        // Create default provider profile
+        await db.collection("providers").doc(uid).set({
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || "Provider",
+          email: currentUser.email,
+          rating: 4.5,
+          trustScore: 85,
+          walletBalance: 0,
+          withdrawable: 0,
+          profileStrength: 30,
+          securityScore: 50,
+          userType: "provider",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return await loadProviderProfile(uid);
+      }
+    } catch(error) {
+      console.error("Error loading provider profile:", error);
+      showToast('Error loading profile', true);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // LOAD SERVICES FROM FIRESTORE
+  // ==========================================
+  async function loadServices(uid) {
+    try {
+      const servicesQuery = db.collection("services").where("providerId", "==", uid);
+      const snapshot = await servicesQuery.get();
+      const container = document.getElementById('servicesContainer');
+      
+      if(snapshot.empty) {
+        container.innerHTML = '<div class="glass-card" style="padding:20px; text-align:center;">No services yet. Click + Add New</div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        const serviceDiv = document.createElement('div');
+        serviceDiv.className = 'service-card';
+        serviceDiv.innerHTML = `
+          <div class="service-img" style="background:url('${s.imageUrl || 'https://picsum.photos/id/20/70/70'}') center/cover;"></div>
+          <div style="flex:1"><strong>${s.name}</strong><div>💰 $${s.price} · ⭐ ${s.rating || '4.9'} · ${s.bookings || 0} jobs</div></div>
+          <div class="toggle-switch ${s.active ? 'active' : ''}" data-id="${doc.id}"><div class="toggle-knob"></div></div>
+          <button class="edit-service" data-id="${doc.id}">✎</button>
+        `;
+        container.appendChild(serviceDiv);
+      });
+      
+      document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        toggle.addEventListener('click', async (e) => {
+          const id = toggle.getAttribute('data-id');
+          const isActive = toggle.classList.contains('active');
+          await db.collection("services").doc(id).update({ active: !isActive });
+          await loadServices(uid);
+        });
+      });
+    } catch(error) {
+      console.error("Error loading services:", error);
+      document.getElementById('servicesContainer').innerHTML = '<div class="glass-card" style="padding:20px; text-align:center;">Error loading services</div>';
+    }
+  }
+
+  // ==========================================
+  // LOAD PORTFOLIO FROM FIRESTORE
+  // ==========================================
+  async function loadPortfolio(uid) {
+    try {
+      const portfolioQuery = db.collection("portfolio").where("providerId", "==", uid);
+      const snapshot = await portfolioQuery.get();
+      const grid = document.getElementById('portfolioGrid');
+      
+      if(snapshot.empty) {
+        grid.innerHTML = '<div class="glass-card" style="padding:20px; text-align:center; grid-column:span 2;">Upload your work images</div>';
+        return;
+      }
+      
+      grid.innerHTML = '';
+      snapshot.forEach(doc => {
+        const item = doc.data();
+        const portDiv = document.createElement('div');
+        portDiv.className = 'portfolio-item';
+        portDiv.style.background = `url('${item.imageUrl}') center/cover`;
+        grid.appendChild(portDiv);
+      });
+    } catch(error) {
+      console.error("Error loading portfolio:", error);
+    }
+  }
+
+  // ==========================================
+  // LOAD REVIEWS FROM FIRESTORE
+  // ==========================================
+  async function loadReviews(uid) {
+    try {
+      const reviewsQuery = db.collection("reviews")
+        .where("providerId", "==", uid)
+        .orderBy("createdAt", "desc")
+        .limit(5);
+      const snapshot = await reviewsQuery.get();
+      const container = document.getElementById('reviewsContainer');
+      
+      if(snapshot.empty) {
+        container.innerHTML = '<div class="glass-card" style="padding:20px; text-align:center;">No reviews yet</div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        container.innerHTML += `
+          <div class="review-card">
+            <div class="flex-between">
+              <div><img src="${r.customerAvatar || 'https://randomuser.me/api/portraits/women/68.jpg'}" width="40" style="border-radius:30px;"> <strong>${r.customerName || 'Customer'}</strong> ⭐${r.rating || 5}</div>
+              <span>🧠 AI: ${r.sentiment || 'Positive'}</span>
+            </div>
+            <div>${r.comment || 'Great service!'}</div>
+          </div>
+        `;
+      });
+    } catch(error) {
+      console.error("Error loading reviews:", error);
+    }
+  }
+
+  // ==========================================
+  // LOAD STATS FROM FIRESTORE
+  // ==========================================
+  async function loadStats(uid) {
+    try {
+      const jobsQuery = db.collection("jobs").where("providerId", "==", uid);
+      const jobsSnap = await jobsQuery.get();
+      const totalJobs = jobsSnap.size;
+      const completedJobs = jobsSnap.docs.filter(d => d.data().status === 'completed').length;
+      
+      const statsGrid = document.getElementById('statsGrid');
+      statsGrid.innerHTML = `
+        <div class="stat-card"><div class="flex-between"><span>📆 Total Jobs</span><span style="color:#0f6">▲ +12%</span></div><div class="stat-number" id="statTotalJobs">0</div></div>
+        <div class="stat-card"><div class="flex-between"><span>✅ Completed</span><span style="color:#0f6">▲ +8%</span></div><div class="stat-number" id="statCompletedJobs">0</div></div>
+        <div class="stat-card"><div class="flex-between"><span>💰 Total Earn</span><span style="color:#0f6">▲ +15%</span></div><div class="stat-number" id="statTotalEarn">$0</div></div>
+        <div class="stat-card"><div class="flex-between"><span>😊 CSAT</span><span style="color:#0f6">▲ +2%</span></div><div class="stat-number" id="statCSAT">0%</div></div>
+      `;
+      
+      setTimeout(() => {
+        animateNumber(document.getElementById('statTotalJobs'), totalJobs, '');
+        animateNumber(document.getElementById('statCompletedJobs'), completedJobs, '');
+        animateNumber(document.getElementById('statTotalEarn'), providerData?.walletBalance || 0, '$');
+        animateNumber(document.getElementById('statCSAT'), 98, '%');
+      }, 100);
+    } catch(error) {
+      console.error("Error loading stats:", error);
+    }
+  }
+
+  // ==========================================
+  // ADD SERVICE
+  // ==========================================
+  document.getElementById('addServiceBtn')?.addEventListener('click', async () => {
+    if(!currentUser) {
+      showToast('Please login first', true);
+      return;
+    }
+    const name = prompt("Enter service name:");
+    const price = prompt("Enter price (in USD):");
+    if(name && price && currentUser) {
+      try {
+        await db.collection("services").add({
+          providerId: currentUser.uid,
+          name: name,
+          price: parseInt(price),
+          active: true,
+          rating: 5.0,
+          bookings: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast(`Service "${name}" added successfully!`);
+        await loadServices(currentUser.uid);
+      } catch(error) {
+        showToast("Error adding service", true);
+      }
+    }
+  });
+
+  // ==========================================
+  // UPLOAD PORTFOLIO IMAGE TO FIRESTORE
+  // ==========================================
+  document.getElementById('uploadImageBtn')?.addEventListener('click', () => {
+    if(!currentUser) {
+      showToast('Please login first', true);
+      return;
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if(file && currentUser) {
+        showToast("Uploading image...");
+        const storageRef = storage.ref(`portfolio/${currentUser.uid}/${Date.now()}_${file.name}`);
+        const snapshot = await storageRef.put(file);
+        const url = await snapshot.ref.getDownloadURL();
+        await db.collection("portfolio").add({
+          providerId: currentUser.uid,
+          imageUrl: url,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("Image uploaded successfully!");
+        await loadPortfolio(currentUser.uid);
+      }
+    };
+    input.click();
+  });
+
+  // ==========================================
+  // TOGGLE CONTROLS
+  // ==========================================
+  document.getElementById('onlineToggle')?.addEventListener('click', async function() {
+    this.classList.toggle('active');
+    if(currentUser) {
+      await db.collection("providers").doc(currentUser.uid).update({ 
+        isOnline: this.classList.contains('active') 
+      });
+      showToast(this.classList.contains('active') ? 'You are now online' : 'You are now offline');
+    }
+  });
+  
+  document.getElementById('autoAcceptToggle')?.addEventListener('click', function() { 
+    this.classList.toggle('active');
+    showToast(this.classList.contains('active') ? 'Auto-accept enabled' : 'Auto-accept disabled');
+  });
+  
+  document.getElementById('vacationToggle')?.addEventListener('click', function() { 
+    this.classList.toggle('active');
+    showToast(this.classList.contains('active') ? 'Vacation mode enabled' : 'Vacation mode disabled');
+  });
+
+  // ==========================================
+  // AI TIPS
+  // ==========================================
+  const aiTips = ["⚡ Surge forecast: +24% earnings in next 3h", "📸 Add video portfolio for 5x visibility", "💰 Weekend pricing: +18% recommended", "🎯 3 premium jobs within 1km - Accept now", "⭐ You're in top 10% of providers this week"];
+  setInterval(() => {
+    document.getElementById('aiAssistantMsg').innerHTML = `🧠 ${aiTips[Math.floor(Math.random() * aiTips.length)]}`;
+  }, 10000);
+
+  // ==========================================
+  // EARNINGS SPARKLINE
+  // ==========================================
+  const earnCtx = document.getElementById('earningsSparkline')?.getContext('2d');
+  if(earnCtx) {
+    let data = [310, 540, 880, 1280, 1840, 2340, 2840, 3340, 3872, 4372, 4872];
+    let w = 300, h = 50;
+    earnCtx.clearRect(0,0,w,h);
+    earnCtx.beginPath(); earnCtx.strokeStyle='#0af'; earnCtx.lineWidth=2;
+    let step = w/(data.length-1);
+    data.forEach((v,i) => {
+      let x = i*step;
+      let y = h - (v/5000)*h;
+      if(i===0) earnCtx.moveTo(x,y);
+      else earnCtx.lineTo(x,y);
+    });
+    earnCtx.stroke();
+  }
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    if(confirm("⚠️ Secure logout from all devices?")) {
+      await auth.signOut();
+      localStorage.removeItem('quickfix_provider_logged_in');
+      window.location.href = 'login.html';
+    }
+  });
+
+  // ==========================================
+  // SUPPORT MODAL
+  // ==========================================
+  const modal = document.getElementById('supportModal');
+  document.getElementById('supportBtn')?.addEventListener('click', () => { modal.style.display = 'flex'; });
+  document.getElementById('closeModalBtn')?.addEventListener('click', () => { modal.style.display = 'none'; });
+  document.getElementById('supportCenterBtn')?.addEventListener('click', () => { modal.style.display = 'flex'; });
+  window.onclick = (e) => { if(e.target === modal) modal.style.display = 'none'; };
+
+  // ==========================================
+  // BUTTON HANDLERS
+  // ==========================================
+  document.getElementById('editProfileBtn')?.addEventListener('click', () => showToast('✎ AI Profile Studio coming soon'));
+  document.getElementById('shareProfileBtn')?.addEventListener('click', () => showToast('🔗 Profile link copied'));
+  document.getElementById('withdrawBtn')?.addEventListener('click', () => showToast('💸 Withdrawal feature coming soon'));
+  document.getElementById('manageBankBtn')?.addEventListener('click', () => showToast('🏦 Bank management coming soon'));
+  document.getElementById('verifyNowBtn')?.addEventListener('click', () => showToast('🔒 Security verification coming soon'));
+  document.getElementById('aiAdviceBtn')?.addEventListener('click', () => showToast('💡 AI suggests: Raise prices by 15% during peak hours'));
+  document.getElementById('aiJobScannerBtn')?.addEventListener('click', () => showToast('🔍 5 high-value jobs found within 2km'));
+  document.getElementById('settingsProfile')?.addEventListener('click', () => showToast('✎ Profile settings coming soon'));
+  document.getElementById('settingsNotif')?.addEventListener('click', () => showToast('🔔 Notification preferences'));
+  document.getElementById('settingsLanguage')?.addEventListener('click', () => showToast('🌐 Language: English'));
+  document.getElementById('settingsPrivacy')?.addEventListener('click', () => showToast('🔒 Privacy settings'));
+  document.getElementById('liveChatBtn')?.addEventListener('click', () => showToast('💬 Live chat connecting...'));
+  document.getElementById('faqBtn')?.addEventListener('click', () => showToast('📘 FAQ page coming soon'));
+  document.getElementById('reportIssueBtn')?.addEventListener('click', () => showToast('⚠️ Report submitted to support'));
+
+  // ==========================================
+  // AUTH STATE LISTENER
+  // ==========================================
+  auth.onAuthStateChanged(async (user) => {
+    if(user) {
+      currentUser = user;
+      await loadProviderProfile(user.uid);
+      await loadServices(user.uid);
+      await loadPortfolio(user.uid);
+      await loadReviews(user.uid);
+      await loadStats(user.uid);
+      console.log('✅ Firebase connected - Profile page ready');
+    } else {
+      showToast('Please login to continue', true);
+      setTimeout(() => window.location.href = 'login.html', 1500);
+    }
+  });
+
+  console.log('%c👤 NEBULA PROVIDER PROFILE - Firebase Integrated!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Firebase Auth, Firestore, Storage configured');
+  console.log('✅ Real-time profile data from Firestore');
+</script>
+</body>
+</html>

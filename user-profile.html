@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>QuickFix | My Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(ellipse at 30% 20%, #0a1128 0%, #02040a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+            padding-bottom: 75px;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 18px 0 18px;
+            position: relative;
+        }
+
+        .glass-card {
+            background: rgba(12, 22, 35, 0.55);
+            backdrop-filter: blur(20px);
+            border-radius: 38px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.6), inset 0 0 0 0.5px rgba(255, 215, 0, 0.15);
+            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 50px -12px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(245, 176, 66, 0.4);
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-top: 6px;
+        }
+        .top-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFFFFF, #FFE5B4, #F5B042);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.8px;
+        }
+        .right-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .icon-btn {
+            background: rgba(245, 176, 66, 0.15);
+            backdrop-filter: blur(20px);
+            width: 52px;
+            height: 52px;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(245, 176, 66, 0.4);
+        }
+        .icon-btn i {
+            font-size: 1.5rem;
+            color: #F5B042;
+        }
+        .icon-btn:active {
+            transform: scale(0.92);
+        }
+        .mode-switch-btn {
+            background: rgba(0, 255, 255, 0.12);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+        }
+        .mode-switch-btn i {
+            color: #4ECDC4;
+        }
+
+        .profile-card {
+            padding: 28px 26px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(8, 18, 28, 0.65);
+        }
+        .profile-avatar {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 18px;
+        }
+        .avatar-img {
+            width: 104px;
+            height: 104px;
+            background: linear-gradient(145deg, #2c3e5e, #0e1a2a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #F5B042;
+            box-shadow: 0 0 20px rgba(245, 176, 66, 0.6);
+            overflow: hidden;
+        }
+        .avatar-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-img i {
+            font-size: 3.8rem;
+            color: #F5B042;
+        }
+        .edit-icon {
+            position: absolute;
+            bottom: 6px;
+            right: 2px;
+            background: linear-gradient(135deg, #F5B042, #FF8C42);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #0a0f1e;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .edit-icon i {
+            font-size: 1rem;
+            color: #0a0f1e;
+        }
+        .profile-info {
+            margin-top: 12px;
+        }
+        .profile-info h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFF, #FFE0A3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .profile-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 14px;
+            color: #C0DAF0;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .profile-detail-item i {
+            width: 26px;
+            font-size: 1.2rem;
+            color: #F5B042;
+        }
+        .arrow-icon {
+            margin-left: auto;
+            color: #F5B042;
+            font-size: 1rem;
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .mode-popup {
+            width: 320px;
+            background: rgba(12, 22, 35, 0.95);
+            backdrop-filter: blur(32px);
+            border-radius: 48px;
+            border: 1px solid rgba(245, 176, 66, 0.5);
+            padding: 24px 18px;
+            transform: scale(0.92);
+            transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+        }
+        .modal-overlay.active .mode-popup {
+            transform: scale(1);
+        }
+        .popup-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFF, #F5B042);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .mode-option-popup {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            margin: 8px 0;
+            border-radius: 32px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(20, 35, 55, 0.6);
+            border: 1px solid transparent;
+        }
+        .mode-option-popup.active-mode {
+            background: rgba(245, 176, 66, 0.2);
+            border: 1px solid #F5B042;
+        }
+        .mode-option-popup i {
+            font-size: 1.8rem;
+            width: 44px;
+            text-align: center;
+        }
+        .close-popup {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 22px;
+            border-bottom: 1px solid rgba(255,215,0,0.08);
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+        .menu-item:hover {
+            background: rgba(245, 176, 66, 0.12);
+            transform: translateX(6px);
+            border-radius: 28px;
+        }
+        .menu-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(20, 35, 55, 0.9);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        .menu-content {
+            flex: 1;
+        }
+        .menu-content h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #FFF;
+        }
+        .menu-content p {
+            font-size: 0.7rem;
+            color: #ADC6FF;
+            margin-top: 3px;
+        }
+        .menu-arrow {
+            color: #F5B042;
+            opacity: 0.7;
+        }
+
+        .logout-card {
+            background: rgba(30, 15, 25, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 36px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 80, 80, 0.3);
+            transition: all 0.3s;
+        }
+        .logout-card:hover {
+            background: rgba(220, 50, 50, 0.25);
+            border-color: #FF6B6B;
+        }
+        .logout-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(255, 70, 70, 0.2);
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logout-icon i {
+            font-size: 1.8rem;
+            color: #FF6B6B;
+        }
+        .logout-text h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .logout-text p {
+            font-size: 0.7rem;
+            color: #C0BBDD;
+        }
+        .logout-arrow {
+            margin-left: auto;
+            color: #FF6B6B;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 18, 28, 0.92);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 20px 20px;
+            border-top: 1px solid rgba(245, 176, 66, 0.2);
+            z-index: 1000;
+        }
+        @media (min-width: 480px) {
+            .bottom-nav {
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                max-width: 480px;
+            }
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.6;
+            background: transparent;
+            border: none;
+            color: #C0D4F0;
+            padding: 4px 16px;
+        }
+        .nav-item.active {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+        .nav-item i {
+            font-size: 1.5rem;
+            color: #C0D4F0;
+        }
+        .nav-item.active i {
+            color: #F5B042;
+        }
+        .nav-item span {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #C0D4F0;
+        }
+        .nav-item.active span {
+            color: #F5B042;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 24px;
+            border-radius: 60px;
+            border: 1px solid #F5B042;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            font-size: 14px;
+            white-space: nowrap;
+            color: #fff;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .bottom-nav {
+                padding: 10px 10px 18px;
+            }
+            .nav-item i {
+                font-size: 1.3rem;
+            }
+            .nav-item span {
+                font-size: 0.6rem;
+            }
+            .nav-item {
+                padding: 4px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-header">
+        <h1>My Profile</h1>
+        <div class="right-actions">
+            <div class="icon-btn" id="settingsBtn">
+                <i class="fas fa-sliders-h"></i>
+            </div>
+            <div class="icon-btn mode-switch-btn" id="modeTriggerBtn">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card profile-card">
+        <div class="profile-avatar">
+            <div class="avatar-img" id="avatarImg">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="edit-icon" id="editProfileBtn">
+                <i class="fas fa-camera"></i>
+            </div>
+        </div>
+        <div class="profile-info">
+            <h2 id="userName">Loading...</h2>
+            <div class="profile-detail-item">
+                <i class="fas fa-mobile-alt"></i> <span id="userPhone">-</span>
+                <i class="fas fa-chevron-right arrow-icon" id="editPhoneBtn"></i>
+            </div>
+            <div class="profile-detail-item">
+                <i class="fas fa-envelope-open-text"></i> <span id="userEmail">-</span>
+                <i class="fas fa-chevron-right arrow-icon" id="editEmailBtn"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card" style="padding: 10px 0 10px 0; margin-bottom: 28px;">
+        <div class="menu-item" data-nav="booking">
+            <div class="menu-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="menu-content"><h4>My Bookings</h4><p>Track all your service appointments</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="Saved Services">
+            <div class="menu-icon"><i class="fas fa-heart"></i></div>
+            <div class="menu-content"><h4>Saved Services</h4><p>Quick access to preferred workers</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="My Addresses">
+            <div class="menu-icon"><i class="fas fa-map-marked-alt"></i></div>
+            <div class="menu-content"><h4>My Addresses</h4><p>Saved locations for faster booking</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="Wallet">
+            <div class="menu-icon"><i class="fas fa-coins"></i></div>
+            <div class="menu-content"><h4>Wallet</h4><p><span id="walletBalance">₹0.00</span> | Add money & offers</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="Notifications">
+            <div class="menu-icon"><i class="fas fa-bell"></i></div>
+            <div class="menu-content"><h4>Notifications</h4><p>Alerts, promotions & updates</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="Privacy & Security">
+            <div class="menu-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="menu-content"><h4>Privacy & Security</h4><p>Two-factor, data control</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="menu-item" data-alert="Help & Support">
+            <div class="menu-icon"><i class="fas fa-headset"></i></div>
+            <div class="menu-content"><h4>Help & Support</h4><p>FAQs, live chat, email support</p></div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+    </div>
+
+    <div class="logout-card" id="logoutBtn">
+        <div class="logout-icon"><i class="fas fa-sign-out-alt"></i></div>
+        <div class="logout-text">
+            <h3>Logout</h3>
+            <p>Securely exit your account</p>
+        </div>
+        <div class="logout-arrow"><i class="fas fa-arrow-right"></i></div>
+    </div>
+    <div style="height: 15px;"></div>
+</div>
+
+<div id="modeModal" class="modal-overlay">
+    <div class="mode-popup">
+        <div class="popup-title">Switch Experience</div>
+        <div id="popupUserMode" class="mode-option-popup" data-mode="user">
+            <i class="fas fa-user-check" style="color:#F5B042;"></i>
+            <div class="mode-text">
+                <h4>User Mode</h4>
+                <p>Book Services</p>
+            </div>
+        </div>
+        <div id="popupProviderMode" class="mode-option-popup" data-mode="provider">
+            <i class="fas fa-chart-line" style="color:#4ECDC4;"></i>
+            <div class="mode-text">
+                <h4>Provider Mode</h4>
+                <p>Provide Services & Earn</p>
+            </div>
+        </div>
+        <div class="close-popup" id="closePopupBtn">Cancel</div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-item" data-page="home"><i class="fas fa-home"></i><span>Home</span></button>
+    <button class="nav-item" data-page="booking"><i class="fas fa-calendar-alt"></i><span>Booking</span></button>
+    <button class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></button>
+</div>
+
+<script>
+    // ==========================================
+    // STANDALONE PROFILE PAGE - WORKS WITH LOCALSTORAGE
+    // ==========================================
+    
+    let currentUser = null;
+    
+    function showToast(message, isError = false) {
+        const existingToast = document.querySelector('.toast');
+        if(existingToast) existingToast.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.background = isError ? 'rgba(220, 53, 69, 0.95)' : 'rgba(26, 95, 122, 0.95)';
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    function loadUserProfile() {
+        // Check if user is logged in
+        const isLoggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
+        
+        if (!isLoggedIn) {
+            showToast('Please login to view profile', true);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+            return false;
+        }
+        
+        // Load user data from localStorage
+        const userName = localStorage.getItem('quickfix_user_name');
+        const userPhone = localStorage.getItem('quickfix_user_phone');
+        const userEmail = localStorage.getItem('quickfix_user_email');
+        const profileStr = localStorage.getItem('quickfix_profile');
+        const walletBalance = localStorage.getItem('quickfix_wallet_balance') || '0';
+        
+        if (userName) {
+            document.getElementById('userName').innerText = userName;
+        } else {
+            document.getElementById('userName').innerText = 'QuickFix User';
+        }
+        
+        document.getElementById('userPhone').innerText = userPhone && userPhone !== 'null' ? userPhone : 'Not set';
+        document.getElementById('userEmail').innerText = userEmail && userEmail !== 'null' ? userEmail : 'Not set';
+        document.getElementById('walletBalance').innerText = `₹${parseInt(walletBalance).toFixed(2)}`;
+        
+        // Load profile picture if exists
+        const savedAvatar = localStorage.getItem('quickfix_avatar');
+        if (savedAvatar) {
+            const avatarDiv = document.getElementById('avatarImg');
+            avatarDiv.innerHTML = `<img src="${savedAvatar}" style="width:100%; height:100%; object-fit:cover;">`;
+        }
+        
+        currentUser = { name: userName, phone: userPhone, email: userEmail };
+        return true;
+    }
+    
+    function navigateTo(page) {
+        if(page === 'home') {
+            window.location.href = 'user-homepage.html';
+        } else if(page === 'booking') {
+            window.location.href = 'user-booking.html';
+        } else if(page === 'profile') {
+            return;
+        }
+    }
+    
+    // Mode switching - Provider mode redirects to create-provider-profile.html
+    const modal = document.getElementById('modeModal');
+    const modeTrigger = document.getElementById('modeTriggerBtn');
+    const closePopup = document.getElementById('closePopupBtn');
+    const userOption = document.getElementById('popupUserMode');
+    const providerOption = document.getElementById('popupProviderMode');
+    
+    function openModal() { modal.classList.add('active'); }
+    function closeModal() { modal.classList.remove('active'); }
+    
+    modeTrigger.addEventListener('click', openModal);
+    closePopup.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+    
+    userOption.addEventListener('click', () => {
+        closeModal();
+        localStorage.setItem('quickfix_mode', 'user');
+        showToast('👤 User mode activated');
+    });
+    
+    // PROVIDER MODE - Redirect to create-provider-profile.html
+    providerOption.addEventListener('click', () => {
+        closeModal();
+        localStorage.setItem('quickfix_mode', 'provider');
+        showToast('🚀 Switching to Provider Mode...');
+        
+        // Redirect to provider profile creation page
+        setTimeout(() => {
+            window.location.href = 'create-provider-profile.html';
+        }, 800);
+    });
+    
+    // Menu item clicks
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const navTarget = item.getAttribute('data-nav');
+            if(navTarget === 'booking') {
+                navigateTo('booking');
+            } else {
+                const title = item.querySelector('h4')?.innerText;
+                showToast(`✨ ${title} — Coming soon`);
+            }
+        });
+    });
+    
+    // Edit handlers
+    document.getElementById('editProfileBtn')?.addEventListener('click', () => {
+        showToast('📸 Change profile picture - Coming soon');
+    });
+    
+    document.getElementById('settingsBtn')?.addEventListener('click', () => {
+        showToast('⚙️ Settings coming soon');
+    });
+    
+    document.getElementById('editPhoneBtn')?.addEventListener('click', () => {
+        const currentPhone = document.getElementById('userPhone').innerText;
+        const newPhone = prompt('Enter new phone number (10 digits):', currentPhone !== 'Not set' ? currentPhone : '');
+        
+        if (newPhone && newPhone.length === 10 && /^\d{10}$/.test(newPhone)) {
+            localStorage.setItem('quickfix_user_phone', newPhone);
+            
+            // Update profile in localStorage
+            const profileStr = localStorage.getItem('quickfix_profile');
+            if (profileStr) {
+                try {
+                    const profile = JSON.parse(profileStr);
+                    profile.phone = newPhone;
+                    localStorage.setItem('quickfix_profile', JSON.stringify(profile));
+                } catch(e) {}
+            }
+            
+            document.getElementById('userPhone').innerText = newPhone;
+            showToast('✅ Phone number updated!');
+        } else if (newPhone) {
+            showToast('Please enter valid 10-digit number', true);
+        }
+    });
+    
+    document.getElementById('editEmailBtn')?.addEventListener('click', () => {
+        const currentEmail = document.getElementById('userEmail').innerText;
+        const newEmail = prompt('Enter new email address:', currentEmail !== 'Not set' ? currentEmail : '');
+        
+        if (newEmail && newEmail.includes('@') && newEmail.includes('.')) {
+            localStorage.setItem('quickfix_user_email', newEmail);
+            
+            // Update profile in localStorage
+            const profileStr = localStorage.getItem('quickfix_profile');
+            if (profileStr) {
+                try {
+                    const profile = JSON.parse(profileStr);
+                    profile.email = newEmail;
+                    localStorage.setItem('quickfix_profile', JSON.stringify(profile));
+                } catch(e) {}
+            }
+            
+            document.getElementById('userEmail').innerText = newEmail;
+            showToast('✅ Email updated!');
+        } else if (newEmail) {
+            showToast('Please enter valid email address', true);
+        }
+    });
+    
+    // Update wallet balance from bookings
+    function updateWalletBalance() {
+        const bookingsStr = localStorage.getItem('quickfix_bookings');
+        if (bookingsStr) {
+            try {
+                const bookings = JSON.parse(bookingsStr);
+                let totalSpent = 0;
+                bookings.forEach(booking => {
+                    if (booking.amount) {
+                        totalSpent += booking.amount;
+                    }
+                });
+                const walletBalance = Math.max(0, 500 - totalSpent);
+                localStorage.setItem('quickfix_wallet_balance', walletBalance.toString());
+                document.getElementById('walletBalance').innerText = `₹${walletBalance.toFixed(2)}`;
+            } catch(e) {}
+        }
+    }
+    
+    // Logout
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        if(confirm('Are you sure you want to logout?')) {
+            // Clear session data
+            localStorage.removeItem('quickfix_logged_in');
+            localStorage.removeItem('quickfix_user_uid');
+            localStorage.removeItem('quickfix_session_start');
+            
+            showToast('🔒 Logged out successfully');
+            
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+    });
+    
+    // Bottom navigation
+    document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            navigateTo(page);
+        });
+    });
+    
+    // Initialize page
+    function init() {
+        const isLoggedIn = loadUserProfile();
+        if (isLoggedIn !== false) {
+            updateWalletBalance();
+            console.log("✅ Profile page loaded successfully!");
+        }
+    }
+    
+    init();
+</script>
+</body>
+</html>

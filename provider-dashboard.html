@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NEBULA PROVIDER | AI Hyperlocal Suite 2035</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #050505;
+      background-image: radial-gradient(circle at 25% 0%, rgba(10, 20, 30, 0.9) 0%, #000000 100%);
+      font-family: 'Inter', 'Poppins', system-ui, -apple-system, 'Segoe UI', 'SF Pro Display', sans-serif;
+      color: white;
+      overflow-x: hidden;
+      padding-bottom: 90px;
+      position: relative;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #0af; border-radius: 10px; box-shadow: 0 0 8px cyan; }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px 14px 90px 14px;
+    }
+
+    .glass-card {
+      background: rgba(10, 15, 25, 0.5);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 2rem;
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(0,255,255,0.1) inset;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 255, 255, 0.5);
+      border-radius: 36px;
+      position: sticky;
+      top: 12px;
+      z-index: 30;
+    }
+
+    .profile-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #00c6ff, #9d4eff);
+      padding: 2px;
+      animation: subtlePulse 3s infinite;
+    }
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 60px;
+      background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover;
+      box-shadow: 0 0 12px cyan;
+    }
+    @keyframes subtlePulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.5);}
+      70% { box-shadow: 0 0 0 8px rgba(0, 255, 255, 0);}
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);}
+    }
+    .online-pulse {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #0f6;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #0f6;
+      animation: pulse-green 1.2s infinite;
+      margin-left: 4px;
+    }
+    @keyframes pulse-green {
+      0% { opacity: 0.4; transform: scale(0.8);}
+      100% { opacity: 1; transform: scale(1.2);}
+    }
+    .greeting h2 { font-size: 1rem; font-weight: 500; letter-spacing: -0.2px;}
+    .greeting p { font-size: 0.7rem; opacity: 0.8; display: flex; gap: 6px; align-items: center;}
+
+    .right-actions { display: flex; gap: 10px; align-items: center; }
+    .icon-btn {
+      background: rgba(255,255,255,0.05);
+      border-radius: 40px;
+      padding: 10px;
+      backdrop-filter: blur(5px);
+      border: 0.5px solid rgba(0,255,255,0.5);
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .icon-btn:active { transform: scale(0.96);}
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin: 24px 0;
+    }
+    .stat-card {
+      padding: 16px 12px;
+      border-radius: 28px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 18px 30px -10px rgba(0,150,255,0.3); border-color: #0af;}
+    .stat-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; display: flex; justify-content: space-between;}
+    .stat-value { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #fff, #aaffff); -webkit-background-clip: text; background-clip: text; color: transparent;}
+    .mini-graph { height: 24px; margin-top: 8px; display: flex; gap: 3px; align-items: flex-end;}
+    .mini-graph span { background: #0af; width: 20%; border-radius: 4px; transition: 0.3s;}
+    .circular-progress { width: 48px; height: 48px; margin-left: auto; }
+    svg circle { transition: stroke-dashoffset 0.5s; }
+
+    .analytics-charts { display: flex; flex-direction: column; gap: 18px; margin: 30px 0; }
+    .chart-container { background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); padding: 16px; border-radius: 32px; }
+    canvas { max-width: 100%; border-radius: 24px; }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 28px 0;
+    }
+    .action-btn {
+      background: linear-gradient(145deg, rgba(20,30,55,0.7), rgba(0,0,0,0.6));
+      backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 14px 6px;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border: 1px solid rgba(0,255,210,0.3);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .action-btn i { font-size: 1.5rem; display: block; margin-bottom: 6px; filter: drop-shadow(0 0 5px cyan);}
+    .action-btn:active { transform: scale(0.96); background: radial-gradient(circle at 30% 10%, #00a6ff30, #000);}
+
+    .job-card {
+      background: rgba(8, 12, 24, 0.7);
+      backdrop-filter: blur(16px);
+      border-radius: 32px;
+      margin-bottom: 20px;
+      padding: 16px;
+      border-left: 4px solid #0af;
+      transition: all 0.3s;
+      animation: fadeSlideUp 0.4s ease-out;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .job-header { display: flex; gap: 14px; align-items: center; }
+    .customer-img { width: 50px; height: 50px; border-radius: 30px; background-size: cover; box-shadow: 0 0 10px magenta; }
+    .urgency { background: #ff3366; padding: 2px 8px; border-radius: 30px; font-size: 0.6rem; font-weight: bold; display: inline-block; }
+    .job-buttons { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .job-buttons button { background: rgba(0,0,0,0.6); border: 1px solid cyan; border-radius: 40px; padding: 8px 14px; color: white; backdrop-filter: blur(4px); font-weight: 500; transition: 0.1s; cursor: pointer; }
+    .job-buttons button:active { transform: scale(0.95); background: cyan; color: black; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 460px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(24px);
+      border-radius: 48px;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 255, 255, 0.6);
+      z-index: 50;
+      box-shadow: 0 0 20px rgba(0,200,255,0.3);
+    }
+    .nav-item {
+      text-align: center;
+      padding: 10px 0;
+      flex: 1;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: 0.2s;
+      border-radius: 60px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      user-select: none;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+    .nav-item.active { 
+      background: rgba(0,255,255,0.2); 
+      text-shadow: 0 0 8px cyan; 
+      color: white;
+    }
+    .post-btn { 
+      background: linear-gradient(45deg, #00c6ff, #b624ff) !important; 
+      border-radius: 60px; 
+      padding: 4px 14px; 
+      transform: scale(1.1); 
+      box-shadow: 0 0 12px cyan;
+      color: white !important;
+    }
+
+    h3, h4 { font-weight: 500; letter-spacing: -0.3px; }
+
+    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(12px);
+      padding: 12px 24px;
+      border-radius: 60px;
+      border: 1px solid cyan;
+      z-index: 2000;
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: cyan;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .post-btn:hover {
+      transform: scale(1.15);
+    }
+  </style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+<div class="app-container" id="appContainer">
+
+  <div class="header glass-card">
+    <div class="profile-area" id="profileArea">
+      <div class="avatar"><div class="avatar-inner" id="avatarImg"></div></div>
+      <div class="greeting">
+        <h2>Welcome back, <span id="providerName" style="color:#0af">Loading...</span> <span class="online-pulse"></span></h2>
+        <p>🤖 AI: <span id="ai-greeting">Loading dashboard...</span> ⚡</p>
+      </div>
+    </div>
+    <div class="right-actions">
+      <div class="icon-btn" id="notificationBtn">🔔<span id="notificationBadge" style="background:red; border-radius:20px; padding:0 6px; font-size:10px; position:relative; top:-8px;">0</span></div>
+      <div class="icon-btn" id="aiSuggestBtn">⚡</div>
+      <div class="icon-btn" id="settingsBtn">⚙️</div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; margin-bottom: 20px; background: rgba(0,0,0,0.4); border-radius: 60px; padding: 12px 20px; backdrop-filter: blur(8px);">
+    <div>🌤️ 24°C • <span id="providerCity">Loading...</span> <span style="opacity:0.7">AI: clear skies</span></div>
+    <div>💰 <strong id="todayEarn">$0</strong> <span style="font-size:11px;">today</span></div>
+  </div>
+
+  <div class="stats-grid" id="analyticsGrid"></div>
+
+  <div class="analytics-charts">
+    <div class="chart-container"><canvas id="weeklyChart" width="400" height="120" style="width:100%; height:120px"></canvas><div style="text-align:center; font-size:12px;">📈 Weekly revenue & AI Prediction</div></div>
+    <div class="chart-container"><canvas id="radarCanvas" width="300" height="150" style="width:100%; height:150px"></canvas><div style="text-align:center;">⚡ Circular earnings radar</div></div>
+  </div>
+
+  <h3 style="margin: 15px 0 5px 8px;">✨ Neural Quick Actions</h3>
+  <div class="quick-actions" id="quickActions"></div>
+
+  <div style="display: flex; justify-content: space-between; margin: 15px 6px 8px;"><h3>📍 Nearby HyperJobs</h3><span style="color:cyan">AI Trust Filter ✅</span></div>
+  <div id="jobFeed"><div class="loading-spinner" style="margin: 20px auto; display: block;"></div></div>
+
+  <div class="chart-container" style="margin-top: 15px;">
+    <h4>🔁 Live Activity Feed</h4>
+    <div id="liveFeed" style="font-size:13px; max-height: 140px; overflow-y: auto;"></div>
+  </div>
+
+  <div class="glass-card" style="padding: 20px; margin: 20px 0;">
+    <h4>💎 Performance Pulse</h4>
+    <div id="performanceMeters" style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between;"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" onclick="handleNavClick('home')">🏠 Home</button>
+  <button class="nav-item" onclick="handleNavClick('orders')">📦 Orders</button>
+  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
+  <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
+</div>
+
+<script>
+  // GLOBAL NAVIGATION FUNCTION
+  window.handleNavClick = function(type) {
+    console.log('Navigation clicked:', type);
+    
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.remove('active');
+    });
+    
+    switch(type) {
+      case 'home':
+        document.querySelectorAll('.nav-item').forEach(el => {
+          if(el.textContent.includes('Home')) {
+            el.classList.add('active');
+          }
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToastMessage('🏠 Back to Home');
+        break;
+        
+      case 'orders':
+        showToastMessage('📦 Opening Orders...');
+        setTimeout(() => {
+          window.location.href = 'provider-orders.html';
+        }, 300);
+        break;
+        
+      case 'post':
+        showToastMessage('✨ Opening Post Job...');
+        setTimeout(() => {
+          window.location.href = 'provider-postjob.html';
+        }, 300);
+        break;
+        
+      case 'profile':
+        showToastMessage('👤 Opening Profile...');
+        setTimeout(() => {
+          window.location.href = 'provider-profile.html';
+        }, 300);
+        break;
+        
+      default:
+        showToastMessage('📍 ' + type + ' page coming soon');
+    }
+  };
+
+  function showToastMessage(message, isError = false) {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+</script>
+
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script type="module">
+  // ==========================================
+  // FIREBASE CONFIG
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+    authDomain: "quickfix-907c0.firebaseapp.com",
+    projectId: "quickfix-907c0",
+    storageBucket: "quickfix-907c0.firebasestorage.app",
+    messagingSenderId: "539102384460",
+    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+    measurementId: "G-B548C8R9WV"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  console.log('✅ Firebase initialized successfully!');
+
+  // Particle system
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  for(let i=0;i<80;i++){ particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, rad:Math.random()*2+1, dx:(Math.random()-0.5)*0.3, dy:(Math.random()-0.5)*0.2, color:`hsl(${Math.random()*60 + 180},100%,60%)`});}
+  function animateParticles() { if(!ctx) return; ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; if(p.x<0) p.x=canvas.width; if(p.x>canvas.width) p.x=0; if(p.y<0) p.y=canvas.height; if(p.y>canvas.height) p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2); ctx.fillStyle=p.color; ctx.shadowBlur=8; ctx.fill(); }); requestAnimationFrame(animateParticles);}
+  animateParticles();
+
+  let currentUser = null;
+  let providerData = null;
+
+  function showToast(message, isError = false) {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function animateNumber(element, target, suffix='') {
+    let start = 0, duration = 1200, stepTime = 16;
+    let steps = duration / stepTime;
+    let increment = target / steps;
+    let curr = 0;
+    let interval = setInterval(() => {
+      curr += increment;
+      if(curr >= target) {
+        element.innerText = target.toFixed(0) + suffix;
+        clearInterval(interval);
+      } else {
+        element.innerText = Math.floor(curr) + suffix;
+      }
+    }, stepTime);
+  }
+
+  // ==========================================
+  // LOAD PROVIDER DATA FROM FIRESTORE
+  // ==========================================
+  async function loadProviderData(uid) {
+    try {
+      const providerRef = db.collection("providers").doc(uid);
+      const docSnap = await providerRef.get();
+      
+      if(docSnap.exists) {
+        providerData = docSnap.data();
+        
+        // Update UI with provider data
+        document.getElementById('providerName').innerText = providerData.displayName || providerData.fullName || 'Provider';
+        document.getElementById('providerCity').innerText = providerData.location?.split(',')[0] || providerData.city || 'Your City';
+        document.getElementById('todayEarn').innerText = `$${providerData.todayEarnings || providerData.walletBalance || 0}`;
+        
+        // Update profile photo if available
+        if(providerData.profilePhotoUrl || providerData.photoURL) {
+          document.querySelector('.avatar-inner').style.background = `url('${providerData.profilePhotoUrl || providerData.photoURL}') center/cover`;
+        }
+        
+        // Update notification badge with pending jobs count
+        const pendingJobs = await getPendingJobsCount(uid);
+        document.getElementById('notificationBadge').innerText = pendingJobs || '0';
+        
+        // Update analytics with real data
+        updateAnalyticsFromData();
+        return true;
+      } else {
+        // Provider profile doesn't exist
+        showToast('Please complete your profile setup', true);
+        setTimeout(() => window.location.href = 'Provider Profile Creation - Step 1.html', 1500);
+        return false;
+      }
+    } catch(error) {
+      console.error("Error loading provider data:", error);
+      showToast('Error loading profile data', true);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // GET PENDING JOBS COUNT
+  // ==========================================
+  async function getPendingJobsCount(uid) {
+    try {
+      const jobsQuery = db.collection("jobs")
+        .where("providerId", "==", uid)
+        .where("status", "==", "pending");
+      const snapshot = await jobsQuery.get();
+      return snapshot.size;
+    } catch(e) {
+      console.error("Error getting pending jobs:", e);
+      return 0;
+    }
+  }
+
+  // ==========================================
+  // UPDATE ANALYTICS WITH FIRESTORE DATA
+  // ==========================================
+  function updateAnalyticsFromData() {
+    const grid = document.getElementById('analyticsGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    
+    // Use real data from Firestore or fallback to defaults
+    const items = [
+      {title:'📆 Total Bookings', val: providerData?.totalJobs || providerData?.totalBookings || 0, suffix:''},
+      {title:'⚡ Today Bookings', val: providerData?.todayBookings || 0, suffix:''},
+      {title:'💰 Total Earn', val: providerData?.totalEarnings || providerData?.walletBalance || 0, suffix:'$'},
+      {title:'📅 Monthly Earn', val: providerData?.monthlyEarnings || 0, suffix:'$'},
+      {title:'✅ Completed Jobs', val: providerData?.completedJobs || 0},
+      {title:'⏳ Pending', val: providerData?.pendingJobs || 0},
+      {title:'😊 CSAT', val: providerData?.satisfaction || providerData?.rating || 0, suffix:'%', ring:true},
+      {title:'🔄 Repeat Cust', val: providerData?.repeatCustomers || 0, suffix:'%'},
+      {title:'⚡ Fast Response', val: providerData?.responseSpeed || 0, suffix:'%'},
+      {title:'🎯 Acceptance', val: providerData?.acceptanceRate || 0, suffix:'%'},
+      {title:'⚠️ Cancellation', val: providerData?.cancellationRate || 0, suffix:'%'},
+      {title:'🟢 Live Active', val: providerData?.liveActiveJobs || 0}
+    ];
+    
+    items.forEach(it => {
+      let card = document.createElement('div'); 
+      card.className = 'stat-card';
+      let trendUp = (Math.random() > 0.3) ? '▲ +5%' : '▼ -2%';
+      let trendColor = trendUp.includes('▲') ? '#0f6' : '#ff5577';
+      card.innerHTML = `<div class="stat-title"><span>${it.title}</span><span style="color:${trendColor}">${trendUp}</span></div>
+      <div class="stat-value" id="val-${it.title.replace(/\s/g,'')}">0${it.suffix||''}</div>
+      ${it.ring ? `<div class="circular-progress"><svg width="44" height="44" viewBox="0 0 44 44"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0af"/><stop offset="100%" stop-color="#f0f"/></linearGradient></defs><circle cx="22" cy="22" r="18" fill="none" stroke="#333" stroke-width="3"/><circle id="ring-${it.title.replace(/\s/g,'')}" cx="22" cy="22" r="18" fill="none" stroke="url(#grad)" stroke-width="3" stroke-dasharray="${2*Math.PI*18}" stroke-dashoffset="${2*Math.PI*18*(1-it.val/100)}" transform="rotate(-90 22 22)"/></svg></div>` : ''}
+      <div style="font-size:10px; margin-top:8px;">📊 AI trend ${trendUp}</div>`;
+      grid.appendChild(card);
+      setTimeout(() => {
+        let el = document.getElementById(`val-${it.title.replace(/\s/g,'')}`);
+        if(el) animateNumber(el, it.val, it.suffix||'');
+      }, 100);
+      if(it.ring) {
+        let circumference = 2 * Math.PI * 18;
+        let offset = circumference * (1 - it.val/100);
+        let ringCircle = document.querySelector(`#ring-${it.title.replace(/\s/g,'')}`);
+        if(ringCircle) ringCircle.style.strokeDashoffset = offset;
+      }
+    });
+  }
+
+  // ==========================================
+  // LOAD NEARBY JOBS FROM FIRESTORE
+  // ==========================================
+  async function loadNearbyJobs() {
+    try {
+      const jobsQuery = db.collection("jobs")
+        .where("status", "==", "pending")
+        .orderBy("createdAt", "desc")
+        .limit(5);
+      
+      const jobsSnapshot = await jobsQuery.get();
+      const feedDiv = document.getElementById('jobFeed');
+      
+      if(!jobsSnapshot.empty) {
+        feedDiv.innerHTML = '';
+        jobsSnapshot.forEach((doc) => {
+          const job = doc.data();
+          const card = document.createElement('div');
+          card.className = 'job-card';
+          card.innerHTML = `
+            <div class="job-header"><div class="customer-img" style="background:url('${job.customerAvatar || 'https://randomuser.me/api/portraits/women/68.jpg'}') center/cover;"></div><div><strong>${job.customerName || 'Customer'}</strong> ⭐ ${job.customerRating || '4.9'} <span style="color:#0af">AI Trust ${job.aiTrust || '98'}%</span><div>${job.title || job.category} • ${job.distance || '0.8mi'} • 🕒 Just now</div><div class="urgency">${job.urgency || 'High'}</div></div></div>
+            <div style="margin: 12px 0;"><span>📝 ${job.description || 'Service request'}</span> • 💰 $${job.budget || 65}</div>
+            <div class="job-buttons"><button data-id="${doc.id}" class="accept-job">✅ Accept</button><button>❌ Decline</button><button>💬 Chat</button><button>🗺️ Navigate</button></div>`;
+          feedDiv.appendChild(card);
+        });
+        
+        document.querySelectorAll('.accept-job').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const jobId = btn.getAttribute('data-id');
+            if(currentUser) {
+              await db.collection("jobs").doc(jobId).update({ 
+                status: "accepted", 
+                providerId: currentUser.uid, 
+                acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              showToast('✅ Job accepted! Customer will be notified.');
+              btn.closest('.job-card').remove();
+              // Update notification badge
+              const pendingJobs = await getPendingJobsCount(currentUser.uid);
+              document.getElementById('notificationBadge').innerText = pendingJobs || '0';
+            }
+          });
+        });
+      } else {
+        feedDiv.innerHTML = '<div class="glass-card" style="padding:30px; text-align:center;">✨ No pending jobs available</div>';
+      }
+    } catch(e) { 
+      console.error("Error loading jobs:", e);
+      document.getElementById('jobFeed').innerHTML = '<div class="glass-card" style="padding:30px; text-align:center;">Error loading jobs</div>';
+    }
+  }
+
+  // ==========================================
+  // QUICK ACTIONS
+  // ==========================================
+  const actionsList = ['Edit Profile', 'Add Service', 'Upload Photos', 'Live Availability', 'Withdraw', 'Wallet', 'Customer Chat', 'Video Call', 'AI Pricing', 'Nearby Scanner', 'Emergency Toggle', 'Boost Profile'];
+  const quickDiv = document.getElementById('quickActions');
+  if(quickDiv) {
+    actionsList.forEach(act => {
+      let btn = document.createElement('div'); 
+      btn.className = 'action-btn'; 
+      btn.innerHTML = `<i>${act==='AI Pricing'?'🤖':act==='Emergency Toggle'?'🚨':act==='Boost Profile'?'🚀':act==='Nearby Scanner'?'📍':act==='Video Call'?'📹':'✨'}</i>${act}`;
+      btn.addEventListener('click', () => {
+        if(act === 'Edit Profile') window.location.href = 'provider-profile.html';
+        else if(act === 'Add Service') window.location.href = 'provider-profile.html';
+        else if(act === 'Withdraw') showToast('💰 Withdrawal request initiated');
+        else if(act === 'Wallet') showToast('💳 Wallet: $' + (providerData?.walletBalance || 0));
+        else showToast(`✨ ${act} feature coming soon`);
+      });
+      quickDiv.appendChild(btn);
+    });
+  }
+
+  // ==========================================
+  // PERFORMANCE METERS
+  // ==========================================
+  const perfDiv = document.getElementById('performanceMeters');
+  if(perfDiv) {
+    const perfData = [
+      {name:'Completion Rate', val: providerData?.completionRate || 0},
+      {name:'Customer Happiness', val: providerData?.customerHappiness || 0},
+      {name:'Response Speed', val: providerData?.responseSpeed || 0},
+      {name:'Service Quality', val: providerData?.serviceQuality || 0},
+      {name:'Weekly Growth', val: providerData?.weeklyGrowth || 0},
+      {name:'Income Increase', val: providerData?.incomeIncrease || 0}
+    ];
+    perfData.forEach(p => {
+      let meter = document.createElement('div'); 
+      meter.style.flex = '1'; 
+      meter.innerHTML = `<div>${p.name}</div><div style="background:#222; border-radius:30px; height:8px; width:100%;"><div style="width:0%; background:linear-gradient(90deg,#0af,#f0f); height:8px; border-radius:30px; box-shadow:0 0 6px cyan;" id="bar-${p.name.replace(/\s/g,'')}"></div></div><div>${p.val}%</div>`;
+      perfDiv.appendChild(meter);
+      setTimeout(() => {
+        let el = document.getElementById(`bar-${p.name.replace(/\s/g,'')}`);
+        if(el) el.style.width = `${Math.min(p.val, 100)}%`;
+      }, 200);
+    });
+  }
+
+  // ==========================================
+  // CHARTS (Static for demo)
+  // ==========================================
+  const weekCanvas = document.getElementById('weeklyChart');
+  if(weekCanvas){
+    let ctxW = weekCanvas.getContext('2d');
+    let fakeData = [320, 450, 580, 690, 870, 1020, 1340];
+    let predData = [1350, 1480, 1620];
+    function drawWeekly(){
+      ctxW.clearRect(0,0,weekCanvas.width,120);
+      ctxW.beginPath(); ctxW.strokeStyle='cyan'; ctxW.lineWidth=2; ctxW.shadowBlur=6;
+      let step = weekCanvas.width/7;
+      for(let i=0;i<fakeData.length;i++){ 
+        let x=i*step+10; 
+        let y=120 - (fakeData[i]/1500)*100; 
+        if(i===0) ctxW.moveTo(x,y); 
+        else ctxW.lineTo(x,y); 
+        ctxW.fillStyle='#0af'; 
+        ctxW.fillRect(x-2,y-2,4,4);
+      } 
+      ctxW.stroke();
+      ctxW.beginPath(); 
+      ctxW.strokeStyle='#f0f'; 
+      ctxW.setLineDash([5,5]); 
+      for(let i=0;i<predData.length;i++){ 
+        let x=(6+i)*step+10; 
+        let y=120 - (predData[i]/1500)*100; 
+        if(i===0) ctxW.moveTo(x,y); 
+        else ctxW.lineTo(x,y);
+      } 
+      ctxW.stroke();
+    }
+    drawWeekly();
+  }
+  
+  let radar = document.getElementById('radarCanvas');
+  if(radar){ 
+    let rctx=radar.getContext('2d'); 
+    rctx.fillStyle='rgba(0,100,200,0.2)'; 
+    rctx.beginPath(); 
+    for(let i=0;i<6;i++){ 
+      let angle=Math.PI*2*i/6; 
+      let rad=55; 
+      let x=radar.width/2+Math.cos(angle)*rad; 
+      let y=radar.height/2+Math.sin(angle)*rad; 
+      if(i===0) rctx.moveTo(x,y); 
+      else rctx.lineTo(x,y);
+    } 
+    rctx.fill(); 
+    rctx.strokeStyle='cyan'; 
+    rctx.stroke(); 
+  }
+
+  // ==========================================
+  // LIVE ACTIVITY FEED
+  // ==========================================
+  const liveFeedDiv = document.getElementById('liveFeed');
+  let activities = ['✅ Service completed by Alex • +$78', '📞 New booking request: Plumbing', '⭐ 5-star review from Michael', '💰 Withdrawal of $240 initiated', '📍 Nearby job: Car Wash'];
+  function updateLiveFeed() {
+    if(liveFeedDiv) liveFeedDiv.innerHTML = activities.map(a => `<div style="padding:6px 0; border-bottom:0.5px solid rgba(0,255,255,0.3);">✨ ${a}</div>`).join('');
+  }
+  updateLiveFeed();
+  setInterval(() => {
+    let newAct = `🔔 ${['New review', 'Job accepted', 'Earning update'][Math.floor(Math.random()*3)]} at ${new Date().toLocaleTimeString()}`;
+    activities.unshift(newAct);
+    if(activities.length > 7) activities.pop();
+    updateLiveFeed();
+  }, 8000);
+
+  // ==========================================
+  // AI GREETING UPDATES
+  // ==========================================
+  const aiMsg = document.getElementById('ai-greeting');
+  const aiMessages = ["Peak hours, 12 live requests", "⭐ AI trust premium surge", "⚡ 3 urgent jobs near you", "💰 +$52 estimated extra", "📈 Bookings up 23% this week"];
+  setInterval(() => {
+    if(aiMsg) aiMsg.innerText = aiMessages[Math.floor(Math.random() * aiMessages.length)];
+  }, 11000);
+
+  // ==========================================
+  // EVENT LISTENERS
+  // ==========================================
+  document.getElementById('profileArea')?.addEventListener('click', () => window.location.href = 'provider-profile.html');
+  
+  document.getElementById('notificationBtn')?.addEventListener('click', () => {
+    const badge = document.getElementById('notificationBadge');
+    showToast(`🔔 ${badge.innerText} new notifications`);
+  });
+  
+  document.getElementById('aiSuggestBtn')?.addEventListener('click', () => {
+    showToast('🤖 AI: Increase availability for 2x earnings');
+  });
+  
+  document.getElementById('settingsBtn')?.addEventListener('click', () => window.location.href = 'provider-profile.html');
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+  window.logout = async function() {
+    if(confirm('Are you sure you want to logout?')) {
+      await auth.signOut();
+      localStorage.removeItem('quickfix_provider_logged_in');
+      localStorage.removeItem('quickfix_provider_uid');
+      window.location.href = 'login.html';
+    }
+  };
+
+  // ==========================================
+  // AUTH STATE LISTENER
+  // ==========================================
+  onAuthStateChanged(auth, async (user) => {
+    if(user) {
+      currentUser = user;
+      console.log('✅ User logged in:', user.email);
+      
+      // Load provider data
+      const loaded = await loadProviderData(user.uid);
+      if(loaded) {
+        // Load nearby jobs
+        await loadNearbyJobs();
+      }
+    } else {
+      currentUser = null;
+      console.log('ℹ️ No user logged in');
+      showToast('Please login to continue', true);
+      setTimeout(() => window.location.href = 'login.html', 1500);
+    }
+  });
+
+  console.log('%c🔥 NEBULA PROVIDER Dashboard - Firebase Integrated!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Firebase Auth, Firestore configured');
+  console.log('✅ Real-time data from Firestore');
+</script>
+</body>
+</html>
