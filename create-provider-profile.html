@@ -265,14 +265,14 @@
 
         .create-profile-btn {
             width: 100%;
-            padding: 20px;
+            padding: 18px;
             background: linear-gradient(135deg, #00ffcc, #0097e6);
             background-size: 200%;
             border: none;
             border-radius: 50px;
             color: #0a0a0f;
             font-weight: 800;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -296,6 +296,62 @@
         .create-profile-btn:active:not(:disabled) {
             transform: scale(0.97);
             animation: none;
+        }
+
+        /* Login Button */
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 2px solid rgba(0,255,204,0.3);
+            border-radius: 50px;
+            color: #00ffcc;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s;
+            margin-top: 12px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-btn:hover {
+            background: rgba(0,255,204,0.1);
+            border-color: #00ffcc;
+            transform: scale(1.02);
+        }
+
+        .login-btn:active {
+            transform: scale(0.97);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .divider-text {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            white-space: nowrap;
         }
 
         .skip-link {
@@ -334,6 +390,11 @@
             white-space: nowrap;
         }
 
+        .toast.error {
+            border-color: #ff3366;
+            color: #ff3366;
+        }
+
         @keyframes toastFadeIn {
             from { opacity: 0; transform: translateX(-50%) translateY(20px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -358,7 +419,11 @@
             }
             .create-profile-btn {
                 padding: 16px;
-                font-size: 18px;
+                font-size: 16px;
+            }
+            .login-btn {
+                padding: 14px;
+                font-size: 14px;
             }
             .toast {
                 white-space: normal;
@@ -425,10 +490,25 @@
 
         <!-- Button Section -->
         <div class="button-section">
+            <!-- Create New Profile Button -->
             <button class="create-profile-btn" id="createProfileBtn">
-                <i class="fas fa-rocket"></i> Create a Provider Profile
+                <i class="fas fa-rocket"></i> Create New Profile
                 <i class="fas fa-arrow-right"></i>
             </button>
+
+            <!-- Divider -->
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">or</div>
+                <div class="divider-line"></div>
+            </div>
+
+            <!-- Login Button -->
+            <button class="login-btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Login as Provider
+            </button>
+
+            <!-- Skip to User Mode -->
             <button class="skip-link" id="skipBtn">← Back to User Mode</button>
         </div>
     </div>
@@ -437,7 +517,6 @@
 <!-- ==========================================
      FIREBASE SDK + INIT
      ========================================== -->
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -490,10 +569,8 @@
         if(existingToast) existingToast.remove();
         
         const toast = document.createElement('div');
-        toast.className = 'toast';
+        toast.className = 'toast' + (isError ? ' error' : '');
         toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
-        toast.style.borderColor = isError ? '#ff3366' : '#00ffcc';
-        toast.style.color = isError ? '#ff3366' : '#00ffcc';
         document.body.appendChild(toast);
         
         setTimeout(() => {
@@ -510,16 +587,18 @@
         if (user) {
             currentUser = user;
             document.getElementById('createProfileBtn').disabled = false;
+            document.getElementById('loginBtn').disabled = false;
             console.log('✅ User logged in:', user.email);
         } else {
             currentUser = null;
             document.getElementById('createProfileBtn').disabled = false;
+            document.getElementById('loginBtn').disabled = false;
             console.log('ℹ️ No user logged in');
         }
     });
 
     // ==========================================
-    // CREATE PROVIDER PROFILE - FIREBASE
+    // CREATE PROVIDER PROFILE (New Account)
     // ==========================================
     document.getElementById('createProfileBtn').addEventListener('click', async function() {
         const btn = this;
@@ -531,9 +610,8 @@
             if (!currentUser) {
                 showToast('Please login first to become a provider', true);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-rocket"></i> Create a Provider Profile <i class="fas fa-arrow-right"></i>';
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Create New Profile <i class="fas fa-arrow-right"></i>';
                 
-                // Redirect to login page after 1.5 seconds
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 1500);
@@ -545,8 +623,7 @@
             const docSnap = await providerRef.get();
 
             if (docSnap.exists) {
-                // Already a provider - redirect to dashboard
-                showToast('✅ You are already a provider! Redirecting...');
+                showToast('✅ You already have a provider profile! Redirecting to dashboard...', false);
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
                 setTimeout(() => {
                     window.location.href = 'provider-dashboard.html';
@@ -563,7 +640,7 @@
                 displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Provider',
                 phone: currentUser.phoneNumber || '',
                 userType: 'provider',
-                status: 'pending', // pending, active, suspended
+                status: 'pending',
                 rating: 0,
                 totalJobs: 0,
                 walletBalance: 0,
@@ -578,18 +655,85 @@
                 profileStrength: 10
             });
 
-            showToast('✅ Provider profile created! Redirecting...');
+            showToast('✅ Provider profile created! Redirecting...', false);
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
             
+            localStorage.setItem('quickfix_provider_logged_in', 'true');
+            localStorage.setItem('quickfix_provider_uid', currentUser.uid);
+            
             setTimeout(() => {
-                window.location.href = 'create-provider-profile-step-1.html';
+                window.location.href = 'Provider Profile Creation - Step 1.html';
             }, 1500);
 
         } catch (error) {
             console.error('Error creating provider profile:', error);
             showToast('❌ Error: ' + error.message, true);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-rocket"></i> Create a Provider Profile <i class="fas fa-arrow-right"></i>';
+            btn.innerHTML = '<i class="fas fa-rocket"></i> Create New Profile <i class="fas fa-arrow-right"></i>';
+        }
+    });
+
+    // ==========================================
+    // LOGIN AS PROVIDER (Existing Account)
+    // ==========================================
+    document.getElementById('loginBtn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+        try {
+            // Check if user is logged in
+            if (!currentUser) {
+                showToast('Please login first', true);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
+                
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+
+            // Check if user has a provider profile
+            const providerRef = db.collection('providers').doc(currentUser.uid);
+            const docSnap = await providerRef.get();
+
+            if (!docSnap.exists) {
+                showToast('❌ No provider profile found. Please create a new profile first.', true);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
+                return;
+            }
+
+            const providerData = docSnap.data();
+            
+            // Check if profile is complete
+            if (providerData.profileCompleted) {
+                showToast('✅ Welcome back! Redirecting to dashboard...', false);
+                localStorage.setItem('quickfix_provider_logged_in', 'true');
+                localStorage.setItem('quickfix_provider_uid', currentUser.uid);
+                localStorage.setItem('quickfix_provider_name', providerData.displayName || 'Provider');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
+                
+                setTimeout(() => {
+                    window.location.href = 'provider-dashboard.html';
+                }, 1500);
+            } else {
+                showToast('⚠️ Please complete your profile setup first.', true);
+                localStorage.setItem('quickfix_provider_logged_in', 'true');
+                localStorage.setItem('quickfix_provider_uid', currentUser.uid);
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
+                
+                setTimeout(() => {
+                    window.location.href = 'Provider Profile Creation - Step 1.html';
+                }, 1500);
+            }
+
+        } catch (error) {
+            console.error('Error logging in as provider:', error);
+            showToast('❌ Error: ' + error.message, true);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
         }
     });
 
@@ -598,10 +742,12 @@
     // ==========================================
     document.getElementById('skipBtn').addEventListener('click', function(e) {
         e.preventDefault();
+        localStorage.setItem('quickfix_mode', 'user');
         window.location.href = 'user-homepage.html';
     });
 
     console.log('✅ Become a Provider page loaded with Firebase!');
+    console.log('ℹ️ Two options: Create New Profile OR Login as Provider');
 </script>
 </body>
 </html>
