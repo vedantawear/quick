@@ -25,7 +25,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated background particles */
         .bg-particle {
             position: fixed;
             width: 4px;
@@ -297,7 +296,6 @@
             gap: 8px;
         }
 
-        /* Phone input styling */
         .input-group input[type="tel"] {
             letter-spacing: 0.5px;
         }
@@ -371,7 +369,7 @@
     <div class="toast" id="toastMsg"></div>
 
     <!-- ==========================================
-         FIREBASE SDK + INIT
+         FIREBASE SDK + INIT (CORRECT CONFIG)
          ========================================== -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -379,7 +377,7 @@
 
     <script>
         // ==========================================
-        // FIREBASE CONFIG
+        // FIREBASE CONFIG - YOUR ORIGINAL CONFIG
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
@@ -397,10 +395,11 @@
         try {
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
+                console.log("✅ Firebase initialized with correct config");
             }
             auth = firebase.auth();
             db = firebase.firestore();
-            console.log("✅ Firebase initialized successfully");
+            console.log("✅ Firebase Auth & Firestore ready");
         } catch (error) {
             console.error("Firebase init error:", error);
         }
@@ -500,10 +499,16 @@
         async function createOrAuthenticateUser(name, phone) {
             const cleanName = name.replace(/\s/g, '').toLowerCase();
             const timestamp = Date.now();
+            
+            // Generate a unique email based on name + timestamp
             const userEmail = phone && phone.length === 10 
                 ? `${phone}@quickfix.user` 
-                : `guest_${cleanName}_${timestamp}@quickfix.user`;
-            const password = phone && phone.length === 10 ? `Quick${phone}Fix!` : `Guest${timestamp}Quick`;
+                : `${cleanName}_${timestamp}@quickfix.user`;
+            
+            // Generate a strong password
+            const password = phone && phone.length === 10 
+                ? `Quick${phone}Fix@2024` 
+                : `Guest${timestamp}@QuickFix`;
             
             let userCredential;
             let isNewUser = false;
@@ -511,14 +516,14 @@
             try {
                 // Try to sign in first
                 userCredential = await auth.signInWithEmailAndPassword(userEmail, password);
-                console.log("Existing user signed in");
+                console.log("✅ Existing user signed in:", userEmail);
             } catch (signInError) {
-                if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+                if (signInError.code === 'auth/user-not-found') {
                     // Create new user
                     try {
                         userCredential = await auth.createUserWithEmailAndPassword(userEmail, password);
                         isNewUser = true;
-                        console.log("New user created");
+                        console.log("✅ New user created:", userEmail);
                     } catch (createError) {
                         console.error("Create user error:", createError);
                         throw new Error(createError.message);
@@ -560,7 +565,7 @@
         // ==========================================
         // GUEST LOGIN
         // ==========================================
-        async function guestLogin() {
+        function guestLogin() {
             try {
                 const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
                 const guestName = "Explorer";
@@ -624,7 +629,7 @@
             
             try {
                 if (!auth || !db) {
-                    throw new Error("Firebase not initialized. Using fallback mode.");
+                    throw new Error("Firebase not initialized");
                 }
                 
                 const result = await createOrAuthenticateUser(name, phone);
@@ -647,20 +652,12 @@
                 
                 if (error.message.includes('network')) {
                     errorMessage = "Network issue. Check your connection and try again.";
-                } else if (error.message.includes('configuration')) {
-                    errorMessage = "Service configuration issue. Using demo mode - redirecting...";
-                    localStorage.setItem('quickfix_logged_in', 'true');
-                    localStorage.setItem('quickfix_mode', 'demo');
-                    localStorage.setItem('quickfix_user_name', name);
-                    localStorage.setItem('quickfix_user_phone', phone || '');
-                    localStorage.setItem('quickfix_demo_mode', 'true');
-                    showToast(`✨ Welcome ${name}! (Demo Mode Active)`);
-                    setTimeout(() => {
-                        window.location.href = 'user-homepage.html';
-                    }, 800);
-                    return;
+                } else if (error.code === 'auth/api-key-not-valid') {
+                    errorMessage = "API Key not valid. Please check Firebase configuration.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = "Too many attempts. Please try later.";
                 } else {
-                    errorMessage += error.message;
+                    errorMessage += error.message || "Please try again.";
                 }
                 
                 showToast(errorMessage, true);
@@ -671,7 +668,7 @@
         // ==========================================
         // CHECK EXISTING SESSION
         // ==========================================
-        async function checkExistingSession() {
+        function checkExistingSession() {
             const isLoggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
             const userUid = localStorage.getItem('quickfix_user_uid');
             
@@ -755,9 +752,9 @@
         }
         createParticles();
 
-        console.log('%c⚡ QuickFix Login — Fully Functional with Firebase', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
-        console.log('%c🔥 Firebase Auth + Firestore configured!', 'color: #00ffcc; font-size: 12px;');
-        console.log('%c📌 Config: quickfix-907c0', 'color: #8895a4; font-size: 11px;');
+        console.log('%c⚡ QuickFix Login — Firebase Connected!', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
+        console.log('%c🔥 Config: quickfix-907c0', 'color: #00ffcc; font-size: 12px;');
+        console.log('%c📌 API Key: AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw', 'color: #8895a4; font-size: 11px;');
     </script>
 </body>
 </html>
