@@ -206,6 +206,101 @@
             min-height: 80px;
         }
 
+        /* Category Search Input */
+        .category-search-wrapper {
+            position: relative;
+        }
+
+        .category-search-wrapper input {
+            width: 100%;
+            padding: 14px 18px 14px 18px;
+            background: #f5f7fb;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a2e;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .category-search-wrapper input:focus {
+            border-color: #1a5f7a;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26,95,122,0.1);
+        }
+
+        .category-search-wrapper input::placeholder {
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #1a5f7a;
+            border-radius: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .category-dropdown.show {
+            display: block;
+        }
+
+        .category-dropdown-item {
+            padding: 12px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #1a1a2e;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .category-dropdown-item:hover {
+            background: #e8f0fe;
+            color: #1a5f7a;
+        }
+
+        .category-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .category-dropdown-item .cat-icon {
+            margin-right: 10px;
+        }
+
+        .selected-category-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #1a5f7a, #0f2b3d);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .selected-category-chip i {
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .selected-category-chip i:hover {
+            opacity: 1;
+        }
+
         .category-row {
             display: flex;
             gap: 16px;
@@ -294,6 +389,89 @@
 
         .char-counter.danger {
             color: #dc3545;
+        }
+
+        /* Media Upload */
+        .media-upload-area {
+            background: #f5f7fb;
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-upload-area:hover {
+            border-color: #1a5f7a;
+            background: #f0f4fe;
+        }
+
+        .media-upload-area i {
+            font-size: 36px;
+            color: #1a5f7a;
+            margin-bottom: 6px;
+        }
+
+        .media-upload-area p {
+            color: #8895a4;
+            font-size: 12px;
+        }
+
+        .media-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .media-preview-item {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: #e2e8f0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .media-preview-item img,
+        .media-preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-preview-item .remove-media {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-preview-item .media-type-badge {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
         }
 
         .btn-primary {
@@ -391,6 +569,9 @@
                 padding: 10px 6px;
                 font-size: 11px;
             }
+            .media-preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
@@ -417,36 +598,32 @@
                 <p>Tell us about your skills and expertise</p>
             </div>
 
-            <div class="category-row">
-                <div class="form-group">
-                    <label>Category <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-tools"></i>
-                        <select id="category">
-                            <option value="">Select Category</option>
-                            <option value="Plumber">🔧 Plumber</option>
-                            <option value="Electrician">⚡ Electrician</option>
-                            <option value="AC Technician">❄️ AC Technician</option>
-                            <option value="Carpenter">🪚 Carpenter</option>
-                            <option value="Car Mechanic">🚗 Car Mechanic</option>
-                            <option value="Painter">🎨 Painter</option>
-                            <option value="Welder">🔥 Welder</option>
-                            <option value="General Technician">🔩 General Technician</option>
-                        </select>
-                    </div>
+            <!-- Category with Search -->
+            <div class="form-group">
+                <label>Category <span class="required">*</span></label>
+                <div class="category-search-wrapper">
+                    <input type="text" id="categorySearch" placeholder="Type to search category... (e.g., plumber, electrician, carpenter)">
+                    <div class="category-dropdown" id="categoryDropdown"></div>
                 </div>
-
-                <div class="form-group">
-                    <label>Sub-category <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-tag"></i>
-                        <select id="subCategory">
-                            <option value="">Select Sub-category</option>
-                        </select>
-                    </div>
+                <div id="selectedCategoryContainer"></div>
+                <div class="error-message hidden" id="categoryError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Please select a category</span>
                 </div>
             </div>
 
+            <!-- Sub-category -->
+            <div class="form-group">
+                <label>Sub-category <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-tag"></i>
+                    <select id="subCategory">
+                        <option value="">Select Sub-category</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Experience -->
             <div class="form-group">
                 <label>Experience <span class="required">*</span></label>
                 <div class="experience-options" id="experienceOptions">
@@ -473,6 +650,7 @@
                 </div>
             </div>
 
+            <!-- Skills -->
             <div class="form-group">
                 <label>Skills <span class="required">*</span> <span class="optional">(select multiple)</span></label>
                 <div class="skills-container" id="skillsContainer"></div>
@@ -482,6 +660,7 @@
                 </div>
             </div>
 
+            <!-- Service Title -->
             <div class="form-group">
                 <label>Service Title <span class="required">*</span></label>
                 <div class="input-wrapper">
@@ -494,6 +673,7 @@
                 </div>
             </div>
 
+            <!-- Description -->
             <div class="form-group">
                 <label>Description <span class="required">*</span></label>
                 <div class="input-wrapper">
@@ -505,6 +685,18 @@
                     <i class="fas fa-exclamation-circle"></i>
                     <span>Please enter a description (max 200 words)</span>
                 </div>
+            </div>
+
+            <!-- Work Photos & Videos -->
+            <div class="form-group">
+                <label>Work Photos & Videos <span class="optional">(optional - helps showcase your work)</span></label>
+                <div class="media-upload-area" id="mediaUploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click to upload photos or videos of your work</p>
+                    <div style="font-size:10px; color:#b0c4de; margin-top:4px;">Supports JPG, PNG, MP4 (Max 10MB each)</div>
+                </div>
+                <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display: none;">
+                <div class="media-preview-grid" id="mediaPreviewGrid"></div>
             </div>
 
             <button class="btn-primary" id="continueBtn">
@@ -522,6 +714,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <script>
         // ==========================================
@@ -541,14 +734,173 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         console.log('✅ Firebase initialized successfully!');
 
         // ========================
-        // CHECK AUTH STATUS
+        // ALL CATEGORIES (40+)
         // ========================
+        const allCategories = [
+            { id: 'plumber', name: 'Plumber', icon: '🔧' },
+            { id: 'electrician', name: 'Electrician', icon: '⚡' },
+            { id: 'ac-technician', name: 'AC Technician', icon: '❄️' },
+            { id: 'carpenter', name: 'Carpenter', icon: '🪚' },
+            { id: 'car-mechanic', name: 'Car Mechanic', icon: '🚗' },
+            { id: 'painter', name: 'Painter', icon: '🎨' },
+            { id: 'welder', name: 'Welder', icon: '🔥' },
+            { id: 'general-technician', name: 'General Technician', icon: '🔩' },
+            { id: 'bathroom-cleaner', name: 'Bathroom Cleaner', icon: '🚽' },
+            { id: 'house-cleaner', name: 'House Cleaner', icon: '🧹' },
+            { id: 'dish-washer', name: 'Dish Washer', icon: '🍽️' },
+            { id: 'fan-cleaner', name: 'Fan Cleaner', icon: '🌀' },
+            { id: 'mosquito-control', name: 'Mosquito Control', icon: '🦟' },
+            { id: 'car-washer', name: 'Car Washer', icon: '🚿' },
+            { id: 'bike-washer', name: 'Bike Washer', icon: '🏍️' },
+            { id: 'bike-repair', name: 'Bike Repair', icon: '🔧' },
+            { id: 'car-repair', name: 'Car Repair', icon: '🔩' },
+            { id: 'ac-repair', name: 'AC Repair', icon: '❄️' },
+            { id: 'refrigerator-repair', name: 'Refrigerator Repair', icon: '🧊' },
+            { id: 'washing-machine-repair', name: 'Washing Machine Repair', icon: '🧺' },
+            { id: 'tv-repair', name: 'TV Repair', icon: '📺' },
+            { id: 'mobile-repair', name: 'Mobile Repair', icon: '📱' },
+            { id: 'laptop-repair', name: 'Laptop Repair', icon: '💻' },
+            { id: 'plumbing-repair', name: 'Plumbing Repair', icon: '🔧' },
+            { id: 'electrical-repair', name: 'Electrical Repair', icon: '⚡' },
+            { id: 'roof-repair', name: 'Roof Repair', icon: '🏠' },
+            { id: 'pest-control', name: 'Pest Control', icon: '🐜' },
+            { id: 'gardening', name: 'Gardening', icon: '🌿' },
+            { id: 'packers-movers', name: 'Packers & Movers', icon: '📦' },
+            { id: 'furniture-assembly', name: 'Furniture Assembly', icon: '🪑' },
+            { id: 'floor-cleaning', name: 'Floor Cleaning', icon: '🧹' },
+            { id: 'window-cleaning', name: 'Window Cleaning', icon: '🪟' },
+            { id: 'water-tank-cleaning', name: 'Water Tank Cleaning', icon: '💧' },
+            { id: 'sofa-cleaning', name: 'Sofa Cleaning', icon: '🛋️' },
+            { id: 'carpet-cleaning', name: 'Carpet Cleaning', icon: '🧶' },
+            { id: 'kitchen-cleaning', name: 'Kitchen Cleaning', icon: '🍳' },
+            { id: 'bathroom-renovation', name: 'Bathroom Renovation', icon: '🚿' },
+            { id: 'kitchen-renovation', name: 'Kitchen Renovation', icon: '🍽️' },
+            { id: 'wall-painting', name: 'Wall Painting', icon: '🎨' },
+            { id: 'waterproofing', name: 'Waterproofing', icon: '💧' },
+            { id: 'tile-fixing', name: 'Tile Fixing', icon: '🧱' },
+            { id: 'door-repair', name: 'Door Repair', icon: '🚪' },
+            { id: 'window-repair', name: 'Window Repair', icon: '🪟' },
+            { id: 'lock-repair', name: 'Lock Repair', icon: '🔒' },
+            { id: 'home-automation', name: 'Home Automation', icon: '🤖' },
+            { id: 'cctv-installation', name: 'CCTV Installation', icon: '📹' }
+        ];
+
+        // ========================
+        // SUB-CATEGORIES MAPPING
+        // ========================
+        const subCategoryMap = {
+            'plumber': ['Pipe Installation', 'Leakage Repair', 'Tap Fixing', 'Drain Cleaning', 'Water Heater Installation', 'Bathroom Fitting', 'Toilet Repair', 'Kitchen Sink Installation', 'Water Tank Installation', 'Pipeline Fitting'],
+            'electrician': ['Wiring', 'Switch Installation', 'Fan Repair', 'Light Fitting', 'MCB Repair', 'Inverter Installation', 'Meter Installation', 'Voltage Stabilizer', 'Earthing', 'Home Automation Wiring'],
+            'ac-technician': ['Installation', 'Repair', 'Gas Refilling', 'Service', 'Dismantle', 'Annual Maintenance', 'Compressor Repair', 'PCB Repair', 'Thermostat Setting', 'Coil Cleaning'],
+            'carpenter': ['Furniture Making', 'Repair', 'Polishing', 'Wood Work', 'Cabinet Installation', 'Door Fixing', 'Window Fitting', 'Decking', 'Custom Furniture', 'Wood Restoration'],
+            'car-mechanic': ['Oil Change', 'Engine Repair', 'AC Service', 'Brake Fixing', 'Tyre Change', 'Battery Check', 'Clutch Repair', 'Gearbox Repair', 'Suspension Repair', 'Exhaust System'],
+            'painter': ['Wall Painting', 'Texture Paint', 'Waterproofing', 'Furniture Paint', 'Exterior Paint', 'Interior Paint', 'Designer Paint', 'Crack Filling', 'Wallpaper Installation'],
+            'welder': ['Gate Repair', 'Grill Work', 'Metal Fabrication', 'Pipe Welding', 'Structure Repair', 'Steel Furniture', 'Aluminum Welding', 'Iron Work'],
+            'general-technician': ['Home Repair', 'Fixing', 'Maintenance', 'Assembly', 'Installation', 'Handyman Services'],
+            'bathroom-cleaner': ['Bathroom Cleaning', 'Tile Cleaning', 'Toilet Cleaning', 'Sink Cleaning', 'Mold Removal'],
+            'house-cleaner': ['House Cleaning', 'Room Cleaning', 'Floor Mopping', 'Dusting', 'Deep Cleaning'],
+            'dish-washer': ['Dish Washing', 'Utensil Cleaning', 'Kitchen Cleaning'],
+            'fan-cleaner': ['Fan Cleaning', 'Exhaust Fan Cleaning', 'Chandelier Cleaning'],
+            'mosquito-control': ['Mosquito Spray', 'Fogging', 'Larvicide', 'Mosquito Net Installation'],
+            'car-washer': ['Car Washing', 'Car Detailing', 'Polishing', 'Interior Cleaning'],
+            'bike-washer': ['Bike Washing', 'Bike Detailing', 'Polishing', 'Chain Cleaning'],
+            'bike-repair': ['Bike Engine Repair', 'Bike Brake Repair', 'Chain Fixing', 'Tyre Change', 'Bike Servicing', 'Clutch Repair', 'Gearbox Repair'],
+            'car-repair': ['Car Engine Repair', 'Car Brake Repair', 'Clutch Repair', 'Gearbox Repair', 'AC Repair', 'Battery Replacement', 'Suspension Repair'],
+            'ac-repair': ['AC Installation', 'AC Repair', 'Gas Refilling', 'AC Service', 'Compressor Repair'],
+            'refrigerator-repair': ['Refrigerator Repair', 'Gas Refilling', 'Compressor Repair', 'Thermostat Setting'],
+            'washing-machine-repair': ['Washing Machine Repair', 'Motor Repair', 'Drain Repair', 'Timer Repair'],
+            'tv-repair': ['TV Repair', 'LED TV Repair', 'LCD Repair', 'Smart TV Repair'],
+            'mobile-repair': ['Mobile Repair', 'Screen Replacement', 'Battery Replacement', 'Water Damage Repair'],
+            'laptop-repair': ['Laptop Repair', 'Screen Replacement', 'Keyboard Repair', 'Motherboard Repair'],
+            'plumbing-repair': ['Pipe Repair', 'Tap Repair', 'Leakage Fix', 'Bathroom Fitting'],
+            'electrical-repair': ['Wiring Repair', 'Switch Repair', 'Socket Repair', 'Circuit Repair'],
+            'roof-repair': ['Roof Fixing', 'Tile Repair', 'Waterproofing', 'Ceiling Repair'],
+            'pest-control': ['Pest Spray', 'Cockroach Control', 'Termite Control', 'Bed Bug Control'],
+            'gardening': ['Lawn Mowing', 'Planting', 'Weed Removal', 'Garden Maintenance'],
+            'packers-movers': ['Packing', 'Loading', 'Unloading', 'Transportation'],
+            'furniture-assembly': ['Furniture Assembly', 'Wardrobe Assembly', 'Kitchen Assembly'],
+            'floor-cleaning': ['Floor Mopping', 'Tile Cleaning', 'Marble Cleaning', 'Wood Polishing'],
+            'window-cleaning': ['Window Cleaning', 'Glass Cleaning', 'Frame Cleaning'],
+            'water-tank-cleaning': ['Water Tank Cleaning', 'Water Purifier Installation', 'Pipe Cleaning'],
+            'sofa-cleaning': ['Sofa Cleaning', 'Upholstery Cleaning', 'Stain Removal'],
+            'carpet-cleaning': ['Carpet Cleaning', 'Carpet Washing', 'Stain Removal'],
+            'kitchen-cleaning': ['Kitchen Cleaning', 'Chimney Cleaning', 'Cabinet Cleaning'],
+            'bathroom-renovation': ['Bathroom Renovation', 'Tiling', 'Fitting', 'Waterproofing'],
+            'kitchen-renovation': ['Kitchen Renovation', 'Cabinet Installation', 'Countertop Installation'],
+            'wall-painting': ['Wall Painting', 'Texture Paint', 'Exterior Paint'],
+            'waterproofing': ['Waterproofing', 'Crack Filling', 'Roof Sealing'],
+            'tile-fixing': ['Tile Installation', 'Tile Repair', 'Grout Fixing'],
+            'door-repair': ['Door Repair', 'Door Installation', 'Door Alignment'],
+            'window-repair': ['Window Repair', 'Glass Replacement', 'Window Installation'],
+            'lock-repair': ['Lock Installation', 'Lock Repair', 'Digital Lock Installation'],
+            'home-automation': ['Smart Home Setup', 'Automation', 'Voice Assistant Setup'],
+            'cctv-installation': ['CCTV Installation', 'Security Camera Setup', 'DVR Installation']
+        };
+
+        // ========================
+        // SKILLS MAPPING
+        // ========================
+        const skillsMap = {
+            'plumber': ['Pipe Fitting', 'Leak Detection', 'Tap Repair', 'Drainage', 'Water Supply', 'PVC Fitting', 'Plumbing Tools'],
+            'electrician': ['Wiring', 'Circuit Testing', 'Switch Board', 'Earthing', 'Load Calculation', 'Safety Check', 'Multimeter'],
+            'ac-technician': ['Gas Charging', 'Compressor Repair', 'Coil Cleaning', 'PCB Repair', 'Thermostat Setting', 'Vacuum Pump'],
+            'carpenter': ['Cutting', 'Sanding', 'Joint Making', 'Polishing', 'Measurement', 'Design Reading', 'Woodworking Tools'],
+            'car-mechanic': ['Engine Diagnosis', 'Brake System', 'Electrical', 'Cooling System', 'Suspension', 'Diagnostic Tools'],
+            'painter': ['Surface Prep', 'Color Mixing', 'Roller Work', 'Brush Work', 'Texture Application', 'Spray Gun'],
+            'welder': ['Arc Welding', 'Gas Welding', 'Cutting', 'Grinding', 'Metal Joining', 'Welding Machine'],
+            'general-technician': ['Repair', 'Maintenance', 'Assembly', 'Diagnostic', 'Installation'],
+            'bathroom-cleaner': ['Cleaning', 'Disinfecting', 'Scrubbing', 'Tile Cleaning', 'Mold Removal'],
+            'house-cleaner': ['Mopping', 'Dusting', 'Vacuuming', 'Organizing', 'Deep Cleaning'],
+            'dish-washer': ['Utensil Cleaning', 'Kitchen Organization', 'Sanitization'],
+            'fan-cleaner': ['Fan Dismantling', 'Cleaning', 'Assembling', 'Exhaust Fan Cleaning'],
+            'mosquito-control': ['Spraying', 'Fogging', 'Larvicide Application', 'Safety Protocol'],
+            'car-washer': ['Car Washing', 'Detailing', 'Polishing', 'Interior Cleaning', 'Pressure Washer'],
+            'bike-washer': ['Bike Washing', 'Detailing', 'Polishing', 'Chain Cleaning', 'Pressure Washer'],
+            'bike-repair': ['Engine Repair', 'Brake Repair', 'Chain Fixing', 'Tyre Change', 'Servicing'],
+            'car-repair': ['Engine Repair', 'Brake Repair', 'AC Repair', 'Battery Replacement', 'Diagnostic Tools'],
+            'ac-repair': ['AC Installation', 'Gas Charging', 'Compressor Repair', 'System Diagnosis'],
+            'refrigerator-repair': ['Refrigerator Diagnosis', 'Gas Charging', 'Compressor Repair', 'Thermostat Setting'],
+            'washing-machine-repair': ['Motor Repair', 'Drain Repair', 'Timer Repair', 'System Diagnosis'],
+            'tv-repair': ['TV Diagnosis', 'Screen Replacement', 'PCB Repair', 'Smart TV Setup'],
+            'mobile-repair': ['Screen Replacement', 'Battery Replacement', 'Water Damage Repair', 'Mobile Diagnosis'],
+            'laptop-repair': ['Screen Replacement', 'Keyboard Repair', 'Motherboard Repair', 'System Diagnosis'],
+            'plumbing-repair': ['Pipe Repair', 'Tap Repair', 'Leakage Fix', 'Plumbing Tools'],
+            'electrical-repair': ['Wiring Repair', 'Switch Repair', 'Circuit Testing', 'Safety Check'],
+            'roof-repair': ['Roof Diagnosis', 'Tile Repair', 'Waterproofing', 'Sealing'],
+            'pest-control': ['Spraying', 'Fogging', 'Termite Control', 'Bed Bug Control'],
+            'gardening': ['Lawn Mowing', 'Planting', 'Weed Removal', 'Gardening Tools'],
+            'packers-movers': ['Packing', 'Loading', 'Unloading', 'Transportation Safety'],
+            'furniture-assembly': ['Assembly', 'Wardrobe Assembly', 'Kitchen Assembly', 'Power Tools'],
+            'floor-cleaning': ['Mopping', 'Tile Cleaning', 'Marble Polishing', 'Wood Polishing'],
+            'window-cleaning': ['Glass Cleaning', 'Frame Cleaning', 'Safety Equipment'],
+            'water-tank-cleaning': ['Tank Cleaning', 'Water Purifier Installation', 'Pipe Cleaning'],
+            'sofa-cleaning': ['Sofa Cleaning', 'Upholstery Cleaning', 'Stain Removal'],
+            'carpet-cleaning': ['Carpet Washing', 'Stain Removal', 'Drying'],
+            'kitchen-cleaning': ['Kitchen Cleaning', 'Chimney Cleaning', 'Cabinet Cleaning'],
+            'bathroom-renovation': ['Tiling', 'Fitting', 'Waterproofing', 'Renovation'],
+            'kitchen-renovation': ['Cabinet Installation', 'Countertop Installation', 'Renovation'],
+            'wall-painting': ['Wall Painting', 'Texture Paint', 'Exterior Paint', 'Prep Work'],
+            'waterproofing': ['Waterproofing', 'Crack Filling', 'Roof Sealing'],
+            'tile-fixing': ['Tile Installation', 'Tile Repair', 'Grout Fixing'],
+            'door-repair': ['Door Repair', 'Door Installation', 'Alignment'],
+            'window-repair': ['Window Repair', 'Glass Replacement', 'Window Installation'],
+            'lock-repair': ['Lock Installation', 'Lock Repair', 'Digital Lock Installation'],
+            'home-automation': ['Smart Home Setup', 'Automation', 'Voice Assistant Setup'],
+            'cctv-installation': ['CCTV Installation', 'Security Camera Setup', 'DVR Installation']
+        };
+
+        // ==========================================
+        // CHECK AUTH STATUS
+        // ==========================================
         let currentUser = null;
         let workData = {};
+        let selectedCategory = null;
+        let uploadedMedia = [];
 
         auth.onAuthStateChanged((user) => {
             if (user) {
@@ -565,34 +917,12 @@
             }
         });
 
-        // ========================
-        // Sub-category mapping
-        // ========================
-        const subCategories = {
-            'Plumber': ['Pipe Installation', 'Leakage Repair', 'Tap Fixing', 'Drain Cleaning', 'Water Heater Installation'],
-            'Electrician': ['Wiring', 'Switch Installation', 'Fan Repair', 'Light Fitting', 'MCB Repair', 'Inverter Installation'],
-            'AC Technician': ['Installation', 'Repair', 'Gas Refilling', 'Service', 'Dismantle', 'Annual Maintenance'],
-            'Carpenter': ['Furniture Making', 'Repair', 'Polishing', 'Wood Work', 'Cabinet Installation', 'Door Fixing'],
-            'Car Mechanic': ['Oil Change', 'Engine Repair', 'AC Service', 'Brake Fixing', 'Tyre Change', 'Battery Check'],
-            'Painter': ['Wall Painting', 'Texture Paint', 'Waterproofing', 'Furniture Paint', 'Exterior Paint'],
-            'Welder': ['Gate Repair', 'Grill Work', 'Metal Fabrication', 'Pipe Welding', 'Structure Repair'],
-            'General Technician': ['Home Repair', 'Fixing', 'Maintenance', 'Assembly', 'Installation']
-        };
-
-        const skillsMapping = {
-            'Plumber': ['Pipe Fitting', 'Leak Detection', 'Tap Repair', 'Drainage', 'Water Supply', 'PVC Fitting'],
-            'Electrician': ['Wiring', 'Circuit Testing', 'Switch Board', 'Earthing', 'Load Calculation', 'Safety Check'],
-            'AC Technician': ['Gas Charging', 'Compressor Repair', 'Coil Cleaning', 'PCB Repair', 'Thermostat Setting'],
-            'Carpenter': ['Cutting', 'Sanding', 'Joint Making', 'Polishing', 'Measurement', 'Design Reading'],
-            'Car Mechanic': ['Engine Diagnosis', 'Brake System', 'Electrical', 'Cooling System', 'Suspension'],
-            'Painter': ['Surface Prep', 'Color Mixing', 'Roller Work', 'Brush Work', 'Texture Application'],
-            'Welder': ['Arc Welding', 'Gas Welding', 'Cutting', 'Grinding', 'Metal Joining'],
-            'General Technician': ['Repair', 'Maintenance', 'Assembly', 'Diagnostic', 'Installation']
-        };
-
-        let selectedSkills = [];
-
-        const categorySelect = document.getElementById('category');
+        // ==========================================
+        // DOM ELEMENTS
+        // ==========================================
+        const categorySearch = document.getElementById('categorySearch');
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const selectedCategoryContainer = document.getElementById('selectedCategoryContainer');
         const subCategorySelect = document.getElementById('subCategory');
         const skillsContainer = document.getElementById('skillsContainer');
         const serviceTitleInput = document.getElementById('serviceTitle');
@@ -600,47 +930,137 @@
         const charCounter = document.getElementById('charCounter');
         const continueBtn = document.getElementById('continueBtn');
         const backBtn = document.getElementById('backBtn');
+        const mediaUploadArea = document.getElementById('mediaUploadArea');
+        const mediaInput = document.getElementById('mediaInput');
+        const mediaPreviewGrid = document.getElementById('mediaPreviewGrid');
 
-        function updateSubCategories() {
-            const selectedCategory = categorySelect.value;
-            subCategorySelect.innerHTML = '<option value="">Select Sub-category</option>';
+        let selectedSkills = [];
+
+        // ==========================================
+        // CATEGORY SEARCH
+        // ==========================================
+        categorySearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const dropdown = categoryDropdown;
             
-            if (selectedCategory && subCategories[selectedCategory]) {
-                subCategories[selectedCategory].forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub;
-                    option.textContent = sub;
-                    subCategorySelect.appendChild(option);
-                });
+            if (query.length === 0) {
+                dropdown.classList.remove('show');
+                return;
             }
+
+            const filtered = allCategories.filter(cat => 
+                cat.name.toLowerCase().includes(query) || 
+                cat.id.includes(query)
+            );
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="category-dropdown-item" style="color:#8895a4;">No categories found</div>';
+            } else {
+                dropdown.innerHTML = filtered.map(cat => `
+                    <div class="category-dropdown-item" data-id="${cat.id}" data-name="${cat.name}" data-icon="${cat.icon}">
+                        ${cat.icon} ${cat.name}
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.add('show');
+        });
+
+        // Category selection from dropdown
+        categoryDropdown.addEventListener('click', function(e) {
+            const item = e.target.closest('.category-dropdown-item');
+            if (!item) return;
+            
+            const id = item.dataset.id;
+            const name = item.dataset.name;
+            const icon = item.dataset.icon;
+            
+            selectCategory(id, name, icon);
+            categoryDropdown.classList.remove('show');
+            categorySearch.value = '';
+        });
+
+        function selectCategory(id, name, icon) {
+            selectedCategory = { id, name, icon };
+            workData.category = id;
+            workData.categoryName = name;
+            
+            selectedCategoryContainer.innerHTML = `
+                <div class="selected-category-chip">
+                    ${icon} ${name}
+                    <i class="fas fa-times" onclick="removeCategory()"></i>
+                </div>
+            `;
+            
+            // Update sub-categories
+            updateSubCategories(id);
+            
+            // Update skills
+            updateSkills(id);
+            
+            document.getElementById('categoryError').classList.add('hidden');
         }
 
-        function updateSkills() {
-            const selectedCategory = categorySelect.value;
+        window.removeCategory = function() {
+            selectedCategory = null;
+            selectedCategoryContainer.innerHTML = '';
+            subCategorySelect.innerHTML = '<option value="">Select Sub-category</option>';
+            skillsContainer.innerHTML = '';
+            selectedSkills = [];
+            workData.category = '';
+            workData.categoryName = '';
+        };
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.category-search-wrapper')) {
+                categoryDropdown.classList.remove('show');
+            }
+        });
+
+        // ==========================================
+        // UPDATE SUB-CATEGORIES
+        // ==========================================
+        function updateSubCategories(categoryId) {
+            subCategorySelect.innerHTML = '<option value="">Select Sub-category</option>';
+            
+            const subs = subCategoryMap[categoryId] || [];
+            subs.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                option.textContent = sub;
+                subCategorySelect.appendChild(option);
+            });
+        }
+
+        // ==========================================
+        // UPDATE SKILLS
+        // ==========================================
+        function updateSkills(categoryId) {
             skillsContainer.innerHTML = '';
             selectedSkills = [];
             
-            if (selectedCategory && skillsMapping[selectedCategory]) {
-                skillsMapping[selectedCategory].forEach(skill => {
-                    const skillChip = document.createElement('div');
-                    skillChip.className = 'skill-chip';
-                    skillChip.textContent = skill;
-                    skillChip.addEventListener('click', () => {
-                        skillChip.classList.toggle('selected');
-                        if (skillChip.classList.contains('selected')) {
-                            selectedSkills.push(skill);
-                            workData.skills = selectedSkills;
-                        } else {
-                            selectedSkills = selectedSkills.filter(s => s !== skill);
-                            workData.skills = selectedSkills;
-                        }
-                        validateSkills();
-                    });
-                    skillsContainer.appendChild(skillChip);
+            const skills = skillsMap[categoryId] || [];
+            skills.forEach(skill => {
+                const chip = document.createElement('div');
+                chip.className = 'skill-chip';
+                chip.textContent = skill;
+                chip.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    if (this.classList.contains('selected')) {
+                        selectedSkills.push(skill);
+                    } else {
+                        selectedSkills = selectedSkills.filter(s => s !== skill);
+                    }
+                    workData.skills = selectedSkills;
+                    validateSkills();
                 });
-            }
+                skillsContainer.appendChild(chip);
+            });
         }
 
+        // ==========================================
+        // UPDATE WORD COUNT
+        // ==========================================
         function updateWordCount() {
             const text = descriptionTextarea.value.trim();
             const wordCount = text === '' ? 0 : text.split(/\s+/).length;
@@ -658,7 +1078,44 @@
             }
         }
 
-        function validateCategory() { return categorySelect.value !== ''; }
+        // ==========================================
+        // MEDIA UPLOAD
+        // ==========================================
+        mediaUploadArea.addEventListener('click', () => mediaInput.click());
+        mediaInput.addEventListener('change', async function(e) {
+            const files = Array.from(this.files);
+            if (files.length === 0) return;
+
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('File size should be less than 10MB', true);
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const url = e.target.result;
+                    const isVideo = file.type.startsWith('video/');
+                    
+                    const item = document.createElement('div');
+                    item.className = 'media-preview-item';
+                    item.innerHTML = `
+                        ${isVideo ? `<video src="${url}"></video>` : `<img src="${url}" alt="Work Media">`}
+                        <span class="media-type-badge">${isVideo ? '🎬 Video' : '🖼️ Photo'}</span>
+                        <button class="remove-media" onclick="this.parentElement.remove()">×</button>
+                    `;
+                    mediaPreviewGrid.appendChild(item);
+                    uploadedMedia.push({ file, url });
+                };
+                reader.readAsDataURL(file);
+            }
+            this.value = '';
+        });
+
+        // ==========================================
+        // VALIDATION
+        // ==========================================
+        function validateCategory() { return selectedCategory !== null; }
         function validateSubCategory() { return subCategorySelect.value !== ''; }
         function validateExperience() { return document.querySelector('input[name="experience"]:checked') !== null; }
         function validateSkills() { return selectedSkills.length > 0; }
@@ -681,6 +1138,7 @@
             const isValid = validateCategory() && validateSubCategory() && validateExperience() && 
                            validateSkills() && validateServiceTitle() && validateDescription();
             
+            showError('categoryError', !validateCategory());
             showError('experienceError', !validateExperience());
             showError('skillsError', !validateSkills());
             showError('titleError', !validateServiceTitle());
@@ -689,6 +1147,9 @@
             return isValid;
         }
 
+        // ==========================================
+        // TOAST
+        // ==========================================
         function showToast(message, isError = false) {
             const oldToasts = document.querySelectorAll('.toast');
             oldToasts.forEach(t => t.remove());
@@ -696,14 +1157,14 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.style.background = isError ? '#dc3545' : '#1a5f7a';
-            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="margin-right: 8px;"></i> ${message}`;
+            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // ========================
-        // LOAD SAVED DATA FROM FIRESTORE
-        // ========================
+        // ==========================================
+        // LOAD SAVED DATA
+        // ==========================================
         async function loadSavedDataFromFirestore() {
             if (!currentUser) return;
 
@@ -714,21 +1175,18 @@
                 if (docSnap.exists) {
                     const data = docSnap.data();
                     
-                    // Load category
                     if (data.category) {
-                        categorySelect.value = data.category;
-                        workData.category = data.category;
-                        updateSubCategories();
-                        updateSkills();
-                        setTimeout(() => {
-                            if (data.subCategory) {
-                                subCategorySelect.value = data.subCategory;
-                                workData.subCategory = data.subCategory;
-                            }
-                        }, 100);
+                        const cat = allCategories.find(c => c.id === data.category);
+                        if (cat) {
+                            selectCategory(cat.id, cat.name, cat.icon);
+                        }
                     }
                     
-                    // Load experience
+                    if (data.subCategory) {
+                        subCategorySelect.value = data.subCategory;
+                        workData.subCategory = data.subCategory;
+                    }
+                    
                     if (data.experience) {
                         const expOption = document.querySelector(`input[name="experience"][value="${data.experience}"]`);
                         if (expOption) {
@@ -737,7 +1195,6 @@
                         }
                     }
                     
-                    // Load skills
                     if (data.skills && data.skills.length > 0) {
                         workData.skills = data.skills;
                         setTimeout(() => {
@@ -752,7 +1209,6 @@
                         }, 200);
                     }
                     
-                    // Load service title and description
                     if (data.serviceTitle) {
                         serviceTitleInput.value = data.serviceTitle;
                         workData.serviceTitle = data.serviceTitle;
@@ -767,92 +1223,32 @@
                 }
             } catch (error) {
                 console.error('Error loading from Firestore:', error);
-                // Try loading from localStorage as fallback
-                loadSavedDataFromLocalStorage();
             }
         }
 
-        // ========================
-        // LOAD SAVED DATA FROM LOCALSTORAGE (Fallback)
-        // ========================
-        function loadSavedDataFromLocalStorage() {
-            const savedData = localStorage.getItem('quickfix_provider_work');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    if (data.category) {
-                        categorySelect.value = data.category;
-                        workData.category = data.category;
-                        updateSubCategories();
-                        updateSkills();
-                        setTimeout(() => {
-                            if (data.subCategory) {
-                                subCategorySelect.value = data.subCategory;
-                                workData.subCategory = data.subCategory;
-                            }
-                        }, 100);
-                    }
-                    if (data.experience) {
-                        const expOption = document.querySelector(`input[name="experience"][value="${data.experience}"]`);
-                        if (expOption) {
-                            expOption.checked = true;
-                            workData.experience = data.experience;
-                        }
-                    }
-                    if (data.skills && data.skills.length > 0) {
-                        workData.skills = data.skills;
-                        setTimeout(() => {
-                            data.skills.forEach(skill => {
-                                const skillChips = document.querySelectorAll('.skill-chip');
-                                skillChips.forEach(chip => {
-                                    if (chip.textContent === skill && !chip.classList.contains('selected')) {
-                                        chip.click();
-                                    }
-                                });
-                            });
-                        }, 200);
-                    }
-                    if (data.serviceTitle) {
-                        serviceTitleInput.value = data.serviceTitle;
-                        workData.serviceTitle = data.serviceTitle;
-                    }
-                    if (data.description) {
-                        descriptionTextarea.value = data.description;
-                        workData.description = data.description;
-                    }
-                    updateWordCount();
-                } catch(e) { console.warn(e); }
-            }
-        }
-
-        // ========================
-        // SAVE TO FIRESTORE AND CONTINUE
-        // ========================
+        // ==========================================
+        // SAVE TO FIRESTORE
+        // ==========================================
         async function saveToFirestore() {
-            if (!currentUser) {
-                showToast('Please login first', true);
-                window.location.href = 'login.html';
-                return false;
-            }
+            if (!currentUser) return false;
 
             try {
                 const selectedExperience = document.querySelector('input[name="experience"]:checked');
                 
-                // Update workData with latest values
-                workData.category = categorySelect.value;
+                workData.category = selectedCategory ? selectedCategory.id : '';
+                workData.categoryName = selectedCategory ? selectedCategory.name : '';
                 workData.subCategory = subCategorySelect.value;
                 workData.experience = selectedExperience ? selectedExperience.value : '';
                 workData.skills = selectedSkills;
                 workData.serviceTitle = serviceTitleInput.value.trim();
                 workData.description = descriptionTextarea.value.trim();
+                workData.mediaCount = uploadedMedia.length;
                 workData.step2Completed = true;
                 workData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
-                // Save to Firestore
                 await db.collection('providers').doc(currentUser.uid).set(workData, { merge: true });
-                console.log('✅ Work data saved to Firestore:', workData);
+                console.log('✅ Work data saved to Firestore');
 
-                // Also save to localStorage for fallback
                 localStorage.setItem('quickfix_provider_work', JSON.stringify(workData));
                 localStorage.setItem('quickfix_provider_step2_complete', 'true');
 
@@ -865,26 +1261,24 @@
             }
         }
 
-        // ========================
+        // ==========================================
         // CONTINUE BUTTON
-        // ========================
+        // ==========================================
         async function continueToNextStep() {
             if (!validateAll()) {
                 showToast('Please fill all required fields', true);
                 return;
             }
 
-            // Disable button
             continueBtn.disabled = true;
             continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            // Save to Firestore
             const saved = await saveToFirestore();
             
             if (saved) {
-                showToast('✅ Work details saved successfully! Redirecting to Step 3...');
+                showToast('✅ Work details saved successfully! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = 'Provider Profile Creation - Step 3.html';
+                    window.location.href = 'create-provider-profile-step-3.html';
                 }, 800);
             } else {
                 continueBtn.disabled = false;
@@ -892,13 +1286,13 @@
             }
         }
 
-        // ========================
+        // ==========================================
         // BACK BUTTON
-        // ========================
+        // ==========================================
         async function goBack() {
-            // Update workData before going back
             const selectedExperience = document.querySelector('input[name="experience"]:checked');
-            workData.category = categorySelect.value;
+            workData.category = selectedCategory ? selectedCategory.id : '';
+            workData.categoryName = selectedCategory ? selectedCategory.name : '';
             workData.subCategory = subCategorySelect.value;
             workData.experience = selectedExperience ? selectedExperience.value : '';
             workData.skills = selectedSkills;
@@ -914,18 +1308,12 @@
                 }
             }
             
-            window.location.href = 'Provider Profile Creation - Step 1.html';
+            window.location.href = 'create-provider-profile-step-1.html';
         }
 
-        // ========================
+        // ==========================================
         // EVENT LISTENERS
-        // ========================
-        categorySelect.addEventListener('change', () => {
-            workData.category = categorySelect.value;
-            updateSubCategories();
-            updateSkills();
-        });
-        
+        // ==========================================
         subCategorySelect.addEventListener('change', () => {
             workData.subCategory = subCategorySelect.value;
         });
@@ -952,35 +1340,18 @@
         continueBtn.addEventListener('click', continueToNextStep);
         backBtn.addEventListener('click', goBack);
 
-        // ========================
-        // ENTER KEY SUPPORT
-        // ========================
-        const formInputs = [serviceTitleInput, descriptionTextarea];
-        formInputs.forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && input.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    continueBtn.click();
-                }
-            });
-        });
-
-        // ========================
+        // ==========================================
         // INITIALIZE
-        // ========================
-        updateSubCategories();
-        updateSkills();
-        
-        // If user is already logged in, load data
+        // ==========================================
         if (auth.currentUser) {
             currentUser = auth.currentUser;
             loadSavedDataFromFirestore();
         }
 
-        console.log('%c🔥 QuickFix - Work Details (Step 2) - Firebase Integrated!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
-        console.log('✅ All work details will be saved to Firestore');
-        console.log('✅ Fields saved: Category, Sub-Category, Experience, Skills, Service Title, Description');
-        console.log('✅ Clicking "Continue to Documents" saves all data and opens Step 3');
+        console.log('%c🔥 QuickFix - Work Details (Step 2) - Updated!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
+        console.log('✅ 40+ categories with search');
+        console.log('✅ Work photos & videos upload');
+        console.log('✅ Auto-save to Firestore');
     </script>
 </body>
 </html>
