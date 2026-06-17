@@ -18,8 +18,9 @@
 
         body {
             font-family: 'Space Grotesk', sans-serif;
-            overflow: hidden;
             background: #050508;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
         #canvas-bg {
@@ -48,7 +49,7 @@
             backdrop-filter: blur(25px);
             border-radius: 80px;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
             animation: floatIn 1s ease-out;
         }
@@ -92,6 +93,20 @@
             border-radius: 78px;
             padding: 50px 40px 60px;
             border: 1px solid rgba(255,255,255,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .card-inner::-webkit-scrollbar {
+            width: 4px;
+        }
+        .card-inner::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .card-inner::-webkit-scrollbar-thumb {
+            background: #ff0066;
+            border-radius: 10px;
         }
 
         .icons-3d-area {
@@ -313,17 +328,32 @@
             color: white;
         }
 
-        /* Demo Mode Badge */
-        .demo-badge {
-            display: inline-block;
-            background: #ffcc00;
-            color: #000;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 10px;
+        .btn-demo {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ffcc00, #ff8800);
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
             font-weight: 700;
-            margin-left: 8px;
-            text-transform: uppercase;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 12px;
+        }
+
+        .btn-demo:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 200, 0, 0.4);
+        }
+
+        .btn-demo:active {
+            transform: scale(0.98);
         }
 
         .btn-outline-3d {
@@ -415,16 +445,16 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Environment Warning */
         .env-warning {
             background: rgba(255, 200, 0, 0.15);
             border: 1px solid rgba(255, 200, 0, 0.3);
             border-radius: 16px;
-            padding: 14px 18px;
+            padding: 12px 16px;
             margin-bottom: 20px;
             text-align: center;
             font-size: 12px;
             color: rgba(255, 200, 0, 0.8);
+            display: none;
         }
         .env-warning i {
             margin-right: 8px;
@@ -432,20 +462,37 @@
 
         @media (max-width: 550px) {
             .card-inner {
-                padding: 35px 25px 45px;
+                padding: 30px 20px 40px;
+                max-height: 95vh;
             }
             .big-logo {
-                font-size: 48px;
+                font-size: 42px;
             }
             .floating-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
             }
+            .floating-icon:nth-child(4) { width: 40px; height: 40px; font-size: 18px; }
+            .floating-icon:nth-child(6) { width: 38px; height: 38px; font-size: 16px; }
             .toast-3d {
                 white-space: normal;
                 text-align: center;
                 max-width: 90%;
+            }
+            .icons-3d-area {
+                height: 150px;
+            }
+            .main-title {
+                margin-bottom: 30px;
+            }
+            .btn-3d {
+                padding: 14px;
+                font-size: 14px;
+            }
+            .btn-google, .btn-demo {
+                padding: 14px;
+                font-size: 14px;
             }
         }
     </style>
@@ -479,7 +526,7 @@
             <!-- Environment Warning -->
             <div class="env-warning" id="envWarning">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>⚠️ Running in file:// protocol. Google Sign-In may not work. Use a local server (Live Server) for full functionality.</span>
+                <span>⚠️ Running on file:// protocol. Use "Demo Login" or open with Live Server.</span>
             </div>
 
             <!-- Phone Panel -->
@@ -505,8 +552,8 @@
                     <i class="fab fa-google"></i> Continue with Google
                 </button>
 
-                <!-- Demo Login Button (for file:// protocol) -->
-                <button class="btn-3d" id="demoLoginBtn" style="margin-top: 12px; background: linear-gradient(90deg, #ffcc00, #ff8800, #ffcc00); background-size: 300%; animation: btnShine 3s linear infinite;">
+                <!-- Demo Login Button -->
+                <button class="btn-demo" id="demoLoginBtn">
                     <i class="fas fa-rocket"></i> Demo Login (Skip)
                 </button>
             </div>
@@ -563,14 +610,9 @@
 
     // Check if running on file:// protocol
     const isFileProtocol = window.location.protocol === 'file:';
+    const envWarning = document.getElementById('envWarning');
     if (isFileProtocol) {
-        document.getElementById('envWarning').style.display = 'block';
-        document.getElementById('envWarning').innerHTML = `
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>⚠️ Running on <strong>file://</strong> protocol. Google Sign-In won't work. Use <strong>Demo Login</strong> or open with <strong>Live Server</strong>.</span>
-        `;
-    } else {
-        document.getElementById('envWarning').style.display = 'none';
+        envWarning.style.display = 'block';
     }
 
     // ==========================================
@@ -687,7 +729,7 @@
     }
 
     // ==========================================
-    // DEMO LOGIN (For file:// protocol)
+    // DEMO LOGIN
     // ==========================================
     function demoLogin() {
         const demoUser = {
@@ -715,9 +757,8 @@
     // GOOGLE SIGN-IN
     // ==========================================
     async function signInWithGoogle() {
-        // Check if running on file:// protocol
-        if (window.location.protocol === 'file:') {
-            showToast('❌ Google Sign-In not supported on file:// protocol. Use "Demo Login" or open with Live Server.', true);
+        if (isFileProtocol) {
+            showToast('❌ Google Sign-In not supported on file:// protocol. Use "Demo Login".', true);
             return;
         }
 
@@ -745,7 +786,7 @@
             } else if (error.code === 'auth/account-exists-with-different-credential') {
                 errorMsg = "This account already exists with a different sign-in method.";
             } else if (error.code === 'auth/operation-not-supported-in-this-environment') {
-                errorMsg = "Google Sign-In not supported on file:// protocol. Use 'Demo Login' or open with Live Server.";
+                errorMsg = "Google Sign-In not supported on file:// protocol. Use 'Demo Login'.";
             } else {
                 errorMsg += error.message || "Please try again.";
             }
@@ -805,8 +846,8 @@
     }
 
     async function sendOtp() {
-        if (window.location.protocol === 'file:') {
-            showToast('❌ OTP not supported on file:// protocol. Use "Demo Login" or open with Live Server.', true);
+        if (isFileProtocol) {
+            showToast('❌ OTP not supported on file:// protocol. Use "Demo Login".', true);
             return;
         }
 
@@ -845,7 +886,7 @@
             else if (error.code === 'auth/too-many-requests') errorMsg += "Too many requests. Please try later.";
             else if (error.code === 'auth/quota-exceeded') errorMsg += "SMS quota exceeded. Please try again later.";
             else if (error.code === 'auth/operation-not-supported-in-this-environment') {
-                errorMsg = "OTP not supported on file:// protocol. Use 'Demo Login' or open with Live Server.";
+                errorMsg = "OTP not supported on file:// protocol. Use 'Demo Login'.";
             } else {
                 errorMsg += error.message || "Please check your network.";
             }
