@@ -192,40 +192,6 @@
             margin-left: 8px;
         }
 
-        .input-wrapper {
-            display: flex;
-            align-items: center;
-            background: #f5f7fb;
-            border-radius: 16px;
-            padding: 4px 16px;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: #1a5f7a;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(26,95,122,0.1);
-        }
-
-        .input-wrapper i {
-            color: #8895a4;
-            font-size: 18px;
-            margin-right: 12px;
-        }
-
-        .input-wrapper input {
-            flex: 1;
-            padding: 14px 0;
-            border: none;
-            background: none;
-            outline: none;
-            font-size: 15px;
-            font-weight: 500;
-            color: #1a1a2e;
-            font-family: inherit;
-        }
-
         /* UPLOAD AREA WITH PREVIEW */
         .upload-area {
             background: #f5f7fb;
@@ -262,14 +228,25 @@
         .upload-area .file-name {
             margin-top: 8px;
             font-size: 11px;
-            color: #4caf50;
             font-weight: 500;
+        }
+
+        .upload-area .file-name.uploaded {
+            color: #4caf50;
+        }
+
+        .upload-area .file-name.failed {
+            color: #dc3545;
+        }
+
+        .upload-area .file-name.uploading {
+            color: #ff9800;
         }
 
         /* Image Preview */
         .image-preview {
             width: 100%;
-            max-height: 200px;
+            max-height: 180px;
             object-fit: contain;
             border-radius: 12px;
             margin-top: 10px;
@@ -280,17 +257,6 @@
         }
 
         .image-preview.show {
-            display: block;
-        }
-
-        .upload-status-text {
-            font-size: 11px;
-            color: #1a5f7a;
-            margin-top: 6px;
-            display: none;
-        }
-
-        .upload-status-text.show {
             display: block;
         }
 
@@ -322,58 +288,6 @@
 
         .doc-type-btn:hover {
             border-color: #1a5f7a;
-        }
-
-        /* Live Selfie */
-        .selfie-container {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #000;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .selfie-container.show {
-            display: block;
-        }
-
-        #selfieVideo {
-            width: 100%;
-            max-height: 300px;
-            object-fit: cover;
-            background: #000;
-        }
-
-        .selfie-controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        .selfie-controls button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-capture {
-            background: #ff0066;
-            color: white;
-        }
-
-        .btn-capture:hover {
-            transform: scale(1.02);
-        }
-
-        .btn-cancel-selfie {
-            background: #e2e8f0;
-            color: #333;
         }
 
         .checkbox-group {
@@ -530,7 +444,7 @@
         <div class="form-card">
             <div class="form-header">
                 <h2>Verify Your Identity</h2>
-                <p>Complete verification to activate your profile & start earning</p>
+                <p>Upload your ID proof to verify your identity</p>
             </div>
 
             <div class="verification-badge">
@@ -552,7 +466,6 @@
                     <p id="idUploadText">Click to upload Aadhar Card</p>
                     <div class="file-name" id="idFileName"></div>
                     <img id="idPreview" class="image-preview" alt="ID Preview">
-                    <div class="upload-status-text" id="idStatusText">⬆️ Uploading...</div>
                 </div>
                 <input type="file" id="idInput" accept="image/*" style="display: none;">
                 <div id="idError" class="error-message hidden">
@@ -561,55 +474,7 @@
                 </div>
             </div>
 
-            <!-- 2. Profile Photo -->
-            <div class="form-group">
-                <label>Profile Photo <span class="required">*</span></label>
-                <div class="upload-area" id="profileUpload">
-                    <i class="fas fa-user-circle" id="profileUploadIcon"></i>
-                    <p id="profileUploadText">Click to upload profile photo</p>
-                    <div class="file-name" id="profileFileName"></div>
-                    <img id="profilePreview" class="image-preview" alt="Profile Preview">
-                    <div class="upload-status-text" id="profileStatusText">⬆️ Uploading...</div>
-                </div>
-                <input type="file" id="profileInput" accept="image/*" style="display: none;">
-            </div>
-
-            <!-- 3. Live Selfie -->
-            <div class="form-group">
-                <label>Live Selfie <span class="required">*</span></label>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-                    <button class="doc-type-btn" id="startSelfieBtn" style="border-color: #1a5f7a; color: #1a5f7a;">
-                        <i class="fas fa-camera"></i> Take Live Selfie
-                    </button>
-                    <button class="doc-type-btn" id="uploadSelfieBtn" style="border-color: #1a5f7a; color: #1a5f7a;">
-                        <i class="fas fa-upload"></i> Upload Photo
-                    </button>
-                </div>
-                
-                <div class="selfie-container" id="selfieContainer">
-                    <video id="selfieVideo" autoplay playsinline></video>
-                    <div class="selfie-controls">
-                        <button class="btn-capture" id="captureSelfieBtn"><i class="fas fa-camera"></i> Capture</button>
-                        <button class="btn-cancel-selfie" id="cancelSelfieBtn"><i class="fas fa-times"></i> Cancel</button>
-                    </div>
-                </div>
-
-                <div class="upload-area" id="selfieUploadArea" style="display: none;">
-                    <i class="fas fa-user" id="selfieUploadIcon"></i>
-                    <p id="selfieUploadText">Click to upload selfie photo</p>
-                    <div class="file-name" id="selfieFileName"></div>
-                    <img id="selfiePreview" class="image-preview" alt="Selfie Preview">
-                    <div class="upload-status-text" id="selfieStatusText">⬆️ Uploading...</div>
-                </div>
-                <input type="file" id="selfieInput" accept="image/*" style="display: none;">
-                
-                <div id="selfieError" class="error-message hidden">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span>Please add a live selfie</span>
-                </div>
-            </div>
-
-            <!-- 4. Professional Certificate (Optional) -->
+            <!-- 2. Professional Certificate (Optional) -->
             <div class="form-group">
                 <label>Professional Certificate <span class="optional">(optional - ITI/Diploma/Degree)</span></label>
                 <div class="upload-area" id="certificateUpload">
@@ -617,12 +482,11 @@
                     <p>Click to upload certificate (ITI, Diploma, Degree, etc.)</p>
                     <div class="file-name" id="certificateFileName"></div>
                     <img id="certificatePreview" class="image-preview" alt="Certificate Preview">
-                    <div class="upload-status-text" id="certificateStatusText">⬆️ Uploading...</div>
                 </div>
                 <input type="file" id="certificateInput" accept="image/*,.pdf" style="display: none;">
             </div>
 
-            <!-- 5. Terms & Conditions -->
+            <!-- 3. Terms & Conditions -->
             <div class="checkbox-group">
                 <input type="checkbox" id="termsCheckbox">
                 <label for="termsCheckbox">
@@ -705,8 +569,6 @@
         // ==========================================
         let uploads = {
             idProof: null,
-            profilePhoto: null,
-            selfie: null,
             certificate: null
         };
 
@@ -717,48 +579,19 @@
         const idInput = document.getElementById('idInput');
         const idFileName = document.getElementById('idFileName');
         const idPreview = document.getElementById('idPreview');
-        const idStatusText = document.getElementById('idStatusText');
         const idUploadIcon = document.getElementById('idUploadIcon');
         const idUploadText = document.getElementById('idUploadText');
 
-        // Profile Upload
-        const profileUpload = document.getElementById('profileUpload');
-        const profileInput = document.getElementById('profileInput');
-        const profileFileName = document.getElementById('profileFileName');
-        const profilePreview = document.getElementById('profilePreview');
-        const profileStatusText = document.getElementById('profileStatusText');
-        const profileUploadIcon = document.getElementById('profileUploadIcon');
-        const profileUploadText = document.getElementById('profileUploadText');
-
-        // Selfie
-        const startSelfieBtn = document.getElementById('startSelfieBtn');
-        const uploadSelfieBtn = document.getElementById('uploadSelfieBtn');
-        const selfieContainer = document.getElementById('selfieContainer');
-        const selfieVideo = document.getElementById('selfieVideo');
-        const captureSelfieBtn = document.getElementById('captureSelfieBtn');
-        const cancelSelfieBtn = document.getElementById('cancelSelfieBtn');
-        const selfieUploadArea = document.getElementById('selfieUploadArea');
-        const selfieInput = document.getElementById('selfieInput');
-        const selfieFileName = document.getElementById('selfieFileName');
-        const selfiePreview = document.getElementById('selfiePreview');
-        const selfieStatusText = document.getElementById('selfieStatusText');
-        const selfieUploadIcon = document.getElementById('selfieUploadIcon');
-        const selfieUploadText = document.getElementById('selfieUploadText');
-
-        // Certificate
+        // Certificate Upload
         const certificateUpload = document.getElementById('certificateUpload');
         const certificateInput = document.getElementById('certificateInput');
         const certificateFileName = document.getElementById('certificateFileName');
         const certificatePreview = document.getElementById('certificatePreview');
-        const certificateStatusText = document.getElementById('certificateStatusText');
 
         const termsCheckbox = document.getElementById('termsCheckbox');
         const continueBtn = document.getElementById('continueBtn');
         const backBtn = document.getElementById('backBtn');
         const saveDraftBtn = document.getElementById('saveDraftBtn');
-
-        let selfieStream = null;
-        let selfieCaptured = false;
 
         // ==========================================
         // DOCUMENT TYPE SELECTION
@@ -773,16 +606,17 @@
                 // Reset upload
                 uploads.idProof = null;
                 idFileName.textContent = '';
+                idFileName.className = 'file-name';
                 idPreview.classList.remove('show');
                 idPreview.src = '';
-                idStatusText.classList.remove('show');
+                document.getElementById('idError').classList.add('hidden');
             });
         });
 
         // ==========================================
         // FAST IMAGE COMPRESSION
         // ==========================================
-        function compressImageFast(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
+        function compressImageFast(file, maxWidth = 500, maxHeight = 500, quality = 0.6) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -828,13 +662,12 @@
             }
 
             try {
-                // Compress image first (fast)
+                // Compress image first
                 const compressedBlob = await compressImageFast(file);
                 const fileName = `${Date.now()}.jpg`;
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`providers/${currentUser.uid}/${folder}/${fileName}`);
                 
-                // Upload with metadata
                 const metadata = {
                     contentType: 'image/jpeg',
                     customMetadata: {
@@ -849,15 +682,14 @@
                 return downloadUrl;
             } catch (error) {
                 console.error('Error uploading file:', error);
-                showToast('Error uploading file: ' + error.message, true);
                 return null;
             }
         }
 
         // ==========================================
-        // SETUP UPLOAD HANDLERS
+        // SETUP UPLOAD HANDLER
         // ==========================================
-        function setupUploadFast(uploadElement, fileInput, fileNameSpan, previewImg, statusText, storeKey, folder, uploadIcon, uploadText) {
+        function setupUpload(uploadElement, fileInput, fileNameSpan, previewImg, storeKey, folder, uploadIcon, uploadText, errorId) {
             uploadElement.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -872,19 +704,13 @@
                     reader.onload = function(e) {
                         previewImg.src = e.target.result;
                         previewImg.classList.add('show');
-                        if (uploadIcon) {
-                            uploadIcon.style.display = 'none';
-                        }
-                        if (uploadText) {
-                            uploadText.style.display = 'none';
-                        }
+                        if (uploadIcon) uploadIcon.style.display = 'none';
+                        if (uploadText) uploadText.style.display = 'none';
                     };
                     reader.readAsDataURL(file);
                     
                     fileNameSpan.textContent = '⏳ Uploading...';
-                    fileNameSpan.style.color = '#ff9800';
-                    statusText.classList.add('show');
-                    statusText.textContent = '⬆️ Uploading...';
+                    fileNameSpan.className = 'file-name uploading';
                     
                     // Upload to Firebase
                     const url = await uploadFileToFirebaseFast(file, folder);
@@ -893,125 +719,26 @@
                         uploads[storeKey] = url;
                         verificationData[storeKey + 'Url'] = url;
                         fileNameSpan.textContent = '✅ Uploaded!';
-                        fileNameSpan.style.color = '#4caf50';
-                        statusText.textContent = '✅ Uploaded!';
-                        setTimeout(() => {
-                            statusText.classList.remove('show');
-                        }, 1000);
-                        console.log(`✅ ${storeKey} uploaded to Firebase Storage`);
+                        fileNameSpan.className = 'file-name uploaded';
+                        if (errorId) {
+                            document.getElementById(errorId).classList.add('hidden');
+                        }
+                        showToast('✅ File uploaded successfully!');
+                        console.log(`✅ ${storeKey} uploaded`);
                     } else {
                         fileNameSpan.textContent = '❌ Upload failed';
-                        fileNameSpan.style.color = '#dc3545';
-                        statusText.textContent = '❌ Upload failed';
-                        statusText.style.color = '#dc3545';
+                        fileNameSpan.className = 'file-name failed';
+                        showToast('❌ Upload failed. Please try again.', true);
                     }
                 }
             });
         }
 
         // Setup ID Upload
-        setupUploadFast(idUpload, idInput, idFileName, idPreview, idStatusText, 'idProof', 'id_proof', idUploadIcon, idUploadText);
-
-        // Setup Profile Upload
-        setupUploadFast(profileUpload, profileInput, profileFileName, profilePreview, profileStatusText, 'profilePhoto', 'profile_photos', profileUploadIcon, profileUploadText);
-
-        // Setup Selfie Upload
-        setupUploadFast(selfieUploadArea, selfieInput, selfieFileName, selfiePreview, selfieStatusText, 'selfie', 'selfies', selfieUploadIcon, selfieUploadText);
+        setupUpload(idUpload, idInput, idFileName, idPreview, 'idProof', 'id_proof', idUploadIcon, idUploadText, 'idError');
 
         // Setup Certificate Upload (Optional)
-        setupUploadFast(certificateUpload, certificateInput, certificateFileName, certificatePreview, certificateStatusText, 'certificate', 'certificates');
-
-        // ==========================================
-        // LIVE SELFIE
-        // ==========================================
-        startSelfieBtn.addEventListener('click', async () => {
-            try {
-                selfieContainer.classList.add('show');
-                selfieUploadArea.style.display = 'none';
-                selfieCaptured = false;
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: 300, height: 300 } 
-                });
-                selfieStream = stream;
-                selfieVideo.srcObject = stream;
-                await selfieVideo.play();
-            } catch (error) {
-                console.error('Camera error:', error);
-                showToast('Unable to access camera. Please upload a photo instead.', true);
-                selfieContainer.classList.remove('show');
-                selfieUploadArea.style.display = 'block';
-            }
-        });
-
-        captureSelfieBtn.addEventListener('click', () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 300;
-            canvas.height = 300;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(selfieVideo, 0, 0, 300, 300);
-            
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
-                
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selfiePreview.src = e.target.result;
-                    selfiePreview.classList.add('show');
-                    selfieUploadIcon.style.display = 'none';
-                    selfieUploadText.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-                
-                selfieFileName.textContent = '⏳ Uploading...';
-                selfieFileName.style.color = '#ff9800';
-                selfieStatusText.classList.add('show');
-                selfieStatusText.textContent = '⬆️ Uploading...';
-                selfieCaptured = true;
-                
-                // Upload to Firebase
-                const url = await uploadFileToFirebaseFast(file, 'selfies');
-                if (url) {
-                    uploads.selfie = url;
-                    verificationData.selfieUrl = url;
-                    selfieFileName.textContent = '✅ Uploaded!';
-                    selfieFileName.style.color = '#4caf50';
-                    selfieStatusText.textContent = '✅ Uploaded!';
-                    setTimeout(() => {
-                        selfieStatusText.classList.remove('show');
-                    }, 1000);
-                    document.getElementById('selfieError').classList.add('hidden');
-                    showToast('✅ Selfie uploaded successfully!');
-                }
-                
-                // Stop camera
-                if (selfieStream) {
-                    selfieStream.getTracks().forEach(track => track.stop());
-                    selfieStream = null;
-                }
-                selfieContainer.classList.remove('show');
-                selfieUploadArea.style.display = 'block';
-            }, 'image/jpeg', 0.8);
-        });
-
-        cancelSelfieBtn.addEventListener('click', () => {
-            if (selfieStream) {
-                selfieStream.getTracks().forEach(track => track.stop());
-                selfieStream = null;
-            }
-            selfieContainer.classList.remove('show');
-        });
-
-        uploadSelfieBtn.addEventListener('click', () => {
-            if (selfieStream) {
-                selfieStream.getTracks().forEach(track => track.stop());
-                selfieStream = null;
-            }
-            selfieContainer.classList.remove('show');
-            selfieUploadArea.style.display = 'block';
-            selfieInput.click();
-        });
+        setupUpload(certificateUpload, certificateInput, certificateFileName, certificatePreview, 'certificate', 'certificates');
 
         // ==========================================
         // TOAST FUNCTION
@@ -1039,18 +766,6 @@
                 isValid = false;
             } else {
                 document.getElementById('idError').classList.add('hidden');
-            }
-            
-            if (!uploads.profilePhoto) {
-                showToast('Please upload a profile photo', true);
-                isValid = false;
-            }
-            
-            if (!uploads.selfie) {
-                document.getElementById('selfieError').classList.remove('hidden');
-                isValid = false;
-            } else {
-                document.getElementById('selfieError').classList.add('hidden');
             }
             
             if (!termsCheckbox.checked) {
@@ -1081,36 +796,11 @@
                         uploads.idProof = data.idProofUrl;
                         verificationData.idProofUrl = data.idProofUrl;
                         idFileName.textContent = '✅ Uploaded';
-                        idFileName.style.color = '#4caf50';
+                        idFileName.className = 'file-name uploaded';
                         idPreview.src = data.idProofUrl;
                         idPreview.classList.add('show');
                         idUploadIcon.style.display = 'none';
                         idUploadText.style.display = 'none';
-                    }
-                    
-                    // Load profile photo
-                    if (data.profilePhotoUrl) {
-                        uploads.profilePhoto = data.profilePhotoUrl;
-                        verificationData.profilePhotoUrl = data.profilePhotoUrl;
-                        profileFileName.textContent = '✅ Uploaded';
-                        profileFileName.style.color = '#4caf50';
-                        profilePreview.src = data.profilePhotoUrl;
-                        profilePreview.classList.add('show');
-                        profileUploadIcon.style.display = 'none';
-                        profileUploadText.style.display = 'none';
-                    }
-                    
-                    // Load selfie
-                    if (data.selfieUrl) {
-                        uploads.selfie = data.selfieUrl;
-                        verificationData.selfieUrl = data.selfieUrl;
-                        selfieFileName.textContent = '✅ Uploaded';
-                        selfieFileName.style.color = '#4caf50';
-                        selfiePreview.src = data.selfieUrl;
-                        selfiePreview.classList.add('show');
-                        selfieUploadIcon.style.display = 'none';
-                        selfieUploadText.style.display = 'none';
-                        selfieUploadArea.style.display = 'block';
                     }
                     
                     // Load certificate
@@ -1118,7 +808,7 @@
                         uploads.certificate = data.certificateUrl;
                         verificationData.certificateUrl = data.certificateUrl;
                         certificateFileName.textContent = '✅ Uploaded';
-                        certificateFileName.style.color = '#4caf50';
+                        certificateFileName.className = 'file-name uploaded';
                         certificatePreview.src = data.certificateUrl;
                         certificatePreview.classList.add('show');
                     }
@@ -1146,8 +836,6 @@
 
             try {
                 verificationData.idProofUrl = uploads.idProof || '';
-                verificationData.profilePhotoUrl = uploads.profilePhoto || '';
-                verificationData.selfieUrl = uploads.selfie || '';
                 verificationData.certificateUrl = uploads.certificate || '';
                 verificationData.termsAccepted = termsCheckbox.checked;
                 verificationData.step3Completed = true;
@@ -1174,7 +862,7 @@
         // ==========================================
         async function continueToStep4() {
             if (!validateForm()) {
-                showToast('Please fill all required fields before continuing', true);
+                showToast('Please upload ID proof and accept terms', true);
                 return;
             }
             
@@ -1184,7 +872,7 @@
             const saved = await saveToFirestore();
             
             if (saved) {
-                showToast('✅ Verification details saved successfully! Redirecting...');
+                showToast('✅ Verification saved! Redirecting...');
                 setTimeout(() => {
                     window.location.href = 'Provider Profile Creation - Step 4.html';
                 }, 800);
@@ -1218,7 +906,7 @@
             const saved = await saveToFirestore();
             
             if (saved) {
-                showToast('📝 Profile saved as draft successfully!');
+                showToast('📝 Profile saved as draft!');
             }
             
             continueBtn.disabled = false;
@@ -1244,11 +932,10 @@
             loadSavedDataFromFirestore();
         }
 
-        console.log('%c🔥 Step 3: FAST Upload - Turbo Charged!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
-        console.log('✅ Images compressed to 200-300KB (5MB se)');
-        console.log('✅ Upload time: 2-3 seconds');
-        console.log('✅ Live selfie with camera');
-        console.log('✅ ID Proof: Aadhar or PAN (mandatory)');
+        console.log('%c🔥 Step 3: Verification - Simple & Fast!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
+        console.log('✅ Aadhar/PAN (mandatory)');
+        console.log('✅ Certificate (optional)');
+        console.log('✅ Fast upload with preview');
     </script>
 </body>
 </html>
