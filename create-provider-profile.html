@@ -280,6 +280,7 @@
             gap: 12px;
             transition: all 0.3s;
             animation: btnPulse 2s infinite;
+            font-family: 'Inter', sans-serif;
         }
 
         .create-profile-btn:disabled {
@@ -298,8 +299,7 @@
             animation: none;
         }
 
-        /* Login Button */
-        .login-btn {
+        .existing-profile-btn {
             width: 100%;
             padding: 16px;
             background: transparent;
@@ -318,17 +318,17 @@
             font-family: 'Inter', sans-serif;
         }
 
-        .login-btn:hover {
+        .existing-profile-btn:hover {
             background: rgba(0,255,204,0.1);
             border-color: #00ffcc;
             transform: scale(1.02);
         }
 
-        .login-btn:active {
+        .existing-profile-btn:active {
             transform: scale(0.97);
         }
 
-        .login-btn:disabled {
+        .existing-profile-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -400,6 +400,110 @@
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
+        /* Popup Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(15, 20, 35, 0.95);
+            border-radius: 40px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid rgba(0,255,204,0.3);
+            text-align: center;
+            animation: modalIn 0.4s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-icon {
+            font-size: 60px;
+            color: #ffcc00;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .modal-text {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .modal-btn-primary {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #00ffcc, #0097e6);
+            border: none;
+            border-radius: 50px;
+            color: #0a0a0f;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-btn-primary:hover {
+            transform: scale(1.02);
+        }
+
+        .modal-btn-secondary {
+            padding: 12px 30px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-btn-secondary:hover {
+            border-color: #00ffcc;
+            color: #00ffcc;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         @media (max-width: 480px) {
             .premium-card {
                 border-radius: 40px;
@@ -421,7 +525,7 @@
                 padding: 16px;
                 font-size: 16px;
             }
-            .login-btn {
+            .existing-profile-btn {
                 padding: 14px;
                 font-size: 14px;
             }
@@ -492,7 +596,7 @@
         <div class="button-section">
             <!-- Create New Profile Button -->
             <button class="create-profile-btn" id="createProfileBtn">
-                <i class="fas fa-rocket"></i> Create New Profile
+                <i class="fas fa-rocket"></i> Create a Provider Profile
                 <i class="fas fa-arrow-right"></i>
             </button>
 
@@ -503,13 +607,28 @@
                 <div class="divider-line"></div>
             </div>
 
-            <!-- Login Button -->
-            <button class="login-btn" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Login as Provider
+            <!-- Use Existing Profile Button -->
+            <button class="existing-profile-btn" id="existingProfileBtn">
+                <i class="fas fa-user-check"></i> Use Your Existing Profile
             </button>
 
             <!-- Skip to User Mode -->
             <button class="skip-link" id="skipBtn">← Back to User Mode</button>
+        </div>
+    </div>
+</div>
+
+<!-- Popup Modal -->
+<div class="modal-overlay" id="noProfileModal">
+    <div class="modal-content">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">No Profile Found!</div>
+        <div class="modal-text">
+            You don't have a provider profile yet. Please create a new profile to start earning.
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-primary" id="modalCreateBtn">Create Profile Now</button>
+            <button class="modal-btn-secondary" id="modalCloseBtn">Cancel</button>
         </div>
     </div>
 </div>
@@ -579,6 +698,17 @@
     }
 
     // ==========================================
+    // MODAL FUNCTIONS
+    // ==========================================
+    function showModal() {
+        document.getElementById('noProfileModal').classList.add('show');
+    }
+
+    function hideModal() {
+        document.getElementById('noProfileModal').classList.remove('show');
+    }
+
+    // ==========================================
     // CHECK AUTH STATUS
     // ==========================================
     let currentUser = null;
@@ -587,18 +717,18 @@
         if (user) {
             currentUser = user;
             document.getElementById('createProfileBtn').disabled = false;
-            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('existingProfileBtn').disabled = false;
             console.log('✅ User logged in:', user.email);
         } else {
             currentUser = null;
             document.getElementById('createProfileBtn').disabled = false;
-            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('existingProfileBtn').disabled = false;
             console.log('ℹ️ No user logged in');
         }
     });
 
     // ==========================================
-    // CREATE PROVIDER PROFILE (New Account)
+    // CREATE PROVIDER PROFILE (New Account - No Check)
     // ==========================================
     document.getElementById('createProfileBtn').addEventListener('click', async function() {
         const btn = this;
@@ -610,7 +740,7 @@
             if (!currentUser) {
                 showToast('Please login first to become a provider', true);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-rocket"></i> Create New Profile <i class="fas fa-arrow-right"></i>';
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Create a Provider Profile <i class="fas fa-arrow-right"></i>';
                 
                 setTimeout(() => {
                     window.location.href = 'login.html';
@@ -618,20 +748,9 @@
                 return;
             }
 
-            // Check if user already has a provider profile
+            // DIRECTLY CREATE NEW PROFILE - No existing check
             const providerRef = db.collection('providers').doc(currentUser.uid);
-            const docSnap = await providerRef.get();
-
-            if (docSnap.exists) {
-                showToast('✅ You already have a provider profile! Redirecting to dashboard...', false);
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
-                setTimeout(() => {
-                    window.location.href = 'provider-dashboard.html';
-                }, 1500);
-                return;
-            }
-
-            // Create new provider profile
+            
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Profile...';
             
             await providerRef.set({
@@ -669,14 +788,14 @@
             console.error('Error creating provider profile:', error);
             showToast('❌ Error: ' + error.message, true);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-rocket"></i> Create New Profile <i class="fas fa-arrow-right"></i>';
+            btn.innerHTML = '<i class="fas fa-rocket"></i> Create a Provider Profile <i class="fas fa-arrow-right"></i>';
         }
     });
 
     // ==========================================
-    // LOGIN AS PROVIDER (Existing Account)
+    // USE EXISTING PROFILE
     // ==========================================
-    document.getElementById('loginBtn').addEventListener('click', async function() {
+    document.getElementById('existingProfileBtn').addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
@@ -686,7 +805,7 @@
             if (!currentUser) {
                 showToast('Please login first', true);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
+                btn.innerHTML = '<i class="fas fa-user-check"></i> Use Your Existing Profile';
                 
                 setTimeout(() => {
                     window.location.href = 'login.html';
@@ -699,41 +818,51 @@
             const docSnap = await providerRef.get();
 
             if (!docSnap.exists) {
-                showToast('❌ No provider profile found. Please create a new profile first.', true);
+                // No profile found - Show popup
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
+                btn.innerHTML = '<i class="fas fa-user-check"></i> Use Your Existing Profile';
+                showModal();
                 return;
             }
 
             const providerData = docSnap.data();
             
-            // Check if profile is complete
-            if (providerData.profileCompleted) {
-                showToast('✅ Welcome back! Redirecting to dashboard...', false);
-                localStorage.setItem('quickfix_provider_logged_in', 'true');
-                localStorage.setItem('quickfix_provider_uid', currentUser.uid);
-                localStorage.setItem('quickfix_provider_name', providerData.displayName || 'Provider');
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
-                
-                setTimeout(() => {
-                    window.location.href = 'provider-dashboard.html';
-                }, 1500);
-            } else {
-                showToast('⚠️ Please complete your profile setup first.', true);
-                localStorage.setItem('quickfix_provider_logged_in', 'true');
-                localStorage.setItem('quickfix_provider_uid', currentUser.uid);
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
-                
-                setTimeout(() => {
-                    window.location.href = 'Provider Profile Creation - Step 1.html';
-                }, 1500);
-            }
+            // Profile exists - redirect to dashboard
+            showToast('✅ Welcome back! Redirecting to dashboard...', false);
+            localStorage.setItem('quickfix_provider_logged_in', 'true');
+            localStorage.setItem('quickfix_provider_uid', currentUser.uid);
+            localStorage.setItem('quickfix_provider_name', providerData.displayName || 'Provider');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
+            
+            setTimeout(() => {
+                window.location.href = 'provider-dashboard.html';
+            }, 1500);
 
         } catch (error) {
-            console.error('Error logging in as provider:', error);
+            console.error('Error checking profile:', error);
             showToast('❌ Error: ' + error.message, true);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Provider';
+            btn.innerHTML = '<i class="fas fa-user-check"></i> Use Your Existing Profile';
+        }
+    });
+
+    // ==========================================
+    // MODAL BUTTONS
+    // ==========================================
+    document.getElementById('modalCreateBtn').addEventListener('click', function() {
+        hideModal();
+        // Trigger create profile button
+        document.getElementById('createProfileBtn').click();
+    });
+
+    document.getElementById('modalCloseBtn').addEventListener('click', function() {
+        hideModal();
+    });
+
+    // Close modal on overlay click
+    document.getElementById('noProfileModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideModal();
         }
     });
 
@@ -747,7 +876,8 @@
     });
 
     console.log('✅ Become a Provider page loaded with Firebase!');
-    console.log('ℹ️ Two options: Create New Profile OR Login as Provider');
+    console.log('ℹ️ "Create a Provider Profile" -> Always creates new profile');
+    console.log('ℹ️ "Use Your Existing Profile" -> Checks and shows popup if no profile');
 </script>
 </body>
 </html>
