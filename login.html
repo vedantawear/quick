@@ -377,7 +377,7 @@
 
     <script>
         // ==========================================
-        // FIREBASE CONFIG - YOUR ORIGINAL CONFIG
+        // FIREBASE CONFIG
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
@@ -395,7 +395,7 @@
         try {
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
-                console.log("✅ Firebase initialized with correct config");
+                console.log("✅ Firebase initialized");
             }
             auth = firebase.auth();
             db = firebase.firestore();
@@ -499,12 +499,10 @@
             const cleanName = name.replace(/\s/g, '').toLowerCase();
             const timestamp = Date.now();
             
-            // Generate email based on phone or name
             const userEmail = phone && phone.length === 10 
                 ? `${phone}@quickfix.user` 
                 : `${cleanName}_${timestamp}@quickfix.user`;
             
-            // Generate password
             const password = phone && phone.length === 10 
                 ? `Quick${phone}Fix@2024` 
                 : `Guest${timestamp}@QuickFix`;
@@ -513,29 +511,26 @@
             let isNewUser = false;
             
             try {
-                // FIRST: Try to create new user (this will fail if already exists)
-                try {
-                    userCredential = await auth.createUserWithEmailAndPassword(userEmail, password);
-                    isNewUser = true;
-                    console.log("✅ New user created:", userEmail);
-                } catch (createError) {
-                    // If user already exists, sign in
-                    if (createError.code === 'auth/email-already-in-use') {
-                        console.log("ℹ️ User already exists, signing in...");
-                        userCredential = await auth.signInWithEmailAndPassword(userEmail, password);
-                        console.log("✅ Existing user signed in:", userEmail);
-                    } else {
-                        throw createError;
-                    }
-                }
+                // TRY: Create new user
+                userCredential = await auth.createUserWithEmailAndPassword(userEmail, password);
+                isNewUser = true;
+                console.log("✅ New user created:", userEmail);
             } catch (error) {
-                console.error("Auth error:", error);
-                throw error;
+                // If user already exists, sign in
+                if (error.code === 'auth/email-already-in-use') {
+                    console.log("ℹ️ User exists, signing in...");
+                    userCredential = await auth.signInWithEmailAndPassword(userEmail, password);
+                    console.log("✅ User signed in:", userEmail);
+                } else {
+                    // If Email/Password is not enabled or any other error, fallback to demo
+                    console.warn("Auth error:", error.code);
+                    throw error;
+                }
             }
             
             const user = userCredential.user;
             
-            // Update profile display name
+            // Update profile
             if (isNewUser || user.displayName !== name) {
                 try {
                     await user.updateProfile({ displayName: name });
@@ -544,13 +539,11 @@
                 }
             }
             
-            // Save to Firestore
             await saveUserToFirestore(user, name, phone);
             
             localStorage.setItem('quickfix_logged_in', 'true');
             localStorage.setItem('quickfix_auth_method', 'firebase');
             localStorage.setItem('quickfix_mode', 'user');
-            localStorage.setItem('quickfix_session_start', Date.now().toString());
             
             const profile = {
                 name: name,
@@ -571,26 +564,15 @@
         function guestLogin() {
             try {
                 const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
-                const guestName = "Explorer";
-                const guestPhone = "";
                 
                 localStorage.clear();
                 
                 localStorage.setItem('quickfix_logged_in', 'true');
                 localStorage.setItem('quickfix_mode', 'guest');
-                localStorage.setItem('quickfix_user_name', guestName);
-                localStorage.setItem('quickfix_user_phone', guestPhone);
+                localStorage.setItem('quickfix_user_name', 'Explorer');
+                localStorage.setItem('quickfix_user_phone', '');
                 localStorage.setItem('quickfix_guest_id', guestId);
                 localStorage.setItem('quickfix_user_type', 'guest');
-                
-                const profile = {
-                    name: guestName,
-                    phone: guestPhone,
-                    isGuest: true,
-                    guestId: guestId,
-                    createdAt: new Date().toISOString()
-                };
-                localStorage.setItem('quickfix_profile', JSON.stringify(profile));
                 
                 showToast('✨ Exploring as Guest — you can book services!');
                 
@@ -631,17 +613,8 @@
             setLoading(loginBtn, true);
             
             try {
-                if (!auth || !db) {
-                    // Fallback to demo mode
-                    showToast('✨ Demo Mode: Login successful!', false);
-                    localStorage.setItem('quickfix_logged_in', 'true');
-                    localStorage.setItem('quickfix_mode', 'demo');
-                    localStorage.setItem('quickfix_user_name', name);
-                    localStorage.setItem('quickfix_user_phone', phone || '');
-                    setTimeout(() => {
-                        window.location.href = 'user-homepage.html';
-                    }, 800);
-                    return;
+                if (!auth) {
+                    throw new Error("Firebase not ready");
                 }
                 
                 const result = await createOrAuthenticateUser(name, phone);
@@ -649,20 +622,25 @@
                 if (result.success) {
                     const welcomeMsg = result.isNewUser 
                         ? `🎉 Welcome ${name}! Your QuickFix journey begins now.` 
-                        : `👋 Welcome back ${name}! Ready to fix things?`;
+                        : `👋 Welcome back ${name}!`;
                     showToast(welcomeMsg);
                     
                     setTimeout(() => {
                         window.location.href = 'user-homepage.html';
                     }, 1000);
-                } else {
-                    throw new Error("Authentication failed");
                 }
             } catch (error) {
-                console.error("Login error details:", error);
+                console.error("Login error:", error.code);
                 
-                // Final fallback - Demo mode
-                showToast(`✨ Demo Mode: Welcome ${name}!`, false);
+                // CHECK: Agar Email/Password enable nahi hai toh error aayega
+                if (error.code === 'auth/operation-not-allowed') {
+                    showToast('⚠️ Email/Password not enabled in Firebase Console. Please enable it in Authentication > Sign-in methods.', true);
+                    setLoading(loginBtn, false, originalBtnContent);
+                    return;
+                }
+                
+                // FALLBACK: Demo mode
+                showToast(`✨ Welcome ${name}! (Demo Mode)`, false);
                 localStorage.setItem('quickfix_logged_in', 'true');
                 localStorage.setItem('quickfix_mode', 'demo');
                 localStorage.setItem('quickfix_user_name', name);
@@ -762,9 +740,9 @@
         }
         createParticles();
 
-        console.log('%c⚡ QuickFix Login — Fully Working!', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
-        console.log('%c🔥 Firebase Auth + Firestore configured', 'color: #00ffcc; font-size: 12px;');
-        console.log('%c📌 If Firebase fails, Demo Mode automatically activates', 'color: #8895a4; font-size: 11px;');
+        console.log('%c⚡ QuickFix Login — Working with Fallback', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
+        console.log('%c📌 If Firebase fails, Demo Mode activates automatically', 'color: #8895a4; font-size: 11px;');
+        console.log('%c🔥 Important: Enable Email/Password in Firebase Console!', 'color: #ff0066; font-size: 12px; font-weight: bold;');
     </script>
 </body>
 </html>
