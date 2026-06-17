@@ -6,16 +6,6 @@
     <title>QuickFix - Login | Premium Service Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Firebase SDK Import Map -->
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
-            }
-        }
-    </script>
     <style>
         * {
             margin: 0;
@@ -380,65 +370,64 @@
 
     <div class="toast" id="toastMsg"></div>
 
-    <script type="module">
+    <!-- ==========================================
+         FIREBASE SDK + INIT
+         ========================================== -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
         // ==========================================
-        // FIREBASE IMPORTS & INITIALIZATION
+        // FIREBASE CONFIG
         // ==========================================
-        import { initializeApp } from "firebase/app";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword,
-            updateProfile,
-            onAuthStateChanged,
-            signOut
-        } from "firebase/auth";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            getDoc, 
-            serverTimestamp 
-        } from "firebase/firestore";
-        
-        // Firebase Configuration (Demo project - fully functional with proper setup)
-        // For this demo, we use a valid configuration structure. In production, replace with your own.
         const firebaseConfig = {
-            apiKey: "AIzaSyB3w2xU4Mq3yq5X7Z9W2kL8pR5tY7uI2oJ3kL4mN",
-            authDomain: "quickfix-demo-8b7c6.firebaseapp.com",
-            projectId: "quickfix-demo-8b7c6",
-            storageBucket: "quickfix-demo-8b7c6.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abc123def456ghi789j0"
+            apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+            authDomain: "quickfix-907c0.firebaseapp.com",
+            projectId: "quickfix-907c0",
+            storageBucket: "quickfix-907c0.firebasestorage.app",
+            messagingSenderId: "539102384460",
+            appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+            measurementId: "G-B548C8R9WV"
         };
-        
+
         // Initialize Firebase
-        let app, auth, db;
+        let auth, db;
+        
         try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            auth = firebase.auth();
+            db = firebase.firestore();
             console.log("✅ Firebase initialized successfully");
         } catch (error) {
             console.error("Firebase init error:", error);
         }
-        
-        // DOM Elements
+
+        // ==========================================
+        // DOM ELEMENTS
+        // ==========================================
         const toastMsg = document.getElementById('toastMsg');
         const loginBtn = document.getElementById('loginBtn');
         const guestBtn = document.getElementById('guestBtn');
         const userNameInput = document.getElementById('userName');
         const userPhoneInput = document.getElementById('userPhone');
-        
-        // Helper: Show toast notification
+
+        // ==========================================
+        // TOAST FUNCTION
+        // ==========================================
         function showToast(message, isError = false) {
             toastMsg.textContent = message;
             toastMsg.style.borderLeftColor = isError ? '#ff0066' : '#00ffcc';
             toastMsg.classList.add('show');
-            setTimeout(() => toastMsg.classList.remove('show'), 3500);
+            clearTimeout(toastMsg._timeout);
+            toastMsg._timeout = setTimeout(() => toastMsg.classList.remove('show'), 3500);
         }
-        
-        // Helper: Set button loading state
+
+        // ==========================================
+        // SET LOADING STATE
+        // ==========================================
         function setLoading(button, isLoading, originalContent = null) {
             if (isLoading) {
                 button.disabled = true;
@@ -452,14 +441,16 @@
                 }
             }
         }
-        
-        // Save user to Firestore with complete profile
+
+        // ==========================================
+        // SAVE USER TO FIRESTORE
+        // ==========================================
         async function saveUserToFirestore(user, name, phone) {
             try {
-                const userRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
+                const userRef = db.collection("users").doc(user.uid);
+                const userSnap = await userRef.get();
                 
-                const now = serverTimestamp();
+                const now = firebase.firestore.FieldValue.serverTimestamp();
                 const userData = {
                     uid: user.uid,
                     displayName: name,
@@ -471,7 +462,7 @@
                     updatedAt: now
                 };
                 
-                if (!userSnap.exists()) {
+                if (!userSnap.exists) {
                     userData.createdAt = now;
                     userData.totalBookings = 0;
                     userData.walletBalance = 0;
@@ -482,13 +473,12 @@
                     };
                 } else {
                     userData.firstLogin = false;
-                    // Preserve existing data like wallet balance
                     const existing = userSnap.data();
                     userData.walletBalance = existing.walletBalance || 0;
                     userData.totalBookings = existing.totalBookings || 0;
                 }
                 
-                await setDoc(userRef, userData, { merge: true });
+                await userRef.set(userData, { merge: true });
                 
                 // Store in localStorage for quick access
                 localStorage.setItem('quickfix_user_uid', user.uid);
@@ -503,10 +493,11 @@
                 return false;
             }
         }
-        
-        // Create or authenticate user using email/password (based on phone + name)
+
+        // ==========================================
+        // CREATE OR AUTHENTICATE USER
+        // ==========================================
         async function createOrAuthenticateUser(name, phone) {
-            // Generate a deterministic email based on name + timestamp to avoid collisions
             const cleanName = name.replace(/\s/g, '').toLowerCase();
             const timestamp = Date.now();
             const userEmail = phone && phone.length === 10 
@@ -519,13 +510,13 @@
             
             try {
                 // Try to sign in first
-                userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
+                userCredential = await auth.signInWithEmailAndPassword(userEmail, password);
                 console.log("Existing user signed in");
             } catch (signInError) {
                 if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
                     // Create new user
                     try {
-                        userCredential = await createUserWithEmailAndPassword(auth, userEmail, password);
+                        userCredential = await auth.createUserWithEmailAndPassword(userEmail, password);
                         isNewUser = true;
                         console.log("New user created");
                     } catch (createError) {
@@ -539,9 +530,9 @@
             
             const user = userCredential.user;
             
-            // Update profile display name if needed
+            // Update profile display name
             if (isNewUser || user.displayName !== name) {
-                await updateProfile(user, { displayName: name });
+                await user.updateProfile({ displayName: name });
             }
             
             // Save to Firestore
@@ -565,15 +556,16 @@
             
             return { success: true, isNewUser, user };
         }
-        
-        // Guest login handler (no Firebase auth, just local storage)
+
+        // ==========================================
+        // GUEST LOGIN
+        // ==========================================
         async function guestLogin() {
             try {
                 const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
                 const guestName = "Explorer";
                 const guestPhone = "";
                 
-                // Clear any existing guest data but set new
                 localStorage.clear();
                 
                 localStorage.setItem('quickfix_logged_in', 'true');
@@ -602,13 +594,14 @@
                 showToast("Guest mode error, please try again", true);
             }
         }
-        
-        // Main login handler (sign-in / sign-up)
+
+        // ==========================================
+        // MAIN LOGIN HANDLER
+        // ==========================================
         async function handleLogin() {
             const name = userNameInput.value.trim();
             let phone = userPhoneInput.value.trim();
             
-            // Validation
             if (!name) {
                 showToast('👉 Please enter your name to continue', true);
                 userNameInput.focus();
@@ -626,12 +619,10 @@
                 return;
             }
             
-            // Store original button content
             const originalBtnContent = loginBtn.innerHTML;
             setLoading(loginBtn, true);
             
             try {
-                // Check if Firebase initialized
                 if (!auth || !db) {
                     throw new Error("Firebase not initialized. Using fallback mode.");
                 }
@@ -644,7 +635,6 @@
                         : `👋 Welcome back ${name}! Ready to fix things?`;
                     showToast(welcomeMsg);
                     
-                    // Small delay for toast visibility before redirect
                     setTimeout(() => {
                         window.location.href = 'user-homepage.html';
                     }, 1000);
@@ -659,7 +649,6 @@
                     errorMessage = "Network issue. Check your connection and try again.";
                 } else if (error.message.includes('configuration')) {
                     errorMessage = "Service configuration issue. Using demo mode - redirecting...";
-                    // Fallback demo mode: store local session without Firebase
                     localStorage.setItem('quickfix_logged_in', 'true');
                     localStorage.setItem('quickfix_mode', 'demo');
                     localStorage.setItem('quickfix_user_name', name);
@@ -678,34 +667,27 @@
                 setLoading(loginBtn, false, originalBtnContent);
             }
         }
-        
-        // Handle guest login button
-        function handleGuestLogin() {
-            guestLogin();
-        }
-        
-        // Check existing session on page load
+
+        // ==========================================
+        // CHECK EXISTING SESSION
+        // ==========================================
         async function checkExistingSession() {
-            // Check local storage first
             const isLoggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
             const userUid = localStorage.getItem('quickfix_user_uid');
             
             if (isLoggedIn && userUid) {
-                // Already have session, redirect to home
                 console.log("Existing session found, redirecting to homepage");
                 window.location.href = 'user-homepage.html';
                 return;
             }
             
-            // Check Firebase auth state
             if (auth) {
-                onAuthStateChanged(auth, async (user) => {
+                auth.onAuthStateChanged(async (user) => {
                     if (user && localStorage.getItem('quickfix_logged_in') !== 'true') {
-                        // Firebase user exists but session not stored
                         try {
-                            const userRef = doc(db, "users", user.uid);
-                            const userSnap = await getDoc(userRef);
-                            if (userSnap.exists()) {
+                            const userRef = db.collection("users").doc(user.uid);
+                            const userSnap = await userRef.get();
+                            if (userSnap.exists) {
                                 const userData = userSnap.data();
                                 localStorage.setItem('quickfix_logged_in', 'true');
                                 localStorage.setItem('quickfix_user_uid', user.uid);
@@ -721,18 +703,21 @@
                 });
             }
         }
-        
-        // Input validations
+
+        // ==========================================
+        // INPUT VALIDATIONS
+        // ==========================================
         userPhoneInput.addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
         });
         
         userNameInput.addEventListener('input', (e) => {
-            // Prevent special chars but allow letters and spaces
             e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '').slice(0, 50);
         });
-        
-        // Enter key handlers
+
+        // ==========================================
+        // ENTER KEY HANDLERS
+        // ==========================================
         userNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
@@ -740,15 +725,21 @@
         userPhoneInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
-        
-        // Attach event listeners
+
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
         loginBtn.onclick = handleLogin;
-        guestBtn.onclick = handleGuestLogin;
-        
-        // Run session check
+        guestBtn.onclick = guestLogin;
+
+        // ==========================================
+        // RUN SESSION CHECK
+        // ==========================================
         checkExistingSession();
-        
-        // Generate floating particles for visual effect
+
+        // ==========================================
+        // CREATE PARTICLES
+        // ==========================================
         function createParticles() {
             for (let i = 0; i < 60; i++) {
                 const particle = document.createElement('div');
@@ -763,9 +754,10 @@
             }
         }
         createParticles();
-        
-        console.log('%c⚡ QuickFix Login — Fully Functional with Firebase & Fallback Mode', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
-        console.log('%c🔥 Ready for seamless authentication!', 'color: #00ffcc; font-size: 12px;');
+
+        console.log('%c⚡ QuickFix Login — Fully Functional with Firebase', 'color: #ffcc00; font-size: 13px; font-weight: bold;');
+        console.log('%c🔥 Firebase Auth + Firestore configured!', 'color: #00ffcc; font-size: 12px;');
+        console.log('%c📌 Config: quickfix-907c0', 'color: #8895a4; font-size: 11px;');
     </script>
 </body>
 </html>
