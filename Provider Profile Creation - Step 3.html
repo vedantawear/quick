@@ -192,17 +192,15 @@
             margin-left: 8px;
         }
 
-        /* UPLOAD AREA WITH PREVIEW */
         .upload-area {
             background: #f5f7fb;
             border: 2px dashed #cbd5e1;
             border-radius: 20px;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
-            min-height: 120px;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -214,6 +212,11 @@
             background: #f0f4fe;
         }
 
+        .upload-area.has-image {
+            border-color: #4caf50;
+            background: #f0faf0;
+        }
+
         .upload-area i {
             font-size: 40px;
             color: #1a5f7a;
@@ -223,33 +226,33 @@
         .upload-area p {
             color: #8895a4;
             font-size: 12px;
+            margin: 0;
         }
 
         .upload-area .file-name {
-            margin-top: 8px;
-            font-size: 11px;
-            font-weight: 500;
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .upload-area .file-name.uploaded {
+        .file-name.uploaded {
             color: #4caf50;
         }
 
-        .upload-area .file-name.failed {
-            color: #dc3545;
-        }
-
-        .upload-area .file-name.uploading {
+        .file-name.uploading {
             color: #ff9800;
         }
 
-        /* Image Preview */
+        .file-name.failed {
+            color: #dc3545;
+        }
+
         .image-preview {
             width: 100%;
-            max-height: 180px;
+            max-height: 150px;
             object-fit: contain;
             border-radius: 12px;
-            margin-top: 10px;
+            margin-top: 8px;
             display: none;
             border: 1px solid #e2e8f0;
             background: white;
@@ -260,7 +263,6 @@
             display: block;
         }
 
-        /* Document Type Selection */
         .doc-type-selector {
             display: flex;
             gap: 12px;
@@ -278,6 +280,7 @@
             color: #8895a4;
             cursor: pointer;
             transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
         }
 
         .doc-type-btn.active {
@@ -335,6 +338,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-primary:hover {
@@ -370,6 +374,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-secondary:hover {
@@ -404,6 +409,15 @@
             z-index: 1000;
             animation: slideUp 0.3s ease;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        .toast.success {
+            background: #1a5f7a;
         }
 
         @media (max-width: 480px) {
@@ -453,7 +467,7 @@
                 <p>Customers trust verified professionals 3x more</p>
             </div>
 
-            <!-- 1. ID Proof - Aadhar or PAN (Mandatory) -->
+            <!-- ID Proof - Aadhar or PAN (Mandatory) -->
             <div class="form-group">
                 <label>ID Proof <span class="required">*</span> (Aadhar or PAN)</label>
                 <div class="doc-type-selector" id="docTypeSelector">
@@ -470,23 +484,23 @@
                 <input type="file" id="idInput" accept="image/*" style="display: none;">
                 <div id="idError" class="error-message hidden">
                     <i class="fas fa-exclamation-circle"></i>
-                    <span>Please upload your ID proof (Aadhar or PAN)</span>
+                    <span>Please upload your ID proof</span>
                 </div>
             </div>
 
-            <!-- 2. Professional Certificate (Optional) -->
+            <!-- Professional Certificate (Optional) -->
             <div class="form-group">
-                <label>Professional Certificate <span class="optional">(optional - ITI/Diploma/Degree)</span></label>
+                <label>Professional Certificate <span class="optional">(optional)</span></label>
                 <div class="upload-area" id="certificateUpload">
                     <i class="fas fa-certificate"></i>
-                    <p>Click to upload certificate (ITI, Diploma, Degree, etc.)</p>
+                    <p>Click to upload certificate</p>
                     <div class="file-name" id="certificateFileName"></div>
                     <img id="certificatePreview" class="image-preview" alt="Certificate Preview">
                 </div>
                 <input type="file" id="certificateInput" accept="image/*,.pdf" style="display: none;">
             </div>
 
-            <!-- 3. Terms & Conditions -->
+            <!-- Terms & Conditions -->
             <div class="checkbox-group">
                 <input type="checkbox" id="termsCheckbox">
                 <label for="termsCheckbox">
@@ -504,11 +518,7 @@
             </button>
 
             <button class="btn-secondary" id="backBtn">
-                <i class="fas fa-arrow-left"></i> Back to Work Details
-            </button>
-
-            <button class="btn-primary btn-outline" id="saveDraftBtn" style="background: transparent; margin-top: 12px;">
-                <i class="fas fa-save"></i> Save as Draft
+                <i class="fas fa-arrow-left"></i> Back
             </button>
         </div>
     </div>
@@ -535,28 +545,25 @@
             measurementId: "G-B548C8R9WV"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        console.log('✅ Firebase initialized successfully!');
+        console.log('✅ Firebase initialized');
 
         // ==========================================
-        // CHECK AUTH STATUS
+        // CHECK AUTH
         // ==========================================
         let currentUser = null;
-        let verificationData = {};
 
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
                 console.log('✅ User logged in:', user.email);
-                loadSavedDataFromFirestore();
+                loadSavedData();
             } else {
                 currentUser = null;
-                console.log('ℹ️ No user logged in');
                 showToast('Please login first', true);
                 setTimeout(() => {
                     window.location.href = 'login.html';
@@ -574,7 +581,6 @@
 
         let docType = 'aadhar';
 
-        // ID Upload
         const idUpload = document.getElementById('idUpload');
         const idInput = document.getElementById('idInput');
         const idFileName = document.getElementById('idFileName');
@@ -582,7 +588,6 @@
         const idUploadIcon = document.getElementById('idUploadIcon');
         const idUploadText = document.getElementById('idUploadText');
 
-        // Certificate Upload
         const certificateUpload = document.getElementById('certificateUpload');
         const certificateInput = document.getElementById('certificateInput');
         const certificateFileName = document.getElementById('certificateFileName');
@@ -591,7 +596,6 @@
         const termsCheckbox = document.getElementById('termsCheckbox');
         const continueBtn = document.getElementById('continueBtn');
         const backBtn = document.getElementById('backBtn');
-        const saveDraftBtn = document.getElementById('saveDraftBtn');
 
         // ==========================================
         // DOCUMENT TYPE SELECTION
@@ -603,20 +607,20 @@
                 docType = this.dataset.type;
                 idUploadText.textContent = `Click to upload ${docType === 'aadhar' ? 'Aadhar Card' : 'PAN Card'}`;
                 idUploadIcon.className = docType === 'aadhar' ? 'fas fa-id-card' : 'fas fa-file-alt';
-                // Reset upload
                 uploads.idProof = null;
                 idFileName.textContent = '';
                 idFileName.className = 'file-name';
                 idPreview.classList.remove('show');
                 idPreview.src = '';
+                idUpload.classList.remove('has-image');
                 document.getElementById('idError').classList.add('hidden');
             });
         });
 
         // ==========================================
-        // FAST IMAGE COMPRESSION
+        // COMPRESS IMAGE - FAST
         // ==========================================
-        function compressImageFast(file, maxWidth = 500, maxHeight = 500, quality = 0.6) {
+        function compressImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -624,27 +628,26 @@
                     img.onload = function() {
                         let width = img.width;
                         let height = img.height;
+                        const maxSize = 600;
                         
-                        if (width > maxWidth) {
-                            height = (height * maxWidth) / width;
-                            width = maxWidth;
+                        if (width > maxSize) {
+                            height = (height * maxSize) / width;
+                            width = maxSize;
                         }
-                        if (height > maxHeight) {
-                            width = (width * maxHeight) / height;
-                            height = maxHeight;
+                        if (height > maxSize) {
+                            width = (width * maxSize) / height;
+                            height = maxSize;
                         }
                         
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, 0, 0, width, height);
                         
                         canvas.toBlob((blob) => {
                             resolve(blob);
-                        }, 'image/jpeg', quality);
+                        }, 'image/jpeg', 0.7);
                     };
                     img.src = e.target.result;
                 };
@@ -653,83 +656,75 @@
         }
 
         // ==========================================
-        // FAST UPLOAD TO FIREBASE
+        // UPLOAD TO FIREBASE - FIXED
         // ==========================================
-        async function uploadFileToFirebaseFast(file, folder) {
+        async function uploadToFirebase(file, folder) {
             if (!currentUser) {
                 showToast('Please login first', true);
                 return null;
             }
 
             try {
-                // Compress image first
-                const compressedBlob = await compressImageFast(file);
+                // Compress
+                const compressed = await compressImage(file);
                 const fileName = `${Date.now()}.jpg`;
-                const storageRef = storage.ref();
-                const fileRef = storageRef.child(`providers/${currentUser.uid}/${folder}/${fileName}`);
+                const path = `providers/${currentUser.uid}/${folder}/${fileName}`;
+                const fileRef = storage.ref(path);
                 
-                const metadata = {
-                    contentType: 'image/jpeg',
-                    customMetadata: {
-                        uploadedBy: currentUser.uid,
-                        timestamp: Date.now().toString()
-                    }
-                };
+                // Upload
+                const snapshot = await fileRef.put(compressed);
+                const url = await snapshot.ref.getDownloadURL();
                 
-                const snapshot = await fileRef.put(compressedBlob, metadata);
-                const downloadUrl = await snapshot.ref.getDownloadURL();
-                
-                return downloadUrl;
+                return url;
             } catch (error) {
-                console.error('Error uploading file:', error);
+                console.error('Upload error:', error);
                 return null;
             }
         }
 
         // ==========================================
-        // SETUP UPLOAD HANDLER
+        // SETUP UPLOAD
         // ==========================================
         function setupUpload(uploadElement, fileInput, fileNameSpan, previewImg, storeKey, folder, uploadIcon, uploadText, errorId) {
             uploadElement.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        showToast('File size should be less than 5MB', true);
-                        return;
+                if (!file) return;
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('File size should be less than 5MB', true);
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.add('show');
+                    if (uploadIcon) uploadIcon.style.display = 'none';
+                    if (uploadText) uploadText.style.display = 'none';
+                    uploadElement.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+                
+                fileNameSpan.textContent = '⏳ Uploading...';
+                fileNameSpan.className = 'file-name uploading';
+                
+                // Upload
+                const url = await uploadToFirebase(file, folder);
+                
+                if (url) {
+                    uploads[storeKey] = url;
+                    fileNameSpan.textContent = '✅ Uploaded!';
+                    fileNameSpan.className = 'file-name uploaded';
+                    if (errorId) {
+                        document.getElementById(errorId).classList.add('hidden');
                     }
-                    
-                    // Show preview
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.src = e.target.result;
-                        previewImg.classList.add('show');
-                        if (uploadIcon) uploadIcon.style.display = 'none';
-                        if (uploadText) uploadText.style.display = 'none';
-                    };
-                    reader.readAsDataURL(file);
-                    
-                    fileNameSpan.textContent = '⏳ Uploading...';
-                    fileNameSpan.className = 'file-name uploading';
-                    
-                    // Upload to Firebase
-                    const url = await uploadFileToFirebaseFast(file, folder);
-                    
-                    if (url) {
-                        uploads[storeKey] = url;
-                        verificationData[storeKey + 'Url'] = url;
-                        fileNameSpan.textContent = '✅ Uploaded!';
-                        fileNameSpan.className = 'file-name uploaded';
-                        if (errorId) {
-                            document.getElementById(errorId).classList.add('hidden');
-                        }
-                        showToast('✅ File uploaded successfully!');
-                        console.log(`✅ ${storeKey} uploaded`);
-                    } else {
-                        fileNameSpan.textContent = '❌ Upload failed';
-                        fileNameSpan.className = 'file-name failed';
-                        showToast('❌ Upload failed. Please try again.', true);
-                    }
+                    showToast('✅ Uploaded successfully!');
+                } else {
+                    fileNameSpan.textContent = '❌ Failed, retry';
+                    fileNameSpan.className = 'file-name failed';
+                    showToast('❌ Upload failed. Please try again.', true);
                 }
             });
         }
@@ -737,51 +732,27 @@
         // Setup ID Upload
         setupUpload(idUpload, idInput, idFileName, idPreview, 'idProof', 'id_proof', idUploadIcon, idUploadText, 'idError');
 
-        // Setup Certificate Upload (Optional)
+        // Setup Certificate Upload
         setupUpload(certificateUpload, certificateInput, certificateFileName, certificatePreview, 'certificate', 'certificates');
 
         // ==========================================
-        // TOAST FUNCTION
+        // TOAST
         // ==========================================
         function showToast(message, isError = false) {
-            const oldToasts = document.querySelectorAll('.toast');
-            oldToasts.forEach(t => t.remove());
+            const old = document.querySelector('.toast');
+            if (old) old.remove();
             
             const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+            toast.className = 'toast ' + (isError ? 'error' : 'success');
             toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
         // ==========================================
-        // VALIDATE FORM
+        // LOAD SAVED DATA
         // ==========================================
-        function validateForm() {
-            let isValid = true;
-            
-            if (!uploads.idProof) {
-                document.getElementById('idError').classList.remove('hidden');
-                isValid = false;
-            } else {
-                document.getElementById('idError').classList.add('hidden');
-            }
-            
-            if (!termsCheckbox.checked) {
-                document.getElementById('termsError').classList.remove('hidden');
-                isValid = false;
-            } else {
-                document.getElementById('termsError').classList.add('hidden');
-            }
-            
-            return isValid;
-        }
-
-        // ==========================================
-        // LOAD SAVED DATA FROM FIRESTORE
-        // ==========================================
-        async function loadSavedDataFromFirestore() {
+        async function loadSavedData() {
             if (!currentUser) return;
 
             try {
@@ -791,37 +762,32 @@
                 if (docSnap.exists) {
                     const data = docSnap.data();
                     
-                    // Load ID proof
                     if (data.idProofUrl) {
                         uploads.idProof = data.idProofUrl;
-                        verificationData.idProofUrl = data.idProofUrl;
                         idFileName.textContent = '✅ Uploaded';
                         idFileName.className = 'file-name uploaded';
                         idPreview.src = data.idProofUrl;
                         idPreview.classList.add('show');
                         idUploadIcon.style.display = 'none';
                         idUploadText.style.display = 'none';
+                        idUpload.classList.add('has-image');
                     }
                     
-                    // Load certificate
                     if (data.certificateUrl) {
                         uploads.certificate = data.certificateUrl;
-                        verificationData.certificateUrl = data.certificateUrl;
                         certificateFileName.textContent = '✅ Uploaded';
                         certificateFileName.className = 'file-name uploaded';
                         certificatePreview.src = data.certificateUrl;
                         certificatePreview.classList.add('show');
+                        certificateUpload.classList.add('has-image');
                     }
                     
                     if (data.termsAccepted) {
                         termsCheckbox.checked = true;
-                        verificationData.termsAccepted = true;
                     }
-                    
-                    console.log('✅ Loaded verification data from Firestore');
                 }
             } catch (error) {
-                console.error('Error loading from Firestore:', error);
+                console.error('Load error:', error);
             }
         }
 
@@ -829,50 +795,53 @@
         // SAVE TO FIRESTORE
         // ==========================================
         async function saveToFirestore() {
-            if (!currentUser) {
-                showToast('Please login first', true);
-                return false;
-            }
+            if (!currentUser) return false;
 
             try {
-                verificationData.idProofUrl = uploads.idProof || '';
-                verificationData.certificateUrl = uploads.certificate || '';
-                verificationData.termsAccepted = termsCheckbox.checked;
-                verificationData.step3Completed = true;
-                verificationData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-                verificationData.verificationStatus = 'pending';
+                const data = {
+                    idProofUrl: uploads.idProof || '',
+                    certificateUrl: uploads.certificate || '',
+                    termsAccepted: termsCheckbox.checked,
+                    step3Completed: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificationStatus: 'pending'
+                };
 
-                await db.collection('providers').doc(currentUser.uid).set(verificationData, { merge: true });
-                console.log('✅ Verification data saved to Firestore');
-
-                localStorage.setItem('quickfix_provider_verification', JSON.stringify(verificationData));
-                localStorage.setItem('quickfix_provider_step3_complete', 'true');
-
+                await db.collection('providers').doc(currentUser.uid).set(data, { merge: true });
                 return true;
-
             } catch (error) {
-                console.error('Error saving to Firestore:', error);
-                showToast('Error saving data: ' + error.message, true);
+                console.error('Save error:', error);
+                showToast('Error saving: ' + error.message, true);
                 return false;
             }
         }
 
         // ==========================================
-        // CONTINUE BUTTON
+        // CONTINUE
         // ==========================================
         async function continueToStep4() {
-            if (!validateForm()) {
-                showToast('Please upload ID proof and accept terms', true);
+            // Validate
+            if (!uploads.idProof) {
+                document.getElementById('idError').classList.remove('hidden');
+                showToast('Please upload ID proof', true);
                 return;
             }
-            
+            document.getElementById('idError').classList.add('hidden');
+
+            if (!termsCheckbox.checked) {
+                document.getElementById('termsError').classList.remove('hidden');
+                showToast('Please accept terms', true);
+                return;
+            }
+            document.getElementById('termsError').classList.add('hidden');
+
             continueBtn.disabled = true;
             continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            
+
             const saved = await saveToFirestore();
-            
+
             if (saved) {
-                showToast('✅ Verification saved! Redirecting...');
+                showToast('✅ Verification saved!');
                 setTimeout(() => {
                     window.location.href = 'Provider Profile Creation - Step 4.html';
                 }, 800);
@@ -883,34 +852,10 @@
         }
 
         // ==========================================
-        // BACK BUTTON
+        // BACK
         // ==========================================
-        async function goBack() {
-            if (currentUser) {
-                try {
-                    await saveToFirestore();
-                } catch (e) {
-                    console.warn('Could not save before going back:', e);
-                }
-            }
+        function goBack() {
             window.location.href = 'Provider Profile Creation - Step 2.html';
-        }
-
-        // ==========================================
-        // SAVE DRAFT
-        // ==========================================
-        async function saveDraft() {
-            continueBtn.disabled = true;
-            saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            
-            const saved = await saveToFirestore();
-            
-            if (saved) {
-                showToast('📝 Profile saved as draft!');
-            }
-            
-            continueBtn.disabled = false;
-            saveDraftBtn.innerHTML = '<i class="fas fa-save"></i> Save as Draft';
         }
 
         // ==========================================
@@ -918,24 +863,11 @@
         // ==========================================
         continueBtn.addEventListener('click', continueToStep4);
         backBtn.addEventListener('click', goBack);
-        saveDraftBtn.addEventListener('click', saveDraft);
 
-        termsCheckbox.addEventListener('change', () => {
-            verificationData.termsAccepted = termsCheckbox.checked;
-        });
-
-        // ==========================================
-        // LOAD SAVED DATA ON PAGE LOAD
-        // ==========================================
-        if (auth.currentUser) {
-            currentUser = auth.currentUser;
-            loadSavedDataFromFirestore();
-        }
-
-        console.log('%c🔥 Step 3: Verification - Simple & Fast!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
+        console.log('%c🔥 Step 3: Verification - Fixed Upload!', 'color: #1a5f7a; font-size: 14px; font-weight: bold;');
         console.log('✅ Aadhar/PAN (mandatory)');
         console.log('✅ Certificate (optional)');
-        console.log('✅ Fast upload with preview');
+        console.log('✅ Upload now working properly');
     </script>
 </body>
 </html>
