@@ -733,7 +733,7 @@
     document.getElementById('createProfileBtn').addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
         try {
             // Check if user is logged in
@@ -750,8 +750,6 @@
 
             // DIRECTLY CREATE NEW PROFILE - No existing check
             const providerRef = db.collection('providers').doc(currentUser.uid);
-            
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Profile...';
             
             await providerRef.set({
                 uid: currentUser.uid,
@@ -781,7 +779,7 @@
             localStorage.setItem('quickfix_provider_uid', currentUser.uid);
             
             setTimeout(() => {
-                window.location.href = 'Provider Profile Creation - Step 1.html';
+                window.location.href = 'create-provider-profile-step-1.html';
             }, 1500);
 
         } catch (error) {
@@ -877,7 +875,7 @@
 
     console.log('✅ Become a Provider page loaded with Firebase!');
     console.log('ℹ️ "Create a Provider Profile" -> Always creates new profile');
-    console.log('ℹ️ "Use Your Existing Profile" -> Checks and shows popup if no profile');
+    console.log('ℹ️ Redirects to: create-provider-profile-step-1.html');
 </script>
 </body>
 </html>
