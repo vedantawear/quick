@@ -335,6 +335,46 @@
             font-size: 1.2rem;
         }
 
+        .booking-summary {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .booking-summary .worker-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid #f5b042;
+            background: linear-gradient(135deg, #2c3e4e, #1a2a3a);
+        }
+        .booking-summary .worker-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .booking-summary .worker-avatar i {
+            font-size: 1.8rem;
+            color: #f5b042;
+        }
+        .booking-summary .worker-info h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .booking-summary .worker-info p {
+            font-size: 0.75rem;
+            color: #8895a4;
+        }
+        .booking-summary .worker-info .rating {
+            color: #f9b81b;
+            font-size: 0.75rem;
+        }
+
         .bottom-bar {
             position: fixed;
             bottom: 0;
@@ -716,8 +756,27 @@
     </div>
 
     <!-- ==========================================
-     SECTION 6: BOOKING SUMMARY - REMOVED
+     SECTION 6: BOOKING SUMMARY - DYNAMIC FROM WORKER
      ========================================== -->
+    <div class="section-card fade-in">
+        <div class="section-title">
+            <i class="fas fa-user-check"></i>
+            <span>Booking Summary</span>
+        </div>
+        <div class="booking-summary">
+            <div class="worker-avatar" id="workerAvatar">
+                <i class="fas fa-user-hard-hat"></i>
+            </div>
+            <div class="worker-info">
+                <h4 id="workerName">Loading...</h4>
+                <p id="workerProfession">Loading...</p>
+                <div class="rating" id="workerRating"><i class="fas fa-star"></i> 0.0 (0 reviews)</div>
+            </div>
+        </div>
+        <div style="margin-top:12px;font-size:0.8rem;color:#8895a4;">
+            <i class="fas fa-clock"></i> Estimated Arrival: 30-45 mins
+        </div>
+    </div>
 
     <!-- BOTTOM FIXED BAR -->
     <div class="bottom-bar">
@@ -778,6 +837,10 @@
     const modalWorkerName = document.getElementById('modalWorkerName');
 
     // Worker display elements
+    const workerAvatar = document.getElementById('workerAvatar');
+    const workerName = document.getElementById('workerName');
+    const workerProfession = document.getElementById('workerProfession');
+    const workerRating = document.getElementById('workerRating');
     const serviceCharge = document.getElementById('serviceCharge');
     const totalAmount = document.getElementById('totalAmount');
     const bottomTotal = document.getElementById('bottomTotal');
@@ -789,26 +852,30 @@
     // LOAD WORKER DATA FROM LOCALSTORAGE
     // ==========================================
     function loadWorkerData() {
+        // Try multiple sources
         let data = null;
         
+        // Source 1: quickfix_booking_worker (set by View Profile)
         const savedData = localStorage.getItem('quickfix_booking_worker');
         if (savedData) {
             try {
                 data = JSON.parse(savedData);
-                console.log('✅ Worker data loaded:', data);
+                console.log('✅ Worker data loaded from quickfix_booking_worker:', data);
             } catch(e) {}
         }
         
+        // Source 2: quickfix_view_worker_data (fallback)
         if (!data) {
             const fallbackData = localStorage.getItem('quickfix_view_worker_data');
             if (fallbackData) {
                 try {
                     data = JSON.parse(fallbackData);
-                    console.log('✅ Worker data loaded from fallback:', data);
+                    console.log('✅ Worker data loaded from quickfix_view_worker_data:', data);
                 } catch(e) {}
             }
         }
         
+        // Source 3: URL Parameters
         if (!data) {
             const params = new URLSearchParams(window.location.search);
             const name = params.get('name');
@@ -827,26 +894,60 @@
         
         if (data) {
             workerData = data;
-            updatePrice(data);
-            modalWorkerName.textContent = data.name || 'Worker';
+            updateUIWithWorkerData(data);
             return true;
         }
         
         console.warn('⚠️ No worker data found, using default');
-        workerData = { name: 'Worker', price: 399 };
-        updatePrice(workerData);
+        // Set default data
+        workerData = {
+            id: 'default',
+            name: 'Worker',
+            profession: 'Service Provider',
+            price: 399,
+            photo: '',
+            rating: 4.5
+        };
+        updateUIWithWorkerData(workerData);
         return false;
     }
 
     // ==========================================
-    // UPDATE PRICE ONLY
+    // UPDATE UI WITH WORKER DATA
     // ==========================================
-    function updatePrice(data) {
+    function updateUIWithWorkerData(data) {
+        // Update name
+        const displayName = data.name || 'Worker';
+        workerName.textContent = displayName;
+        modalWorkerName.textContent = displayName;
+        document.title = `Booking · ${displayName}`;
+
+        // Update profession
+        workerProfession.textContent = data.profession || 'Service Provider';
+
+        // Update rating
+        const reviews = Math.floor(Math.random() * 300) + 50;
+        const rating = data.rating || 4.5;
+        workerRating.innerHTML = `<i class="fas fa-star"></i> ${rating.toFixed(1)} (${reviews} reviews)`;
+
+        // Update price
         const price = data.price || 399;
         const total = price + 49 + 25;
         serviceCharge.textContent = `₹${price}`;
         totalAmount.textContent = `₹${total}`;
         bottomTotal.textContent = `₹${total}`;
+
+        // Update avatar
+        if (data.photo && data.photo.length > 20 && data.photo.startsWith('http')) {
+            workerAvatar.innerHTML = `<img src="${data.photo}" alt="${data.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-user-hard-hat\\'></i>'">`;
+        } else {
+            workerAvatar.innerHTML = `<i class="fas fa-user-hard-hat"></i>`;
+        }
+
+        // Save to localStorage for persistence
+        localStorage.setItem('quickfix_booking_worker', JSON.stringify(data));
+        
+        console.log('✅ UI Updated with worker data:', data);
     }
 
     // ==========================================
@@ -1056,8 +1157,8 @@
     // ==========================================
     loadWorkerData();
 
-    console.log('%c📋 Booking Details - Booking Summary Removed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Only Price Summary and Confirm Booking button');
+    console.log('%c📋 Booking Details - Fully Dynamic!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Worker data loaded:', workerData);
 </script>
 </body>
 </html>
