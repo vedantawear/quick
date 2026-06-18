@@ -678,14 +678,15 @@
     }
 
     // ==========================================
-    // LOAD WORKER PROFILE FROM FIRESTORE
+    // LOAD WORKER PROFILE FROM FIRESTORE - FIXED
     // ==========================================
     async function loadWorkerProfile(workerId) {
         try {
             const docRef = db.collection("providers").doc(workerId);
             const docSnap = await docRef.get();
 
-            if (!docSnap.exists()) {
+            // FIX: .exists is a property, not a function
+            if (!docSnap.exists) {
                 showToast('⚠️ Worker not found', true);
                 setTimeout(() => window.location.href = 'user-homepage.html', 1500);
                 return;
@@ -969,9 +970,8 @@
         if (savedId) {
             loadWorkerProfile(savedId);
         } else {
-            // Demo profile - will load from Firestore if exists
-            const demoId = 'Zs9IEK8ddQduX99wh7UiDzCmeo93';
-            loadWorkerProfile(demoId);
+            showToast('⚠️ No worker selected', true);
+            setTimeout(() => window.location.href = 'user-homepage.html', 1500);
         }
     }
 
