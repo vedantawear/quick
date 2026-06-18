@@ -682,16 +682,13 @@
     // ==========================================
     async function loadWorkerProfile(workerId) {
         try {
-            // FIX: Use 'providers' collection (correct collection name)
             const docRef = db.collection("providers").doc(workerId);
             const docSnap = await docRef.get();
 
-            // Check if document exists
             if (!docSnap.exists) {
                 console.log('❌ Worker not found in Firestore:', workerId);
                 showToast('⚠️ Worker not found', true);
                 
-                // Try to get from localStorage as fallback
                 const savedData = localStorage.getItem('quickfix_view_worker_data');
                 if (savedData) {
                     try {
@@ -711,17 +708,14 @@
             console.log('✅ Profile loaded:', data.displayName || 'Worker');
             workerNameTitle.textContent = data.displayName || 'Worker';
 
-            // Get portfolio images - REAL from Firestore
             let portfolioImages = [];
             
-            // Check in main document
             if (data.portfolioUrls && data.portfolioUrls.length > 0) {
                 portfolioImages = data.portfolioUrls;
             } else if (data.workImages && data.workImages.length > 0) {
                 portfolioImages = data.workImages;
             }
             
-            // If still empty, try sub-collection
             if (portfolioImages.length === 0) {
                 try {
                     const portfolioSnapshot = await db.collection('providers').doc(workerId).collection('portfolio').get();
@@ -736,7 +730,6 @@
                 }
             }
 
-            // Render profile with REAL portfolio
             renderProfile(data, portfolioImages);
 
         } catch (error) {
@@ -763,12 +756,9 @@
         const isOnline = data.isOnline !== undefined ? data.isOnline : true;
         const isVerified = data.verificationStatus === 'verified' || data.isVerified;
 
-        // Skills
         const skills = data.skills || ['Expert Service', 'Professional', 'Trusted'];
-
         const starsHtml = generateStars(rating);
 
-        // Portfolio HTML - ONLY REAL IMAGES
         let portfolioHTML = '';
         if (portfolioImages.length > 0) {
             portfolioHTML = `
@@ -800,7 +790,6 @@
             `;
         }
 
-        // Reviews
         const reviewsData = data.reviews || [
             { name: "Rahul Sharma", rating: 5, date: "2 days ago", comment: "Excellent service! Very professional and quick work. Highly recommended.", avatar: "" },
             { name: "Priya Patel", rating: 4, date: "1 week ago", comment: "Good work but slightly overpriced. Overall satisfied.", avatar: "" },
@@ -878,7 +867,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn-primary-lg" id="bookNowBtn">
+                    <button class="btn-primary-lg book-now-btn" data-worker-id="${data.uid || data.id || ''}" data-worker-name="${data.displayName || 'Worker'}" data-worker-profession="${data.categoryName || data.category || 'Service'}" data-worker-price="${data.price || 399}" data-worker-photo="${data.profilePhotoUrl || ''}" data-worker-rating="${data.rating || 0}">
                         <i class="fas fa-calendar-check"></i> Book Now
                     </button>
                     <button class="btn-outline-lg" id="chatBtn">
@@ -887,7 +876,7 @@
                 </div>
             </div>
 
-            <!-- Work Portfolio - ONLY REAL IMAGES/VIDEOS -->
+            <!-- Work Portfolio -->
             <div class="profile-card fade-in" style="margin-top:16px;">
                 <div class="section-title">
                     <i class="fas fa-images"></i> Work Portfolio
@@ -920,8 +909,36 @@
             </div>
         `;
 
-        document.getElementById('bookNowBtn')?.addEventListener('click', () => {
-            showToast(`✅ Booking request sent to ${data.displayName || 'worker'}!`);
+        // ==========================================
+        // BOOK NOW BUTTON - REDIRECT TO BOOKING DETAILS
+        // ==========================================
+        document.querySelectorAll('.book-now-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const workerId = this.getAttribute('data-worker-id');
+                const workerName = this.getAttribute('data-worker-name');
+                const workerProfession = this.getAttribute('data-worker-profession');
+                const workerPrice = this.getAttribute('data-worker-price');
+                const workerPhoto = this.getAttribute('data-worker-photo');
+                const workerRating = this.getAttribute('data-worker-rating');
+
+                // Save worker data to localStorage
+                const workerData = {
+                    id: workerId,
+                    name: workerName,
+                    profession: workerProfession,
+                    price: workerPrice,
+                    photo: workerPhoto,
+                    rating: workerRating
+                };
+                localStorage.setItem('quickfix_booking_worker', JSON.stringify(workerData));
+
+                showToast(`📋 Opening booking for ${workerName}...`);
+                
+                // Redirect to booking details page
+                setTimeout(() => {
+                    window.location.href = 'booking-details.html';
+                }, 500);
+            });
         });
 
         document.getElementById('chatBtn')?.addEventListener('click', () => {
@@ -995,9 +1012,8 @@
         }
     }
 
-    console.log('%c👤 View Profile - Real Portfolio Images/Videos!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Using "providers" collection in Firestore');
-    console.log('✅ Shows real images/videos from Firestore');
+    console.log('%c👤 View Profile - Book Now Redirects to Booking Details!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Book Now button redirects to booking-details.html');
 </script>
 </body>
 </html>
