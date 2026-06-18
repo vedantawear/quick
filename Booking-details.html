@@ -730,7 +730,7 @@
     </div>
 
     <!-- ==========================================
-     SECTION 5: PRICE SUMMARY
+     SECTION 5: PRICE SUMMARY - DYNAMIC
      ========================================== -->
     <div class="section-card fade-in">
         <div class="section-title">
@@ -743,7 +743,7 @@
         </div>
         <div class="price-row">
             <span>Service Charge</span>
-            <span class="amount">₹199</span>
+            <span class="amount" id="serviceCharge">₹199</span>
         </div>
         <div class="price-row">
             <span>Platform Fee</span>
@@ -751,12 +751,12 @@
         </div>
         <div class="price-row total">
             <span>Total Amount</span>
-            <span class="amount">₹273</span>
+            <span class="amount" id="totalAmount">₹273</span>
         </div>
     </div>
 
     <!-- ==========================================
-     SECTION 6: BOOKING SUMMARY - REAL DATA FROM WORKER
+     SECTION 6: BOOKING SUMMARY - DYNAMIC FROM WORKER
      ========================================== -->
     <div class="section-card fade-in">
         <div class="section-title">
@@ -776,9 +776,6 @@
         <div style="margin-top:12px;font-size:0.8rem;color:#8895a4;">
             <i class="fas fa-clock"></i> Estimated Arrival: 30-45 mins
         </div>
-        <div style="margin-top:8px;font-size:0.8rem;color:#8895a4;">
-            <i class="fas fa-rupee-sign"></i> Price: <strong style="color:#f5b042;" id="workerPrice">₹0</strong> / hour
-        </div>
     </div>
 
     <!-- BOTTOM FIXED BAR -->
@@ -786,7 +783,7 @@
         <div class="bar-content">
             <div class="total-price">
                 <div>Total</div>
-                <div class="price" id="totalPrice">₹273</div>
+                <div class="price" id="bottomTotal">₹273</div>
             </div>
             <button class="confirm-btn" id="confirmBtn">
                 <i class="fas fa-check-circle"></i> Confirm Booking
@@ -844,8 +841,9 @@
     const workerName = document.getElementById('workerName');
     const workerProfession = document.getElementById('workerProfession');
     const workerRating = document.getElementById('workerRating');
-    const workerPrice = document.getElementById('workerPrice');
-    const totalPrice = document.getElementById('totalPrice');
+    const serviceCharge = document.getElementById('serviceCharge');
+    const totalAmount = document.getElementById('totalAmount');
+    const bottomTotal = document.getElementById('bottomTotal');
 
     let uploadedImages = [];
     let workerData = null;
@@ -859,58 +857,84 @@
             try {
                 workerData = JSON.parse(savedData);
                 console.log('✅ Worker data loaded:', workerData);
-                
-                // Update UI with worker data
-                workerName.textContent = workerData.name || 'Worker';
-                workerProfession.textContent = workerData.profession || 'Service Provider';
-                workerRating.innerHTML = `<i class="fas fa-star"></i> ${workerData.rating || 4.5} (${Math.floor(Math.random() * 300) + 50} reviews)`;
-                workerPrice.textContent = `₹${workerData.price || 399}`;
-                totalPrice.textContent = `₹${workerData.price || 399}`;
-                modalWorkerName.textContent = workerData.name || 'Worker';
-                
-                // Update worker avatar
-                if (workerData.photo && workerData.photo.length > 20) {
-                    workerAvatar.innerHTML = `<img src="${workerData.photo}" alt="${workerData.name}" onerror="this.style.display='none'">`;
-                } else {
-                    workerAvatar.innerHTML = `<i class="fas fa-user-hard-hat"></i>`;
-                }
-                
+                updateUIWithWorkerData(workerData);
                 return true;
             } catch(e) {
                 console.error('Error parsing worker data:', e);
                 return false;
             }
         } else {
-            // Check if we came from view-profile with URL params
+            // Try URL params
             const params = new URLSearchParams(window.location.search);
-            const id = params.get('workerId');
             const name = params.get('name');
-            const profession = params.get('profession');
-            const price = params.get('price');
-            
             if (name) {
                 workerData = {
-                    id: id || 'unknown',
+                    id: params.get('id') || 'unknown',
                     name: name,
-                    profession: profession || 'Service Provider',
-                    price: price || 399,
+                    profession: params.get('profession') || 'Service Provider',
+                    price: parseInt(params.get('price')) || 399,
                     photo: params.get('photo') || '',
-                    rating: params.get('rating') || 4.5
+                    rating: parseFloat(params.get('rating')) || 4.5
                 };
-                
-                workerName.textContent = workerData.name;
-                workerProfession.textContent = workerData.profession;
-                workerRating.innerHTML = `<i class="fas fa-star"></i> ${workerData.rating} (${Math.floor(Math.random() * 300) + 50} reviews)`;
-                workerPrice.textContent = `₹${workerData.price}`;
-                totalPrice.textContent = `₹${workerData.price}`;
-                modalWorkerName.textContent = workerData.name;
+                updateUIWithWorkerData(workerData);
                 return true;
             }
             
-            // Fallback - use default data
+            // Fallback - use default data from localStorage
+            const fallbackData = localStorage.getItem('quickfix_view_worker_data');
+            if (fallbackData) {
+                try {
+                    const data = JSON.parse(fallbackData);
+                    workerData = {
+                        id: data.id || 'unknown',
+                        name: data.name || 'Worker',
+                        profession: data.profession || 'Service Provider',
+                        price: parseInt(data.price) || 399,
+                        photo: data.profilePhotoUrl || '',
+                        rating: parseFloat(data.rating) || 4.5
+                    };
+                    updateUIWithWorkerData(workerData);
+                    return true;
+                } catch(e) {}
+            }
+            
             console.warn('⚠️ No worker data found, using default');
             return false;
         }
+    }
+
+    // ==========================================
+    // UPDATE UI WITH WORKER DATA
+    // ==========================================
+    function updateUIWithWorkerData(data) {
+        // Update name
+        workerName.textContent = data.name || 'Worker';
+        modalWorkerName.textContent = data.name || 'Worker';
+        document.title = `Booking · ${data.name || 'Worker'}`;
+
+        // Update profession
+        workerProfession.textContent = data.profession || 'Service Provider';
+
+        // Update rating
+        const reviews = Math.floor(Math.random() * 300) + 50;
+        workerRating.innerHTML = `<i class="fas fa-star"></i> ${data.rating || 4.5} (${reviews} reviews)`;
+
+        // Update price
+        const price = data.price || 399;
+        const total = price + 49 + 25;
+        serviceCharge.textContent = `₹${price}`;
+        totalAmount.textContent = `₹${total}`;
+        bottomTotal.textContent = `₹${total}`;
+
+        // Update avatar
+        if (data.photo && data.photo.length > 20) {
+            workerAvatar.innerHTML = `<img src="${data.photo}" alt="${data.name}" onerror="this.style.display='none'">`;
+        } else {
+            workerAvatar.innerHTML = `<i class="fas fa-user-hard-hat"></i>`;
+        }
+
+        // Save to localStorage for persistence
+        localStorage.setItem('quickfix_booking_worker', JSON.stringify(data));
     }
 
     // ==========================================
@@ -1120,9 +1144,8 @@
     // ==========================================
     loadWorkerData();
 
-    console.log('%c📋 Booking Details - Fully Working!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Worker data loaded from localStorage');
-    console.log('✅ Real worker photo, name, profession, price, rating');
+    console.log('%c📋 Booking Details - Fully Dynamic!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Worker data loaded:', workerData);
 </script>
 </body>
 </html>
