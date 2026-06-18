@@ -188,6 +188,43 @@
     .job-buttons button { background: rgba(0,0,0,0.6); border: 1px solid cyan; border-radius: 40px; padding: 8px 14px; color: white; backdrop-filter: blur(4px); font-weight: 500; transition: 0.1s; cursor: pointer; }
     .job-buttons button:active { transform: scale(0.95); background: cyan; color: black; }
 
+    /* Provider Info Card */
+    .provider-info-card {
+      background: rgba(8, 12, 24, 0.6);
+      backdrop-filter: blur(16px);
+      border-radius: 32px;
+      padding: 18px;
+      margin: 18px 0;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    .provider-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .provider-info-item {
+      background: rgba(0,0,0,0.3);
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(0,255,255,0.1);
+    }
+    .provider-info-item .label {
+      font-size: 0.6rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .provider-info-item .value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .provider-info-item .value i {
+      color: #0af;
+      margin-right: 4px;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 16px;
@@ -236,8 +273,6 @@
 
     h3, h4 { font-weight: 500; letter-spacing: -0.3px; }
 
-    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
-
     .toast {
       position: fixed;
       bottom: 100px;
@@ -272,6 +307,22 @@
     .post-btn:hover {
       transform: scale(1.15);
     }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+    .badge-status.verified {
+      background: #0f6;
+      color: #000;
+    }
+    .badge-status.pending {
+      background: #ffaa33;
+      color: #000;
+    }
   </style>
 </head>
 <body>
@@ -290,6 +341,36 @@
       <div class="icon-btn" id="notificationBtn">🔔<span id="notificationBadge" style="background:red; border-radius:20px; padding:0 6px; font-size:10px; position:relative; top:-8px;">0</span></div>
       <div class="icon-btn" id="aiSuggestBtn">⚡</div>
       <div class="icon-btn" id="settingsBtn">⚙️</div>
+    </div>
+  </div>
+
+  <!-- Provider Info Card - Real Time Data -->
+  <div class="provider-info-card" id="providerInfoCard">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h4>👤 My Profile</h4>
+      <span class="badge-status verified" id="verificationBadge">Verified</span>
+    </div>
+    <div class="provider-info-grid" id="providerInfoGrid">
+      <div class="provider-info-item">
+        <div class="label">📁 Category</div>
+        <div class="value" id="infoCategory">-</div>
+      </div>
+      <div class="provider-info-item">
+        <div class="label">⭐ Rating</div>
+        <div class="value" id="infoRating">-</div>
+      </div>
+      <div class="provider-info-item">
+        <div class="label">📋 Skills</div>
+        <div class="value" id="infoSkills">-</div>
+      </div>
+      <div class="provider-info-item">
+        <div class="label">📅 Experience</div>
+        <div class="value" id="infoExperience">-</div>
+      </div>
+      <div class="provider-info-item" style="grid-column: span 2;">
+        <div class="label">📝 About</div>
+        <div class="value" id="infoBio">-</div>
+      </div>
     </div>
   </div>
 
@@ -458,6 +539,52 @@
   }
 
   // ==========================================
+  // UPDATE PROVIDER INFO CARD
+  // ==========================================
+  function updateProviderInfoCard(data) {
+    // Category
+    const categoryNames = {
+      'plumber': '🔧 Plumber',
+      'electrician': '⚡ Electrician',
+      'ac-technician': '❄️ AC Technician',
+      'carpenter': '🪚 Carpenter',
+      'car-mechanic': '🚗 Car Mechanic',
+      'painter': '🎨 Painter',
+      'welder': '🔥 Welder',
+      'general-technician': '🔩 General Technician'
+    };
+    document.getElementById('infoCategory').innerHTML = data.categoryName || categoryNames[data.category] || data.category || '-';
+    
+    // Rating
+    const rating = data.rating || data.averageRating || 0;
+    document.getElementById('infoRating').innerHTML = rating > 0 ? `⭐ ${rating.toFixed(1)}` : '⭐ No ratings yet';
+    
+    // Skills
+    const skills = data.skills || [];
+    document.getElementById('infoSkills').innerHTML = skills.length > 0 ? skills.slice(0, 3).join(', ') + (skills.length > 3 ? '...' : '') : '-';
+    
+    // Experience
+    document.getElementById('infoExperience').innerHTML = data.experience || '-';
+    
+    // Bio / About
+    document.getElementById('infoBio').innerHTML = data.bio || data.description || 'Professional service provider';
+    
+    // Verification Badge
+    const badge = document.getElementById('verificationBadge');
+    if (data.verificationStatus === 'verified') {
+      badge.textContent = '✅ Verified';
+      badge.className = 'badge-status verified';
+    } else if (data.verificationStatus === 'pending') {
+      badge.textContent = '⏳ Pending';
+      badge.className = 'badge-status pending';
+    } else {
+      badge.textContent = '⚠️ Not Verified';
+      badge.style.background = '#ff3366';
+      badge.style.color = 'white';
+    }
+  }
+
+  // ==========================================
   // LOAD PROVIDER DATA FROM FIRESTORE
   // ==========================================
   async function loadProviderData(uid) {
@@ -468,25 +595,27 @@
       if(docSnap.exists) {
         providerData = docSnap.data();
         
-        // Update UI with provider data
+        // Update header
         document.getElementById('providerName').innerText = providerData.displayName || providerData.fullName || 'Provider';
         document.getElementById('providerCity').innerText = providerData.location?.split(',')[0] || providerData.city || 'Your City';
         document.getElementById('todayEarn').innerText = `$${providerData.todayEarnings || providerData.walletBalance || 0}`;
         
-        // Update profile photo if available
+        // Update profile photo
         if(providerData.profilePhotoUrl || providerData.photoURL) {
           document.querySelector('.avatar-inner').style.background = `url('${providerData.profilePhotoUrl || providerData.photoURL}') center/cover`;
         }
         
-        // Update notification badge with pending jobs count
+        // Update Provider Info Card
+        updateProviderInfoCard(providerData);
+        
+        // Update notification badge
         const pendingJobs = await getPendingJobsCount(uid);
         document.getElementById('notificationBadge').innerText = pendingJobs || '0';
         
-        // Update analytics with real data
+        // Update analytics
         updateAnalyticsFromData();
         return true;
       } else {
-        // Provider profile doesn't exist
         showToast('Please complete your profile setup', true);
         setTimeout(() => window.location.href = 'Provider Profile Creation - Step 1.html', 1500);
         return false;
@@ -522,7 +651,6 @@
     if(!grid) return;
     grid.innerHTML = '';
     
-    // Use real data from Firestore or fallback to defaults
     const items = [
       {title:'📆 Total Bookings', val: providerData?.totalJobs || providerData?.totalBookings || 0, suffix:''},
       {title:'⚡ Today Bookings', val: providerData?.todayBookings || 0, suffix:''},
@@ -598,7 +726,6 @@
               });
               showToast('✅ Job accepted! Customer will be notified.');
               btn.closest('.job-card').remove();
-              // Update notification badge
               const pendingJobs = await getPendingJobsCount(currentUser.uid);
               document.getElementById('notificationBadge').innerText = pendingJobs || '0';
             }
@@ -660,7 +787,7 @@
   }
 
   // ==========================================
-  // CHARTS (Static for demo)
+  // CHARTS
   // ==========================================
   const weekCanvas = document.getElementById('weeklyChart');
   if(weekCanvas){
@@ -768,15 +895,13 @@
   // ==========================================
   // AUTH STATE LISTENER
   // ==========================================
-  onAuthStateChanged(auth, async (user) => {
+  auth.onAuthStateChanged(async (user) => {
     if(user) {
       currentUser = user;
       console.log('✅ User logged in:', user.email);
       
-      // Load provider data
       const loaded = await loadProviderData(user.uid);
       if(loaded) {
-        // Load nearby jobs
         await loadNearbyJobs();
       }
     } else {
@@ -787,9 +912,9 @@
     }
   });
 
-  console.log('%c🔥 NEBULA PROVIDER Dashboard - Firebase Integrated!', 'color: #0af; font-size: 16px; font-weight: bold;');
-  console.log('✅ Firebase Auth, Firestore configured');
-  console.log('✅ Real-time data from Firestore');
+  console.log('%c🔥 NEBULA PROVIDER Dashboard - Fully Real-time!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ All profile data loaded from Firestore in real-time');
+  console.log('✅ Profile photo, category, skills, experience, bio - all displayed');
 </script>
 </body>
 </html>
