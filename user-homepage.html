@@ -106,6 +106,11 @@
             border: 2px solid rgba(255,255,255,0.2);
             overflow: hidden;
         }
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .profile-pic i {
             font-size: 2.5rem;
             color: white;
@@ -605,7 +610,7 @@
                 <i class="fas fa-user-circle"></i>
             </div>
             <div class="location-text">
-                <h2 id="userName">Explorer</h2>
+                <h2 id="userName">Loading...</h2>
                 <p id="userStatus">🔍 Finding best workers near you</p>
             </div>
         </div>
@@ -685,7 +690,6 @@
     <!-- WORKERS -->
     <div class="section-header">
         <h3>Workers Near You</h3>
-        <!-- SEE ALL - Redirects to All-worker.html -->
         <span class="view-all" id="viewAllWorkers">See All</span>
     </div>
     <div class="workers-scroll" id="workersScroll"></div>
@@ -739,11 +743,157 @@
 
 <div class="toast" id="toastMsg"></div>
 
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
     // ==========================================
-    // COMPLETE HOMEPAGE - STANDALONE
+    // FIREBASE CONFIG
     // ==========================================
-    
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+        authDomain: "quickfix-907c0.firebaseapp.com",
+        projectId: "quickfix-907c0",
+        storageBucket: "quickfix-907c0.firebasestorage.app",
+        messagingSenderId: "539102384460",
+        appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+        measurementId: "G-B548C8R9WV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    console.log('✅ Firebase initialized successfully!');
+
+    // ==========================================
+    // CHECK AUTH STATUS
+    // ==========================================
+    let currentUser = null;
+    let userData = null;
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            console.log('✅ User logged in:', user.email);
+            loadUserDataFromFirestore(user.uid);
+        } else {
+            currentUser = null;
+            console.log('ℹ️ No user logged in');
+            // Try loading from localStorage as fallback
+            loadUserDataFromLocalStorage();
+        }
+    });
+
+    // ==========================================
+    // LOAD USER DATA FROM FIRESTORE
+    // ==========================================
+    async function loadUserDataFromFirestore(uid) {
+        try {
+            const userRef = db.collection("users").doc(uid);
+            const docSnap = await userRef.get();
+
+            if (docSnap.exists) {
+                userData = docSnap.data();
+                updateUI(userData);
+                console.log('✅ User data loaded from Firestore');
+            } else {
+                // Create user document if not exists
+                await userRef.set({
+                    displayName: currentUser.displayName || 'User',
+                    email: currentUser.email || '',
+                    phoneNumber: currentUser.phoneNumber || '',
+                    photoURL: currentUser.photoURL || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    userType: 'customer',
+                    isActive: true,
+                    totalBookings: 0,
+                    walletBalance: 0
+                });
+                loadUserDataFromFirestore(uid);
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            loadUserDataFromLocalStorage();
+        }
+    }
+
+    // ==========================================
+    // LOAD USER DATA FROM LOCALSTORAGE (Fallback)
+    // ==========================================
+    function loadUserDataFromLocalStorage() {
+        const loggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
+        const userName = localStorage.getItem('quickfix_user_name');
+        const userPhone = localStorage.getItem('quickfix_user_phone');
+        const userEmail = localStorage.getItem('quickfix_user_email');
+        const userPhoto = localStorage.getItem('quickfix_user_photo');
+
+        if (loggedIn && userName) {
+            document.getElementById('userName').innerText = userName;
+            document.getElementById('userStatus').innerHTML = '📍 Finding best workers near you';
+            // Update profile pic if available
+            if (userPhoto) {
+                document.getElementById('profilePic').innerHTML = `<img src="${userPhoto}" alt="Profile">`;
+            }
+        } else {
+            document.getElementById('userName').innerHTML = 'Explorer';
+            document.getElementById('userStatus').innerHTML = '<a href="login.html" style="color:#f5b042; text-decoration:none;">🔑 Login to book services</a>';
+        }
+        
+        const savedBookings = localStorage.getItem('quickfix_bookings');
+        if (savedBookings) {
+            try {
+                userBookings = JSON.parse(savedBookings);
+                updateRecentBooking();
+            } catch(e) {
+                console.warn('Error parsing bookings:', e);
+            }
+        }
+    }
+
+    // ==========================================
+    // UPDATE UI WITH USER DATA
+    // ==========================================
+    function updateUI(data) {
+        // Update name
+        document.getElementById('userName').innerText = data.displayName || data.name || 'User';
+        document.getElementById('userStatus').innerHTML = '📍 Finding best workers near you';
+        
+        // Update profile photo
+        if (data.photoURL) {
+            document.getElementById('profilePic').innerHTML = `<img src="${data.photoURL}" alt="Profile">`;
+        } else if (data.profilePhotoUrl) {
+            document.getElementById('profilePic').innerHTML = `<img src="${data.profilePhotoUrl}" alt="Profile">`;
+        }
+        
+        // Save to localStorage for quick access
+        localStorage.setItem('quickfix_user_name', data.displayName || data.name || 'User');
+        localStorage.setItem('quickfix_user_phone', data.phoneNumber || '');
+        localStorage.setItem('quickfix_user_email', data.email || '');
+        localStorage.setItem('quickfix_user_photo', data.photoURL || data.profilePhotoUrl || '');
+        localStorage.setItem('quickfix_logged_in', 'true');
+        
+        // Load bookings
+        const savedBookings = localStorage.getItem('quickfix_bookings');
+        if (savedBookings) {
+            try {
+                userBookings = JSON.parse(savedBookings);
+                updateRecentBooking();
+            } catch(e) {
+                console.warn('Error parsing bookings:', e);
+            }
+        }
+    }
+
+    // ==========================================
+    // SAMPLE WORKERS DATA
+    // ==========================================
     const workersData = [
         { id: 1, name: "Rajesh Kumar", profession: "Plumber", rating: 4.8, distance: "0.6 km", price: "₹399/hr", available: true, experience: "8 years" },
         { id: 2, name: "Amit Sharma", profession: "Electrician", rating: 4.9, distance: "1.2 km", price: "₹449/hr", available: true, experience: "10 years" },
@@ -752,7 +902,10 @@
         { id: 5, name: "Mahesh Gupta", profession: "Plumber", rating: 4.9, distance: "0.8 km", price: "₹429/hr", available: true, experience: "12 years" },
         { id: 6, name: "Ravi Kumar", profession: "Electrician", rating: 4.7, distance: "1.1 km", price: "₹399/hr", available: true, experience: "7 years" }
     ];
-    
+
+    // ==========================================
+    // SERVICES DATA
+    // ==========================================
     const servicesData = [
         { name: "Plumber", icon: "fa-wrench" },
         { name: "Electrician", icon: "fa-bolt" },
@@ -763,10 +916,10 @@
         { name: "Mechanic", icon: "fa-car" },
         { name: "Mason", icon: "fa-hard-hat" }
     ];
-    
+
     let userBookings = [];
     let currentFilter = "all";
-    
+
     function showToast(message, isError = false) {
         const toast = document.getElementById('toastMsg');
         toast.textContent = message;
@@ -774,26 +927,7 @@
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
-    
-    function loadUserData() {
-        const loggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
-        const userName = localStorage.getItem('quickfix_user_name');
-        
-        if (loggedIn && userName) {
-            document.getElementById('userName').innerText = userName;
-            document.getElementById('userStatus').innerHTML = '🔍 Finding best workers near you';
-        } else {
-            document.getElementById('userName').innerHTML = 'Explorer';
-            document.getElementById('userStatus').innerHTML = '<a href="login.html" style="color:#f5b042; text-decoration:none;">🔑 Login to book services</a>';
-        }
-        
-        const savedBookings = localStorage.getItem('quickfix_bookings');
-        if (savedBookings) {
-            userBookings = JSON.parse(savedBookings);
-            updateRecentBooking();
-        }
-    }
-    
+
     function renderServices() {
         const container = document.getElementById('servicesGrid');
         container.innerHTML = '';
@@ -812,7 +946,7 @@
             container.appendChild(card);
         });
     }
-    
+
     function renderWorkers(workers) {
         const container = document.getElementById('workersScroll');
         container.innerHTML = '';
@@ -863,7 +997,7 @@
             });
         });
     }
-    
+
     function filterWorkers(category) {
         let filtered = [...workersData];
         if (category && category !== 'all') {
@@ -873,10 +1007,10 @@
         }
         renderWorkers(filtered);
     }
-    
-    function bookWorker(workerId, workerName, price) {
-        const loggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
-        if (!loggedIn) {
+
+    async function bookWorker(workerId, workerName, price) {
+        // Check if user is logged in
+        if (!currentUser) {
             showToast("Please login to book services", true);
             setTimeout(() => {
                 window.location.href = 'login.html';
@@ -891,16 +1025,47 @@
             price: price,
             date: new Date().toLocaleDateString(),
             status: 'pending',
-            bookingTime: new Date().toISOString()
+            bookingTime: new Date().toISOString(),
+            userId: currentUser.uid,
+            userEmail: currentUser.email
         };
         
-        userBookings.unshift(booking);
-        localStorage.setItem('quickfix_bookings', JSON.stringify(userBookings));
-        
-        showToast(`✅ Booked ${workerName}! We'll connect you shortly.`);
-        updateRecentBooking();
+        try {
+            // Save to Firestore
+            await db.collection("bookings").add({
+                ...booking,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                providerId: null,
+                status: 'pending'
+            });
+            
+            // Update user bookings count
+            if (userData) {
+                await db.collection("users").doc(currentUser.uid).update({
+                    totalBookings: (userData.totalBookings || 0) + 1,
+                    lastBooking: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            showToast(`✅ Booked ${workerName}! We'll connect you shortly.`);
+            
+            // Save to localStorage as well
+            userBookings.unshift(booking);
+            localStorage.setItem('quickfix_bookings', JSON.stringify(userBookings));
+            updateRecentBooking();
+            
+        } catch (error) {
+            console.error('Error booking worker:', error);
+            showToast('❌ Error booking. Please try again.', true);
+            
+            // Fallback: save to localStorage only
+            userBookings.unshift(booking);
+            localStorage.setItem('quickfix_bookings', JSON.stringify(userBookings));
+            updateRecentBooking();
+            showToast(`✅ Booked ${workerName}! (Offline mode)`);
+        }
     }
-    
+
     function updateRecentBooking() {
         const container = document.getElementById('recentBookingCard');
         if (userBookings.length > 0) {
@@ -928,8 +1093,10 @@
             `;
         }
     }
-    
+
+    // ==========================================
     // BANNER SLIDER
+    // ==========================================
     let currentSlide = 0;
     const slides = document.getElementById('slides');
     const slideCount = document.querySelectorAll('.slide').length;
@@ -970,8 +1137,10 @@
         if (autoInterval) clearInterval(autoInterval);
         autoInterval = setInterval(nextSlide, 4000);
     }
-    
+
+    // ==========================================
     // NAVIGATION
+    // ==========================================
     function navigateTo(page) {
         if (page === 'home') {
             window.location.reload();
@@ -981,8 +1150,10 @@
             window.location.href = 'user-profile.html';
         }
     }
-    
+
+    // ==========================================
     // EVENT LISTENERS
+    // ==========================================
     document.querySelectorAll('.nav-item').forEach(nav => {
         nav.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1001,20 +1172,15 @@
     document.getElementById('filterIcon').addEventListener('click', () => showToast("🔧 Advanced filters coming soon"));
     document.getElementById('emergencyBtn').addEventListener('click', () => showToast("🚨 Emergency helpline: +91-XXXXXXXXXX"));
     document.getElementById('viewAllServices').addEventListener('click', () => showToast("📋 All services page coming soon"));
-    
-    // ==========================================
-    // SEE ALL - Redirects to All-worker.html
-    // ==========================================
     document.getElementById('viewAllWorkers').addEventListener('click', function() {
         window.location.href = 'All-worker.html';
     });
-    
     document.getElementById('viewHistory').addEventListener('click', () => navigateTo('booking'));
     document.getElementById('recentBookingCard').addEventListener('click', () => {
         if (userBookings.length > 0) navigateTo('booking');
         else showToast("No bookings yet. Book a service!");
     });
-    
+
     // SEARCH
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', (e) => {
@@ -1029,7 +1195,7 @@
             renderWorkers(workersData);
         }
     });
-    
+
     // FILTER PILLS
     document.querySelectorAll('.pill').forEach(pill => {
         pill.addEventListener('click', function() {
@@ -1051,19 +1217,30 @@
             }
         });
     });
-    
+
     document.querySelectorAll('.book-now-banner').forEach(btn => {
         btn.addEventListener('click', () => showToast("🎉 Special offer! Book any service with 20% off"));
     });
-    
+
+    // ==========================================
     // INIT
+    // ==========================================
     function init() {
-        loadUserData();
         renderServices();
         renderWorkers(workersData);
         createDots();
         resetAutoSlide();
+        
+        // If user already logged in via Firebase, load data
+        if (auth.currentUser) {
+            currentUser = auth.currentUser;
+            loadUserDataFromFirestore(currentUser.uid);
+        } else {
+            loadUserDataFromLocalStorage();
+        }
+        
         console.log("✅ QuickFix Homepage Loaded Successfully!");
+        console.log("✅ Firebase connected - Real-time user data");
     }
     
     init();
