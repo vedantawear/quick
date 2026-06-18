@@ -29,9 +29,6 @@
             padding-bottom: 20px;
         }
 
-        /* ==========================================
-           BOTTOM NAVIGATION
-           ========================================== */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -82,7 +79,6 @@
             color: #f5b042;
         }
 
-        /* HEADER WITH BACK BUTTON */
         .top-header {
             display: flex;
             align-items: center;
@@ -131,9 +127,6 @@
             color: #b0c4de;
         }
 
-        /* ==========================================
-           PROFILE CARD
-           ========================================== */
         .profile-card {
             background: rgba(18, 27, 40, 0.75);
             backdrop-filter: blur(16px);
@@ -299,9 +292,6 @@
             color: #f5b042;
         }
 
-        /* ==========================================
-           WORK PORTFOLIO - REAL IMAGES/VIDEOS
-           ========================================== */
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
@@ -366,23 +356,20 @@
         .portfolio-empty {
             grid-column: span 3;
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px;
             color: #b0c4de;
             font-size: 0.85rem;
             background: rgba(0,0,0,0.2);
-            border-radius: 20px;
+            border-radius: 16px;
             border: 1px dashed rgba(255,255,255,0.1);
         }
         .portfolio-empty i {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: #4a5a6a;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: block;
         }
 
-        /* ==========================================
-           REVIEWS
-           ========================================== */
         .review-card {
             background: rgba(0,0,0,0.3);
             border-radius: 20px;
@@ -435,9 +422,6 @@
             line-height: 1.5;
         }
 
-        /* ==========================================
-           ACTION BUTTONS
-           ========================================== */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -481,9 +465,6 @@
             transform: scale(0.98);
         }
 
-        /* ==========================================
-           TOAST
-           ========================================== */
         .toast {
             position: fixed;
             bottom: 100px;
@@ -586,7 +567,6 @@
 <body>
 <div class="app-container" id="app">
 
-    <!-- HEADER WITH BACK BUTTON -->
     <div class="top-header">
         <div class="header-left">
             <button class="back-btn" id="backBtn">
@@ -602,7 +582,6 @@
         </div>
     </div>
 
-    <!-- PROFILE DETAILS -->
     <div id="profileContent">
         <div class="loading-center">
             <div class="loading-spinner"></div>
@@ -610,7 +589,6 @@
         </div>
     </div>
 
-    <!-- BOTTOM NAVIGATION -->
     <div class="bottom-nav">
         <button class="nav-item" data-page="home">
             <i class="fas fa-home"></i>
@@ -708,17 +686,6 @@
             const docSnap = await docRef.get();
 
             if (!docSnap.exists()) {
-                // Try loading from localStorage fallback
-                const savedData = localStorage.getItem('quickfix_view_worker_data');
-                if (savedData) {
-                    try {
-                        const data = JSON.parse(savedData);
-                        workerNameTitle.textContent = data.name || 'Worker';
-                        renderProfile(data);
-                        showToast('⚠️ Using cached profile data', true);
-                        return;
-                    } catch(e) {}
-                }
                 showToast('⚠️ Worker not found', true);
                 setTimeout(() => window.location.href = 'user-homepage.html', 1500);
                 return;
@@ -727,17 +694,24 @@
             const data = docSnap.data();
             workerNameTitle.textContent = data.displayName || 'Worker';
 
-            // Also check for portfolio in sub-collection or separate collection
-            let portfolioUrls = data.portfolioUrls || data.workImages || [];
-
-            // If portfolioUrls is empty, check if there's a portfolio sub-collection
-            if (portfolioUrls.length === 0) {
+            // Get portfolio images - REAL from Firestore
+            let portfolioImages = [];
+            
+            // Check in main document
+            if (data.portfolioUrls && data.portfolioUrls.length > 0) {
+                portfolioImages = data.portfolioUrls;
+            } else if (data.workImages && data.workImages.length > 0) {
+                portfolioImages = data.workImages;
+            }
+            
+            // If still empty, try sub-collection
+            if (portfolioImages.length === 0) {
                 try {
                     const portfolioSnapshot = await db.collection('providers').doc(workerId).collection('portfolio').get();
                     portfolioSnapshot.forEach(doc => {
                         const item = doc.data();
                         if (item.imageUrl || item.url) {
-                            portfolioUrls.push(item.imageUrl || item.url);
+                            portfolioImages.push(item.imageUrl || item.url);
                         }
                     });
                 } catch(e) {
@@ -745,25 +719,12 @@
                 }
             }
 
-            // Render profile with real portfolio
-            renderProfile(data, portfolioUrls);
+            // Render profile with REAL portfolio
+            renderProfile(data, portfolioImages);
 
         } catch (error) {
             console.error('Error loading profile:', error);
             showToast('❌ Error loading profile', true);
-            
-            // Try loading from localStorage
-            const savedData = localStorage.getItem('quickfix_view_worker_data');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    workerNameTitle.textContent = data.name || 'Worker';
-                    renderProfile(data, []);
-                    showToast('⚠️ Using cached profile', true);
-                    return;
-                } catch(e) {}
-            }
-
             profileContent.innerHTML = `
                 <div class="loading-center">
                     <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:#ff3366;"></i>
@@ -777,27 +738,24 @@
     // ==========================================
     // RENDER PROFILE
     // ==========================================
-    function renderProfile(data, portfolioUrls = []) {
+    function renderProfile(data, portfolioImages = []) {
         const hasPhoto = data.profilePhotoUrl && data.profilePhotoUrl.length > 20;
         const rating = data.rating || data.averageRating || 0;
         const reviews = data.totalReviews || 0;
         const isOnline = data.isOnline !== undefined ? data.isOnline : true;
         const isVerified = data.verificationStatus === 'verified' || data.isVerified;
 
-        // Use real portfolio images or empty array
-        const realPortfolio = portfolioUrls || [];
-
         // Skills
         const skills = data.skills || ['Expert Service', 'Professional', 'Trusted'];
 
         const starsHtml = generateStars(rating);
 
-        // Build portfolio HTML
+        // Portfolio HTML - ONLY REAL IMAGES
         let portfolioHTML = '';
-        if (realPortfolio.length > 0) {
+        if (portfolioImages.length > 0) {
             portfolioHTML = `
-                <div class="portfolio-grid" id="portfolioGrid">
-                    ${realPortfolio.map((url, index) => {
+                <div class="portfolio-grid">
+                    ${portfolioImages.map((url, index) => {
                         const isVideo = url.includes('.mp4') || url.includes('.mov') || url.includes('.webm');
                         return `
                             <div class="portfolio-item" onclick="showToast('📸 Viewing portfolio item ${index + 1}')">
@@ -824,7 +782,7 @@
             `;
         }
 
-        // Reviews (sample or real)
+        // Reviews
         const reviewsData = data.reviews || [
             { name: "Rahul Sharma", rating: 5, date: "2 days ago", comment: "Excellent service! Very professional and quick work. Highly recommended.", avatar: "" },
             { name: "Priya Patel", rating: 4, date: "1 week ago", comment: "Good work but slightly overpriced. Overall satisfied.", avatar: "" },
@@ -853,7 +811,6 @@
                     </div>
                 </div>
 
-                <!-- Stats -->
                 <div class="stats-row">
                     <div class="stat-item">
                         <div class="number">${data.totalJobs || 0}</div>
@@ -869,7 +826,6 @@
                     </div>
                 </div>
 
-                <!-- Bio -->
                 ${data.bio ? `
                 <div class="bio-section">
                     <div class="label">📝 About</div>
@@ -877,7 +833,6 @@
                 </div>
                 ` : ''}
 
-                <!-- Info Grid -->
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="label">💼 Experience</div>
@@ -897,7 +852,6 @@
                     </div>
                 </div>
 
-                <!-- Skills -->
                 <div>
                     <div class="label" style="font-size:0.7rem; color:#b0c4de; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🛠️ Skills</div>
                     <div class="skills-container">
@@ -905,7 +859,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="action-buttons">
                     <button class="btn-primary-lg" id="bookNowBtn">
                         <i class="fas fa-calendar-check"></i> Book Now
@@ -916,11 +869,11 @@
                 </div>
             </div>
 
-            <!-- Work Portfolio - REAL IMAGES/VIDEOS -->
+            <!-- Work Portfolio - ONLY REAL IMAGES/VIDEOS -->
             <div class="profile-card fade-in" style="margin-top:16px;">
                 <div class="section-title">
                     <i class="fas fa-images"></i> Work Portfolio
-                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${realPortfolio.length} items)</span>
+                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${portfolioImages.length} items)</span>
                 </div>
                 ${portfolioHTML}
             </div>
@@ -949,7 +902,6 @@
             </div>
         `;
 
-        // Event listeners for buttons
         document.getElementById('bookNowBtn')?.addEventListener('click', () => {
             showToast(`✅ Booking request sent to ${data.displayName || 'worker'}!`);
         });
@@ -1013,30 +965,20 @@
     if (workerId) {
         loadWorkerProfile(workerId);
     } else {
-        // If no ID, try to load from localStorage
         const savedId = localStorage.getItem('quickfix_view_profile_id');
-        const savedData = localStorage.getItem('quickfix_view_worker_data');
         if (savedId) {
             loadWorkerProfile(savedId);
-        } else if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                workerNameTitle.textContent = data.name || 'Worker';
-                renderProfile(data, []);
-                showToast('⚠️ Using cached profile', true);
-            } catch(e) {
-                showToast('⚠️ No worker selected', true);
-                setTimeout(() => window.location.href = 'user-homepage.html', 1500);
-            }
         } else {
-            showToast('⚠️ No worker selected', true);
-            setTimeout(() => window.location.href = 'user-homepage.html', 1500);
+            // Demo profile - will load from Firestore if exists
+            const demoId = 'Zs9IEK8ddQduX99wh7UiDzCmeo93';
+            loadWorkerProfile(demoId);
         }
     }
 
     console.log('%c👤 View Profile - Real Portfolio Images/Videos!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Shows real images/videos uploaded by worker');
+    console.log('✅ Shows real images/videos from Firestore');
     console.log('✅ Empty portfolio shows "No portfolio items uploaded yet"');
+    console.log('✅ Worker ID from URL: ' + workerId);
 </script>
 </body>
 </html>
