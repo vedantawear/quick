@@ -162,7 +162,6 @@
     }
     .chip:active { transform: scale(0.96); }
 
-    /* Provider Info Card */
     .provider-mini-card {
       background: rgba(8, 12, 24, 0.6);
       backdrop-filter: blur(16px);
@@ -334,7 +333,6 @@
     </div>
   </div>
 
-  <!-- Provider Mini Card -->
   <div class="provider-mini-card" id="providerMiniCard">
     <div class="info">
       <div class="avatar-sm">
@@ -540,16 +538,13 @@
       const docSnap = await providerRef.get();
       if(docSnap.exists) {
         providerData = docSnap.data();
-        // Update header
         document.getElementById('providerNameDisplay').innerText = providerData.displayName || 'Provider';
         document.getElementById('providerRatingDisplay').innerText = providerData.rating || providerData.averageRating || '0';
         document.getElementById('providerCategoryDisplay').innerText = providerData.categoryName || providerData.category || 'General';
-        // Update avatar
         if(providerData.profilePhotoUrl) {
           document.getElementById('providerAvatarImg').src = providerData.profilePhotoUrl;
           document.querySelector('.avatar-small-inner').style.background = `url('${providerData.profilePhotoUrl}') center/cover`;
         }
-        // Update status badge
         const badge = document.getElementById('statusBadge');
         if(providerData.isOnline !== false) {
           badge.textContent = '🟢 Online';
@@ -598,16 +593,40 @@
       return;
     }
     
-    container.innerHTML = filtered.map(order => `
+    container.innerHTML = filtered.map(order => {
+      // Customer avatar
+      const customerAvatar = order.customerAvatar || order.photoURL || 'https://randomuser.me/api/portraits/women/68.jpg';
+      const customerName = order.customerName || order.customer || 'Customer';
+      const category = order.category || order.serviceType || 'Service';
+      const distance = order.distance || '0.8';
+      const budget = order.budget || order.price || 0;
+      const description = order.description || order.notes || 'Service request';
+      const scheduledDate = order.scheduledDate || order.date || 'Today';
+      const urgency = order.urgency || 'Medium';
+      
+      return `
       <div class="order-card" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
         <div class="order-header">
-          <div class="customer-img-order" style="background: url('${order.customerAvatar || 'https://randomuser.me/api/portraits/women/68.jpg'}') center/cover; width:52px; height:52px;"></div>
-          <div><strong>${order.customerName || 'Customer'}</strong> ⭐ ${order.customerRating || '4.9'} <span style="color:#0af">AI Trust ${order.aiTrust || '98'}%</span><br>${order.title || order.category} • ${order.distance || '0.8mi'} • 💰 $${order.budget || 0}<div><span class="status-badge" style="background:${statusColor(order.status)}20; border-color:${statusColor(order.status)};">${getStatusDisplay(order.status)}</span> ${order.paymentStatus === 'paid' ? '✅ Paid' : '💵 Pending'}</div></div>
+          <div class="customer-img-order" style="background: url('${customerAvatar}') center/cover; width:52px; height:52px;"></div>
+          <div>
+            <strong>${customerName}</strong> ⭐ ${order.customerRating || '4.9'} 
+            <span style="color:#0af">AI Trust ${order.aiTrust || '98'}%</span>
+            <br>
+            ${category} • ${distance} km away • 💰 $${budget}
+            <div>
+              <span class="status-badge" style="background:${statusColor(order.status)}20; border-color:${statusColor(order.status)};">
+                ${getStatusDisplay(order.status)}
+              </span>
+              ${order.paymentStatus === 'paid' ? '✅ Paid' : '💵 Pending'}
+              ${urgency === 'High' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;"> 🔥 Urgent</span>' : ''}
+              ${urgency === 'Emergency' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;"> 🚨 Emergency</span>' : ''}
+            </div>
+          </div>
         </div>
-        <div>📝 ${order.description || 'Service request'}</div>
+        <div>📝 ${description}</div>
         <div style="display:flex; gap:12px; margin:10px 0;">
           <div style="width:60px; height:60px; background:#333; border-radius:20px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-image"></i></div>
-          <span>📅 ${order.scheduledDate || 'Today'}</span>
+          <span>📅 ${scheduledDate}</span>
         </div>
         <div class="progress-track"><div class="progress-fill" style="width: ${getProgressWidth(order.status)}%;"></div></div>
         <div class="order-buttons">
@@ -619,7 +638,7 @@
           <button class="chatBtn">💬 Chat</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
     
     document.querySelectorAll('.acceptBtn').forEach(btn => {
       btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, 'accepted'));
@@ -641,7 +660,7 @@
   function updateTracking(order) {
     const trackDiv = document.getElementById('trackingContent');
     if(order && (order.status === 'accepted' || order.status === 'in_progress')) {
-      trackDiv.innerHTML = `<div><strong>📍 Serving: ${order.customerName}</strong><br>🚶 Distance: ${order.distance || '1.2mi'} • ETA: ${Math.floor(Math.random()*15)+5} min<br><div class="progress-track mt-1"><div class="progress-fill" style="width: 65%;"></div></div>🗺️ Navigation active: follow route</div>`;
+      trackDiv.innerHTML = `<div><strong>📍 Serving: ${order.customerName}</strong><br>🚶 Distance: ${order.distance || '1.2'} km • ETA: ${Math.floor(Math.random()*15)+5} min<br><div class="progress-track mt-1"><div class="progress-fill" style="width: 65%;"></div></div>🗺️ Navigation active: follow route</div>`;
     } else {
       trackDiv.innerHTML = `<span>✨ No active mission. Accept an order to start live tracking.</span>`;
     }
@@ -683,7 +702,8 @@
     q.onSnapshot((snapshot) => {
       currentOrders = [];
       snapshot.forEach(doc => {
-        currentOrders.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        currentOrders.push({ id: doc.id, ...data });
       });
       
       // Update active orders count
@@ -798,9 +818,8 @@
   });
 
   console.log('%c📦 NEBULA ORDERS - Fully Real-time Working!', 'color: #0af; font-size: 16px; font-weight: bold;');
-  console.log('✅ Firebase Auth, Firestore configured');
-  console.log('✅ Real-time orders from Firestore');
-  console.log('✅ Provider profile loaded in real-time');
+  console.log('✅ Orders load from Firestore in real-time');
+  console.log('✅ Customer name, distance, price, urgency all displayed');
 </script>
 </body>
 </html>
