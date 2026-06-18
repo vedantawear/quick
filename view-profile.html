@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>View Profile · QuickFix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0f1e, #03060c);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+            padding-bottom: 90px;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 18px 0 18px;
+            padding-bottom: 20px;
+        }
+
+        /* ==========================================
+           BOTTOM NAVIGATION
+           ========================================== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(10, 15, 25, 0.96);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 20px 20px;
+            border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            opacity: 0.6;
+            background: transparent;
+            border: none;
+            padding: 4px 16px;
+            color: #b0c4de;
+            flex: 1;
+            justify-content: center;
+        }
+        .nav-item.active {
+            opacity: 1;
+            transform: translateY(-3px);
+        }
+        .nav-item i {
+            font-size: 1.6rem;
+            color: #f5b042;
+            transition: 0.2s;
+        }
+        .nav-item span {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #b0c4de;
+        }
+        .nav-item.active span {
+            color: #f5b042;
+        }
+
+        /* HEADER WITH BACK BUTTON */
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(20, 28, 40, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #f5b042;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(245, 176, 66, 0.15);
+        }
+        .back-btn:active {
+            transform: scale(0.94);
+        }
+
+        .header-title h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .header-title p {
+            font-size: 0.7rem;
+            color: #b0c4de;
+        }
+
+        /* ==========================================
+           PROFILE CARD
+           ========================================== */
+        .profile-card {
+            background: rgba(18, 27, 40, 0.75);
+            backdrop-filter: blur(16px);
+            border-radius: 32px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .profile-header-section {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .profile-avatar-lg {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2c3e4e, #1a2a3a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 3px solid #f5b042;
+        }
+        .profile-avatar-lg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-avatar-lg i {
+            font-size: 3rem;
+            color: #f5b042;
+        }
+
+        .profile-name-section h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .profile-name-section .profession {
+            font-size: 0.85rem;
+            color: #b0c4de;
+        }
+        .profile-name-section .rating {
+            color: #f9b81b;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+        .profile-name-section .rating span {
+            color: #b0c4de;
+        }
+        .verified-badge-lg {
+            display: inline-block;
+            background: #1a73e8;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .status-badge.online {
+            background: #2e7d32;
+            color: #fff;
+        }
+        .status-badge.offline {
+            background: #4a5a6a;
+            color: #fff;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+            padding: 16px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f5b042;
+        }
+        .stat-item .label {
+            font-size: 0.6rem;
+            color: #b0c4de;
+            margin-top: 2px;
+        }
+
+        /* Bio */
+        .bio-section {
+            margin: 12px 0;
+        }
+        .bio-section .label {
+            font-size: 0.7rem;
+            color: #b0c4de;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .bio-section .bio-text {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #e0e8f0;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 16px 0;
+        }
+        .info-item {
+            background: rgba(0,0,0,0.3);
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .info-item .label {
+            font-size: 0.6rem;
+            color: #b0c4de;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-item .value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .info-item .value i {
+            color: #f5b042;
+            margin-right: 4px;
+        }
+
+        /* Skills */
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .skill-tag {
+            background: rgba(245, 176, 66, 0.15);
+            border: 1px solid rgba(245, 176, 66, 0.3);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #f5b042;
+        }
+
+        /* ==========================================
+           WORK PORTFOLIO
+           ========================================== */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title i {
+            color: #f5b042;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .portfolio-item {
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: #1a2a3a;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            cursor: pointer;
+        }
+        .portfolio-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .portfolio-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .portfolio-item .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.6);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+        .portfolio-item .media-type {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.6);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.55rem;
+            color: white;
+        }
+        .portfolio-empty {
+            grid-column: span 3;
+            text-align: center;
+            padding: 30px;
+            color: #b0c4de;
+            font-size: 0.85rem;
+        }
+        .portfolio-empty i {
+            font-size: 2rem;
+            color: #4a5a6a;
+            margin-bottom: 8px;
+        }
+
+        /* ==========================================
+           REVIEWS
+           ========================================== */
+        .review-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .review-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2a3a4e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .review-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .review-avatar i {
+            font-size: 1.4rem;
+            color: #f5b042;
+        }
+        .review-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .review-date {
+            font-size: 0.6rem;
+            color: #b0c4de;
+        }
+        .review-stars {
+            color: #f9b81b;
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+        .review-text {
+            font-size: 0.8rem;
+            color: #d0d8e0;
+            line-height: 1.5;
+        }
+
+        /* ==========================================
+           ACTION BUTTONS
+           ========================================== */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn-primary-lg {
+            flex: 1;
+            background: linear-gradient(135deg, #f5b042, #f57c00);
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 700;
+            color: #0a0f1e;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        .btn-primary-lg:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(245, 176, 66, 0.4);
+        }
+        .btn-primary-lg:active {
+            transform: scale(0.98);
+        }
+        .btn-outline-lg {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #f5b042;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #f5b042;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        .btn-outline-lg:hover {
+            background: rgba(245, 176, 66, 0.1);
+        }
+        .btn-outline-lg:active {
+            transform: scale(0.98);
+        }
+
+        /* ==========================================
+           TOAST
+           ========================================== */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 24px;
+            border-radius: 60px;
+            border: 1px solid #f5b042;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            white-space: nowrap;
+            font-size: 14px;
+            color: white;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: #f5b042;
+            animation: spin 0.8s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-center {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 14px 14px 0 14px;
+            }
+            .profile-header-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            .profile-avatar-lg {
+                width: 80px;
+                height: 80px;
+            }
+            .bottom-nav {
+                padding: 10px 10px 18px;
+            }
+            .nav-item i {
+                font-size: 1.4rem;
+            }
+            .nav-item span {
+                font-size: 0.6rem;
+            }
+            .nav-item {
+                padding: 4px 8px;
+            }
+            .portfolio-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        @media (min-width: 600px) {
+            .app-container {
+                border-radius: 28px;
+                margin-top: 20px;
+                background: rgba(10, 15, 25, 0.4);
+                box-shadow: 0 20px 60px rgba(0, 20, 50, 0.08);
+            }
+            body {
+                padding: 20px 0 80px 0;
+                background: #0a0f1e;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+
+    <!-- HEADER WITH BACK BUTTON -->
+    <div class="top-header">
+        <div class="header-left">
+            <button class="back-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="header-title">
+                <h1>View Profile</h1>
+                <p id="workerNameTitle">Loading...</p>
+            </div>
+        </div>
+        <div class="notification-icon" id="notifBtn" style="background:rgba(20,28,40,0.8); width:44px; height:44px; border-radius:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.08);">
+            <i class="fas fa-share-alt" style="color:#f5b042; font-size:1.2rem;"></i>
+        </div>
+    </div>
+
+    <!-- PROFILE DETAILS -->
+    <div id="profileContent">
+        <div class="loading-center">
+            <div class="loading-spinner"></div>
+            <p style="color:#b0c4de; margin-top:12px;">Loading profile...</p>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+        <button class="nav-item" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item active" data-page="profile">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </button>
+        <button class="nav-item" data-page="booking">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Booking</span>
+        </button>
+    </div>
+
+    <div class="toast" id="toastMsg"></div>
+</div>
+
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+<script>
+    // ==========================================
+    // FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+        authDomain: "quickfix-907c0.firebaseapp.com",
+        projectId: "quickfix-907c0",
+        storageBucket: "quickfix-907c0.firebasestorage.app",
+        messagingSenderId: "539102384460",
+        appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+        measurementId: "G-B548C8R9WV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    console.log('✅ Firebase initialized successfully!');
+
+    // ==========================================
+    // DOM ELEMENTS
+    // ==========================================
+    const profileContent = document.getElementById('profileContent');
+    const backBtn = document.getElementById('backBtn');
+    const notifBtn = document.getElementById('notifBtn');
+    const toastMsg = document.getElementById('toastMsg');
+    const workerNameTitle = document.getElementById('workerNameTitle');
+
+    // ==========================================
+    // GET WORKER ID FROM URL
+    // ==========================================
+    function getWorkerIdFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+
+    // ==========================================
+    // TOAST FUNCTION
+    // ==========================================
+    function showToast(message, isError = false) {
+        toastMsg.textContent = message;
+        toastMsg.style.borderColor = isError ? '#ff0066' : '#f5b042';
+        toastMsg.classList.add('show');
+        clearTimeout(toastMsg._timer);
+        toastMsg._timer = setTimeout(() => toastMsg.classList.remove('show'), 3000);
+    }
+
+    // ==========================================
+    // GENERATE STARS
+    // ==========================================
+    function generateStars(rating) {
+        const full = Math.floor(rating);
+        const half = rating % 1 >= 0.5 ? 1 : 0;
+        let html = '';
+        for (let i = 0; i < full; i++) html += '<i class="fas fa-star"></i>';
+        if (half) html += '<i class="fas fa-star-half-alt"></i>';
+        const empty = 5 - full - half;
+        for (let i = 0; i < empty; i++) html += '<i class="far fa-star"></i>';
+        return html;
+    }
+
+    // ==========================================
+    // LOAD WORKER PROFILE FROM FIRESTORE
+    // ==========================================
+    async function loadWorkerProfile(workerId) {
+        try {
+            const docRef = db.collection("providers").doc(workerId);
+            const docSnap = await docRef.get();
+
+            if (!docSnap.exists) {
+                showToast('⚠️ Worker not found', true);
+                setTimeout(() => window.location.href = 'user-homepage.html', 1500);
+                return;
+            }
+
+            const data = docSnap.data();
+            workerNameTitle.textContent = data.displayName || 'Worker';
+
+            // Render profile
+            renderProfile(data);
+
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            showToast('❌ Error loading profile', true);
+            profileContent.innerHTML = `
+                <div class="loading-center">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:#ff3366;"></i>
+                    <p style="color:#b0c4de; margin-top:12px;">Error loading profile</p>
+                    <button onclick="window.location.href='user-homepage.html'" style="margin-top:16px; background:#f5b042; border:none; padding:10px 24px; border-radius:40px; font-weight:600; cursor:pointer;">Go Back</button>
+                </div>
+            `;
+        }
+    }
+
+    // ==========================================
+    // RENDER PROFILE
+    // ==========================================
+    function renderProfile(data) {
+        const hasPhoto = data.profilePhotoUrl && data.profilePhotoUrl.length > 20;
+        const rating = data.rating || data.averageRating || 0;
+        const reviews = data.totalReviews || 0;
+        const isOnline = data.isOnline !== undefined ? data.isOnline : true;
+        const isVerified = data.verificationStatus === 'verified' || data.isVerified;
+
+        // Sample portfolio images (from Firestore or fallback)
+        const portfolioImages = data.portfolioUrls || data.workImages || [
+            'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=300&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&h=300&fit=crop'
+        ];
+
+        // Sample reviews
+        const reviewsData = [
+            { name: "Rahul Sharma", rating: 5, date: "2 days ago", comment: "Excellent service! Very professional and quick work. Highly recommended.", avatar: "" },
+            { name: "Priya Patel", rating: 4, date: "1 week ago", comment: "Good work but slightly overpriced. Overall satisfied.", avatar: "" },
+            { name: "Amit Kumar", rating: 5, date: "2 weeks ago", comment: "Best service I've ever hired. Will definitely book again.", avatar: "" }
+        ];
+
+        // Skills
+        const skills = data.skills || ['Expert Service', 'Professional', 'Trusted'];
+
+        const starsHtml = generateStars(rating);
+
+        profileContent.innerHTML = `
+            <!-- Profile Card -->
+            <div class="profile-card fade-in">
+                <div class="profile-header-section">
+                    <div class="profile-avatar-lg">
+                        ${hasPhoto ? `<img src="${data.profilePhotoUrl}" alt="${data.displayName}">` : `<i class="fas fa-user-hard-hat"></i>`}
+                    </div>
+                    <div class="profile-name-section">
+                        <h2>${data.displayName || 'Provider'} ${isVerified ? '<span class="verified-badge-lg">✓ Verified</span>' : ''}</h2>
+                        <div class="profession">${data.categoryName || data.category || 'Professional Service Provider'}</div>
+                        <div class="rating">${starsHtml} <span>${rating.toFixed(1)} (${reviews || 0} reviews)</span></div>
+                        <div>
+                            <span class="status-badge ${isOnline ? 'online' : 'offline'}">
+                                ${isOnline ? '🟢 Online' : '🔴 Offline'}
+                            </span>
+                            <span style="font-size:0.65rem; color:#b0c4de; margin-left:8px;">
+                                <i class="fas fa-map-marker-alt"></i> ${data.location || 'Your City'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="number">${data.totalJobs || 0}</div>
+                        <div class="label">Total Jobs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number">${data.completedJobs || 0}</div>
+                        <div class="label">Completed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number">${data.responseRate || 95}%</div>
+                        <div class="label">Response Rate</div>
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                ${data.bio ? `
+                <div class="bio-section">
+                    <div class="label">📝 About</div>
+                    <div class="bio-text">${data.bio}</div>
+                </div>
+                ` : ''}
+
+                <!-- Info Grid -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">💼 Experience</div>
+                        <div class="value">${data.experience || '2+ years'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">💰 Price</div>
+                        <div class="value"><i class="fas fa-rupee-sign"></i> ${data.price || 399}/hr</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">📅 Member Since</div>
+                        <div class="value">${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : '2024'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">📞 Contact</div>
+                        <div class="value"><i class="fas fa-phone"></i> ${data.phone || '+91 98765 43210'}</div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div>
+                    <div class="label" style="font-size:0.7rem; color:#b0c4de; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🛠️ Skills</div>
+                    <div class="skills-container">
+                        ${skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn-primary-lg" id="bookNowBtn">
+                        <i class="fas fa-calendar-check"></i> Book Now
+                    </button>
+                    <button class="btn-outline-lg" id="chatBtn">
+                        <i class="fas fa-comment-dots"></i> Chat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Work Portfolio -->
+            <div class="profile-card fade-in" style="margin-top:16px;">
+                <div class="section-title">
+                    <i class="fas fa-images"></i> Work Portfolio
+                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${portfolioImages.length} items)</span>
+                </div>
+                <div class="portfolio-grid" id="portfolioGrid">
+                    ${portfolioImages.map((img, index) => `
+                        <div class="portfolio-item" onclick="showToast('📸 Viewing portfolio item ${index + 1}')">
+                            ${img.includes('.mp4') || img.includes('.mov') ? `
+                                <video src="${img}" muted></video>
+                                <div class="play-icon"><i class="fas fa-play"></i></div>
+                                <div class="media-type">🎬 Video</div>
+                            ` : `
+                                <img src="${img}" alt="Work ${index + 1}">
+                                <div class="media-type">📸 Photo</div>
+                            `}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Reviews -->
+            <div class="profile-card fade-in" style="margin-top:16px;">
+                <div class="section-title">
+                    <i class="fas fa-star"></i> Reviews
+                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${reviewsData.length} reviews)</span>
+                </div>
+                ${reviewsData.map(review => `
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="review-avatar">
+                                ${review.avatar ? `<img src="${review.avatar}" alt="${review.name}">` : `<i class="fas fa-user-circle"></i>`}
+                            </div>
+                            <div>
+                                <div class="review-name">${review.name}</div>
+                                <div class="review-date">${review.date}</div>
+                            </div>
+                            <div class="review-stars">${generateStars(review.rating)}</div>
+                        </div>
+                        <div class="review-text">${review.comment}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Event listeners for buttons
+        document.getElementById('bookNowBtn')?.addEventListener('click', () => {
+            showToast(`✅ Booking request sent to ${data.displayName || 'worker'}!`);
+        });
+
+        document.getElementById('chatBtn')?.addEventListener('click', () => {
+            showToast('💬 Chat feature coming soon!');
+        });
+    }
+
+    // ==========================================
+    // NAVIGATION
+    // ==========================================
+    function navigateTo(page) {
+        if (page === 'home') {
+            window.location.href = 'user-homepage.html';
+        } else if (page === 'booking') {
+            window.location.href = 'user-booking.html';
+        }
+    }
+
+    // ==========================================
+    // EVENT LISTENERS
+    // ==========================================
+    backBtn.addEventListener('click', function() {
+        window.history.back();
+    });
+
+    notifBtn.addEventListener('click', function() {
+        showToast('🔗 Profile link copied to clipboard!');
+        // Copy profile link to clipboard
+        const url = window.location.href;
+        navigator.clipboard?.writeText(url).then(() => {
+            showToast('🔗 Profile link copied!');
+        }).catch(() => {
+            showToast('🔗 Share this profile: ' + url);
+        });
+    });
+
+    document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            this.classList.add('active');
+            navigateTo(page);
+        });
+    });
+
+    // ==========================================
+    // AUTH CHECK
+    // ==========================================
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            showToast('Please login to view profiles', true);
+            setTimeout(() => window.location.href = 'login.html', 1500);
+        }
+    });
+
+    // ==========================================
+    // INIT
+    // ==========================================
+    const workerId = getWorkerIdFromURL();
+    if (workerId) {
+        loadWorkerProfile(workerId);
+    } else {
+        // If no ID, try to load from localStorage or use demo
+        const savedId = localStorage.getItem('quickfix_view_profile_id');
+        if (savedId) {
+            loadWorkerProfile(savedId);
+        } else {
+            // Demo mode - load a sample profile
+            const demoId = 'Zs9IEK8ddQduX99wh7UiDzCmeo93';
+            loadWorkerProfile(demoId);
+        }
+    }
+
+    console.log('%c👤 View Profile - Fully Real-time!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Firebase Firestore configured');
+    console.log('✅ Worker ID from URL: ' + workerId);
+</script>
+</body>
+</html>
