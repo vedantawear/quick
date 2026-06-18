@@ -682,17 +682,33 @@
     // ==========================================
     async function loadWorkerProfile(workerId) {
         try {
+            // FIX: Use 'providers' collection (correct collection name)
             const docRef = db.collection("providers").doc(workerId);
             const docSnap = await docRef.get();
 
-            // FIX: .exists is a property, not a function
+            // Check if document exists
             if (!docSnap.exists) {
+                console.log('❌ Worker not found in Firestore:', workerId);
                 showToast('⚠️ Worker not found', true);
+                
+                // Try to get from localStorage as fallback
+                const savedData = localStorage.getItem('quickfix_view_worker_data');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        workerNameTitle.textContent = data.name || 'Worker';
+                        renderProfile(data, []);
+                        showToast('⚠️ Using cached profile data', true);
+                        return;
+                    } catch(e) {}
+                }
+                
                 setTimeout(() => window.location.href = 'user-homepage.html', 1500);
                 return;
             }
 
             const data = docSnap.data();
+            console.log('✅ Profile loaded:', data.displayName || 'Worker');
             workerNameTitle.textContent = data.displayName || 'Worker';
 
             // Get portfolio images - REAL from Firestore
@@ -725,11 +741,12 @@
 
         } catch (error) {
             console.error('Error loading profile:', error);
-            showToast('❌ Error loading profile', true);
+            showToast('❌ Error loading profile: ' + error.message, true);
             profileContent.innerHTML = `
                 <div class="loading-center">
                     <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:#ff3366;"></i>
                     <p style="color:#b0c4de; margin-top:12px;">Error loading profile</p>
+                    <p style="color:#6a7a8a; font-size:0.8rem; margin-top:4px;">${error.message}</p>
                     <button onclick="window.location.href='user-homepage.html'" style="margin-top:16px; background:#f5b042; border:none; padding:10px 24px; border-radius:40px; font-weight:600; cursor:pointer;">Go Back</button>
                 </div>
             `;
@@ -963,11 +980,14 @@
     // INIT
     // ==========================================
     const workerId = getWorkerIdFromURL();
+    console.log('🔍 Worker ID from URL:', workerId);
+    
     if (workerId) {
         loadWorkerProfile(workerId);
     } else {
         const savedId = localStorage.getItem('quickfix_view_profile_id');
         if (savedId) {
+            console.log('🔍 Using saved ID:', savedId);
             loadWorkerProfile(savedId);
         } else {
             showToast('⚠️ No worker selected', true);
@@ -976,9 +996,8 @@
     }
 
     console.log('%c👤 View Profile - Real Portfolio Images/Videos!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Using "providers" collection in Firestore');
     console.log('✅ Shows real images/videos from Firestore');
-    console.log('✅ Empty portfolio shows "No portfolio items uploaded yet"');
-    console.log('✅ Worker ID from URL: ' + workerId);
 </script>
 </body>
 </html>
