@@ -678,7 +678,7 @@
     }
 
     // ==========================================
-    // LOAD WORKER PROFILE FROM FIRESTORE - FIXED
+    // LOAD WORKER PROFILE FROM FIRESTORE
     // ==========================================
     async function loadWorkerProfile(workerId) {
         try {
@@ -796,6 +796,18 @@
             { name: "Amit Kumar", rating: 5, date: "2 weeks ago", comment: "Best service I've ever hired. Will definitely book again.", avatar: "" }
         ];
 
+        // ==========================================
+        // GET REAL WORKER DATA FOR BOOK NOW
+        // ==========================================
+        const workerId = data.uid || data.id || getWorkerIdFromURL() || 'unknown';
+        const workerName = data.displayName || data.fullName || 'Worker';
+        const workerProfession = data.categoryName || data.category || 'Service Provider';
+        const workerPrice = data.price || 399;
+        const workerPhoto = data.profilePhotoUrl || data.photoURL || '';
+        const workerRating = data.rating || data.averageRating || 4.5;
+
+        console.log('📌 Worker Data for Booking:', { workerId, workerName, workerProfession, workerPrice, workerPhoto });
+
         profileContent.innerHTML = `
             <!-- Profile Card -->
             <div class="profile-card fade-in">
@@ -847,7 +859,7 @@
                     </div>
                     <div class="info-item">
                         <div class="label">💰 Price</div>
-                        <div class="value"><i class="fas fa-rupee-sign"></i> ${data.price || 399}/hr</div>
+                        <div class="value"><i class="fas fa-rupee-sign"></i> ₹${workerPrice}/hr</div>
                     </div>
                     <div class="info-item">
                         <div class="label">📅 Member Since</div>
@@ -867,7 +879,13 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn-primary-lg book-now-btn" data-worker-id="${data.uid || data.id || ''}" data-worker-name="${data.displayName || 'Worker'}" data-worker-profession="${data.categoryName || data.category || 'Service'}" data-worker-price="${data.price || 399}" data-worker-photo="${data.profilePhotoUrl || ''}" data-worker-rating="${data.rating || 0}">
+                    <button class="btn-primary-lg book-now-btn" 
+                        data-worker-id="${workerId}"
+                        data-worker-name="${workerName}"
+                        data-worker-profession="${workerProfession}"
+                        data-worker-price="${workerPrice}"
+                        data-worker-photo="${workerPhoto}"
+                        data-worker-rating="${workerRating}">
                         <i class="fas fa-calendar-check"></i> Book Now
                     </button>
                     <button class="btn-outline-lg" id="chatBtn">
@@ -910,16 +928,21 @@
         `;
 
         // ==========================================
-        // BOOK NOW BUTTON - REDIRECT TO BOOKING DETAILS
+        // BOOK NOW BUTTON - FIXED
         // ==========================================
         document.querySelectorAll('.book-now-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Get data from button attributes
                 const workerId = this.getAttribute('data-worker-id');
                 const workerName = this.getAttribute('data-worker-name');
                 const workerProfession = this.getAttribute('data-worker-profession');
-                const workerPrice = this.getAttribute('data-worker-price');
-                const workerPhoto = this.getAttribute('data-worker-photo');
-                const workerRating = this.getAttribute('data-worker-rating');
+                const workerPrice = parseInt(this.getAttribute('data-worker-price')) || 399;
+                const workerPhoto = this.getAttribute('data-worker-photo') || '';
+                const workerRating = parseFloat(this.getAttribute('data-worker-rating')) || 4.5;
+
+                console.log('✅ Book Now clicked for:', { workerId, workerName, workerProfession, workerPrice, workerPhoto });
 
                 // Save worker data to localStorage
                 const workerData = {
@@ -928,16 +951,18 @@
                     profession: workerProfession,
                     price: workerPrice,
                     photo: workerPhoto,
-                    rating: workerRating
+                    rating: workerRating,
+                    timestamp: Date.now()
                 };
                 localStorage.setItem('quickfix_booking_worker', JSON.stringify(workerData));
+                localStorage.setItem('quickfix_view_worker_data', JSON.stringify(workerData));
 
                 showToast(`📋 Opening booking for ${workerName}...`);
                 
                 // Redirect to booking details page
                 setTimeout(() => {
                     window.location.href = 'booking-details.html';
-                }, 500);
+                }, 400);
             });
         });
 
@@ -1012,8 +1037,7 @@
         }
     }
 
-    console.log('%c👤 View Profile - Book Now Redirects to Booking Details!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Book Now button redirects to booking-details.html');
+    console.log('%c👤 View Profile - Book Now with Real Worker Data!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
 </script>
 </body>
 </html>
