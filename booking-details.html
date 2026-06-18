@@ -756,7 +756,7 @@
     </div>
 
     <!-- ==========================================
-     SECTION 6: BOOKING SUMMARY - DYNAMIC FROM WORKER
+     SECTION 6: BOOKING SUMMARY
      ========================================== -->
     <div class="section-card fade-in">
         <div class="section-title">
@@ -815,7 +815,34 @@
 <!-- TOAST -->
 <div class="toast" id="toastMsg"></div>
 
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
+    // ==========================================
+    // FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+        authDomain: "quickfix-907c0.firebaseapp.com",
+        projectId: "quickfix-907c0",
+        storageBucket: "quickfix-907c0.firebasestorage.app",
+        messagingSenderId: "539102384460",
+        appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+        measurementId: "G-B548C8R9WV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    console.log('✅ Firebase initialized successfully!');
+
     // ==========================================
     // DOM ELEMENTS
     // ==========================================
@@ -847,67 +874,59 @@
 
     let uploadedImages = [];
     let workerData = null;
+    let currentUser = null;
+
+    // ==========================================
+    // CHECK AUTH STATUS
+    // ==========================================
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            console.log('✅ User logged in:', user.email);
+            loadWorkerData();
+        } else {
+            currentUser = null;
+            console.log('ℹ️ No user logged in');
+            showToast('Please login to book', true);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        }
+    });
 
     // ==========================================
     // LOAD WORKER DATA FROM LOCALSTORAGE
     // ==========================================
     function loadWorkerData() {
-        // Try multiple sources
         let data = null;
         
-        // Source 1: quickfix_booking_worker (set by View Profile)
         const savedData = localStorage.getItem('quickfix_booking_worker');
         if (savedData) {
             try {
                 data = JSON.parse(savedData);
-                console.log('✅ Worker data loaded from quickfix_booking_worker:', data);
+                console.log('✅ Worker data loaded:', data);
             } catch(e) {}
         }
         
-        // Source 2: quickfix_view_worker_data (fallback)
         if (!data) {
             const fallbackData = localStorage.getItem('quickfix_view_worker_data');
             if (fallbackData) {
                 try {
                     data = JSON.parse(fallbackData);
-                    console.log('✅ Worker data loaded from quickfix_view_worker_data:', data);
+                    console.log('✅ Worker data loaded from fallback:', data);
                 } catch(e) {}
-            }
-        }
-        
-        // Source 3: URL Parameters
-        if (!data) {
-            const params = new URLSearchParams(window.location.search);
-            const name = params.get('name');
-            if (name) {
-                data = {
-                    id: params.get('id') || 'unknown',
-                    name: name,
-                    profession: params.get('profession') || 'Service Provider',
-                    price: parseInt(params.get('price')) || 399,
-                    photo: params.get('photo') || '',
-                    rating: parseFloat(params.get('rating')) || 4.5
-                };
-                console.log('✅ Worker data loaded from URL params:', data);
             }
         }
         
         if (data) {
             workerData = data;
             updateUIWithWorkerData(data);
+            modalWorkerName.textContent = data.name || 'Worker';
             return true;
         }
         
         console.warn('⚠️ No worker data found, using default');
-        // Set default data
-        workerData = {
-            id: 'default',
-            name: 'Worker',
-            profession: 'Service Provider',
-            price: 399,
-            photo: '',
-            rating: 4.5
-        };
+        workerData = { name: 'Worker', price: 399 };
         updateUIWithWorkerData(workerData);
         return false;
     }
@@ -916,38 +935,75 @@
     // UPDATE UI WITH WORKER DATA
     // ==========================================
     function updateUIWithWorkerData(data) {
-        // Update name
         const displayName = data.name || 'Worker';
         workerName.textContent = displayName;
         modalWorkerName.textContent = displayName;
         document.title = `Booking · ${displayName}`;
 
-        // Update profession
         workerProfession.textContent = data.profession || 'Service Provider';
 
-        // Update rating
         const reviews = Math.floor(Math.random() * 300) + 50;
         const rating = data.rating || 4.5;
         workerRating.innerHTML = `<i class="fas fa-star"></i> ${rating.toFixed(1)} (${reviews} reviews)`;
 
-        // Update price
         const price = data.price || 399;
         const total = price + 49 + 25;
         serviceCharge.textContent = `₹${price}`;
         totalAmount.textContent = `₹${total}`;
         bottomTotal.textContent = `₹${total}`;
 
-        // Update avatar
         if (data.photo && data.photo.length > 20 && data.photo.startsWith('http')) {
             workerAvatar.innerHTML = `<img src="${data.photo}" alt="${data.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-user-hard-hat\\'></i>'">`;
         } else {
             workerAvatar.innerHTML = `<i class="fas fa-user-hard-hat"></i>`;
         }
 
-        // Save to localStorage for persistence
         localStorage.setItem('quickfix_booking_worker', JSON.stringify(data));
-        
         console.log('✅ UI Updated with worker data:', data);
+    }
+
+    // ==========================================
+    // SAVE BOOKING TO FIRESTORE
+    // ==========================================
+    async function saveBookingToFirestore(bookingData) {
+        if (!currentUser) {
+            showToast('Please login first', true);
+            return false;
+        }
+
+        try {
+            // Save to 'jobs' collection (this will show in Orders page)
+            const jobRef = await db.collection("jobs").add({
+                customerName: bookingData.customerName || 'Customer',
+                customerId: currentUser.uid,
+                customerEmail: currentUser.email,
+                customerAvatar: currentUser.photoURL || '',
+                title: bookingData.title || 'Service Request',
+                category: bookingData.category || workerData?.profession || 'Service',
+                description: bookingData.description || '',
+                budget: bookingData.price || workerData?.price || 399,
+                distance: bookingData.distance || '0.8',
+                status: 'pending',
+                urgency: bookingData.urgency || 'Medium',
+                paymentStatus: 'pending',
+                scheduledDate: bookingData.scheduledDate || 'Today',
+                providerId: workerData?.id || '',
+                providerName: workerData?.name || 'Provider',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                aiTrust: 98,
+                customerRating: 4.9,
+                bookingId: bookingData.bookingId || 'QFX-' + Date.now().toString().slice(-6)
+            });
+
+            console.log('✅ Booking saved to Firestore with ID:', jobRef.id);
+            return jobRef.id;
+
+        } catch (error) {
+            console.error('Error saving booking:', error);
+            showToast('❌ Error saving booking: ' + error.message, true);
+            return null;
+        }
     }
 
     // ==========================================
@@ -1077,9 +1133,9 @@
     });
 
     // ==========================================
-    // CONFIRM BOOKING
+    // CONFIRM BOOKING - SAVES TO FIRESTORE
     // ==========================================
-    confirmBtn.addEventListener('click', function() {
+    confirmBtn.addEventListener('click', async function() {
         const desc = problemDesc.value.trim();
         if (!desc) {
             showToast('⚠️ Please describe your problem', true);
@@ -1087,32 +1143,85 @@
             return;
         }
 
+        // Check if user is logged in
+        if (!currentUser) {
+            showToast('Please login to book', true);
+            setTimeout(() => window.location.href = 'login.html', 1500);
+            return;
+        }
+
         this.disabled = true;
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-        const id = 'QFX-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
-        bookingIdSpan.textContent = '#' + id;
+        // Generate booking ID
+        const bookingId = 'QFX-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+        bookingIdSpan.textContent = '#' + bookingId;
         modalWorkerName.textContent = workerData?.name || 'Worker';
 
-        setTimeout(() => {
-            successModal.classList.add('show');
-            this.disabled = false;
-            this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+        // Prepare booking data for Firestore
+        const scheduleValue = document.querySelector('input[name="schedule"]:checked')?.value || 'asap';
+        const scheduleDate = document.getElementById('scheduleDate').value;
+        const scheduleTime = document.getElementById('scheduleTime').value;
+        
+        const bookingData = {
+            bookingId: bookingId,
+            customerName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Customer',
+            customerId: currentUser.uid,
+            customerEmail: currentUser.email,
+            customerAvatar: currentUser.photoURL || '',
+            title: desc.substring(0, 50) + (desc.length > 50 ? '...' : ''),
+            category: workerData?.profession || 'Service',
+            description: desc,
+            price: workerData?.price || 399,
+            totalAmount: (workerData?.price || 399) + 49 + 25,
+            distance: '0.8',
+            status: 'pending',
+            urgency: 'Medium',
+            paymentStatus: 'pending',
+            scheduledDate: scheduleValue === 'asap' ? 'ASAP' : scheduleDate,
+            scheduledTime: scheduleValue === 'asap' ? 'Immediate' : scheduleTime,
+            scheduleType: scheduleValue,
+            providerId: workerData?.id || '',
+            providerName: workerData?.name || 'Provider',
+            images: uploadedImages.length,
+            imageUrls: uploadedImages.map(img => img.url),
+            aiTrust: 98,
+            customerRating: 4.9,
+            address: 'Sector 62, Noida, Uttar Pradesh 201301',
+            createdAt: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-            const bookingData = {
-                id: id,
+        // Save to Firestore
+        const jobId = await saveBookingToFirestore(bookingData);
+
+        if (jobId) {
+            // Also save to localStorage for fallback
+            const bookings = JSON.parse(localStorage.getItem('quickfix_bookings') || '[]');
+            bookings.unshift({
+                id: jobId,
+                bookingId: bookingId,
                 workerName: workerData?.name || 'Worker',
                 workerId: workerData?.id || '',
                 date: new Date().toISOString(),
                 status: 'pending',
-                price: `₹${workerData?.price || 273}`,
+                price: `₹${(workerData?.price || 399) + 49 + 25}`,
                 description: desc,
                 images: uploadedImages.length
-            };
-            const bookings = JSON.parse(localStorage.getItem('quickfix_bookings') || '[]');
-            bookings.unshift(bookingData);
+            });
             localStorage.setItem('quickfix_bookings', JSON.stringify(bookings));
-        }, 1500);
+
+            showToast('✅ Booking confirmed! Redirecting...');
+            
+            setTimeout(() => {
+                successModal.classList.add('show');
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            }, 800);
+        } else {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+        }
     });
 
     // ==========================================
@@ -1153,12 +1262,11 @@
     document.getElementById('scheduleTime').value = '10:00';
 
     // ==========================================
-    // INIT - LOAD WORKER DATA ON PAGE LOAD
+    // INIT
     // ==========================================
-    loadWorkerData();
-
-    console.log('%c📋 Booking Details - Fully Dynamic!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Worker data loaded:', workerData);
+    console.log('%c📋 Booking Details - Firebase Integrated!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Bookings saved to Firestore "jobs" collection');
+    console.log('✅ Orders page will show real-time bookings');
 </script>
 </body>
 </html>
