@@ -483,6 +483,9 @@
             font-weight: 600;
             cursor: pointer;
         }
+        .btn-outline:hover {
+            background: rgba(245, 176, 66, 0.1);
+        }
         .btn-filled {
             background: #f5b042;
             border: none;
@@ -493,6 +496,9 @@
             font-weight: 700;
             color: #0a0f1e;
             cursor: pointer;
+        }
+        .btn-filled:hover {
+            background: #f57c00;
         }
 
         .emergency-banner {
@@ -1040,11 +1046,50 @@
                 <div class="details"><span>📍 ${worker.distance}</span><span>💰 ₹${worker.price}/hr</span></div>
                 <div><span class="badge-available">${worker.online ? '✅ Available Now' : '⏰ Off Duty'}</span></div>
                 <div class="worker-buttons">
-                    <button class="btn-outline view-profile" data-id="${worker.id}">View Profile</button>
+                    <button class="btn-outline view-profile" data-id="${worker.id}" data-name="${worker.name}" data-profession="${worker.profession}" data-rating="${worker.rating}" data-price="${worker.price}" data-photo="${worker.profilePhotoUrl}" data-online="${worker.online}" data-verified="${worker.verified}" data-experience="${worker.experience}" data-bio="${worker.bio}">View Profile</button>
                     <button class="btn-filled book-now" data-id="${worker.id}" data-name="${worker.name}" data-price="₹${worker.price}/hr">Book Now</button>
                 </div>
             `;
             container.appendChild(card);
+        });
+        
+        // ==========================================
+        // VIEW PROFILE BUTTON - REDIRECT TO view-profile.html
+        // ==========================================
+        document.querySelectorAll('.view-profile').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const workerId = this.getAttribute('data-id');
+                const workerName = this.getAttribute('data-name');
+                const workerProfession = this.getAttribute('data-profession');
+                const workerRating = this.getAttribute('data-rating');
+                const workerPrice = this.getAttribute('data-price');
+                const workerPhoto = this.getAttribute('data-photo');
+                const workerOnline = this.getAttribute('data-online') === 'true';
+                const workerVerified = this.getAttribute('data-verified') === 'true';
+                const workerExperience = this.getAttribute('data-experience');
+                const workerBio = this.getAttribute('data-bio');
+                
+                // Save worker data to localStorage for fallback
+                const workerData = {
+                    id: workerId,
+                    name: workerName,
+                    profession: workerProfession,
+                    rating: workerRating,
+                    price: workerPrice,
+                    profilePhotoUrl: workerPhoto,
+                    online: workerOnline,
+                    verified: workerVerified,
+                    experience: workerExperience,
+                    bio: workerBio
+                };
+                localStorage.setItem('quickfix_view_worker_data', JSON.stringify(workerData));
+                localStorage.setItem('quickfix_view_profile_id', workerId);
+                
+                // Redirect to view-profile.html with worker ID
+                window.location.href = `view-profile.html?id=${workerId}`;
+                showToast(`👤 Loading ${workerName}'s profile...`);
+            });
         });
         
         document.querySelectorAll('.book-now').forEach(btn => {
@@ -1052,13 +1097,6 @@
                 e.stopPropagation();
                 const workerName = btn.getAttribute('data-name');
                 bookWorker(workerName);
-            });
-        });
-        
-        document.querySelectorAll('.view-profile').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showToast("📋 Worker profile coming soon!");
             });
         });
     }
@@ -1282,7 +1320,7 @@
         }
         
         console.log("✅ QuickFix Homepage Loaded Successfully!");
-        console.log("✅ Firebase connected - Real-time workers & user data");
+        console.log("✅ View Profile button redirects to view-profile.html");
     }
     
     init();
