@@ -852,23 +852,35 @@
     // LOAD WORKER DATA FROM LOCALSTORAGE
     // ==========================================
     function loadWorkerData() {
+        // Try multiple sources
+        let data = null;
+        
+        // Source 1: quickfix_booking_worker (set by View Profile)
         const savedData = localStorage.getItem('quickfix_booking_worker');
         if (savedData) {
             try {
-                workerData = JSON.parse(savedData);
-                console.log('✅ Worker data loaded:', workerData);
-                updateUIWithWorkerData(workerData);
-                return true;
-            } catch(e) {
-                console.error('Error parsing worker data:', e);
-                return false;
+                data = JSON.parse(savedData);
+                console.log('✅ Worker data loaded from quickfix_booking_worker:', data);
+            } catch(e) {}
+        }
+        
+        // Source 2: quickfix_view_worker_data (fallback)
+        if (!data) {
+            const fallbackData = localStorage.getItem('quickfix_view_worker_data');
+            if (fallbackData) {
+                try {
+                    data = JSON.parse(fallbackData);
+                    console.log('✅ Worker data loaded from quickfix_view_worker_data:', data);
+                } catch(e) {}
             }
-        } else {
-            // Try URL params
+        }
+        
+        // Source 3: URL Parameters
+        if (!data) {
             const params = new URLSearchParams(window.location.search);
             const name = params.get('name');
             if (name) {
-                workerData = {
+                data = {
                     id: params.get('id') || 'unknown',
                     name: name,
                     profession: params.get('profession') || 'Service Provider',
@@ -876,31 +888,28 @@
                     photo: params.get('photo') || '',
                     rating: parseFloat(params.get('rating')) || 4.5
                 };
-                updateUIWithWorkerData(workerData);
-                return true;
+                console.log('✅ Worker data loaded from URL params:', data);
             }
-            
-            // Fallback - use default data from localStorage
-            const fallbackData = localStorage.getItem('quickfix_view_worker_data');
-            if (fallbackData) {
-                try {
-                    const data = JSON.parse(fallbackData);
-                    workerData = {
-                        id: data.id || 'unknown',
-                        name: data.name || 'Worker',
-                        profession: data.profession || 'Service Provider',
-                        price: parseInt(data.price) || 399,
-                        photo: data.profilePhotoUrl || '',
-                        rating: parseFloat(data.rating) || 4.5
-                    };
-                    updateUIWithWorkerData(workerData);
-                    return true;
-                } catch(e) {}
-            }
-            
-            console.warn('⚠️ No worker data found, using default');
-            return false;
         }
+        
+        if (data) {
+            workerData = data;
+            updateUIWithWorkerData(data);
+            return true;
+        }
+        
+        console.warn('⚠️ No worker data found, using default');
+        // Set default data
+        workerData = {
+            id: 'default',
+            name: 'Worker',
+            profession: 'Service Provider',
+            price: 399,
+            photo: '',
+            rating: 4.5
+        };
+        updateUIWithWorkerData(workerData);
+        return false;
     }
 
     // ==========================================
@@ -908,16 +917,18 @@
     // ==========================================
     function updateUIWithWorkerData(data) {
         // Update name
-        workerName.textContent = data.name || 'Worker';
-        modalWorkerName.textContent = data.name || 'Worker';
-        document.title = `Booking · ${data.name || 'Worker'}`;
+        const displayName = data.name || 'Worker';
+        workerName.textContent = displayName;
+        modalWorkerName.textContent = displayName;
+        document.title = `Booking · ${displayName}`;
 
         // Update profession
         workerProfession.textContent = data.profession || 'Service Provider';
 
         // Update rating
         const reviews = Math.floor(Math.random() * 300) + 50;
-        workerRating.innerHTML = `<i class="fas fa-star"></i> ${data.rating || 4.5} (${reviews} reviews)`;
+        const rating = data.rating || 4.5;
+        workerRating.innerHTML = `<i class="fas fa-star"></i> ${rating.toFixed(1)} (${reviews} reviews)`;
 
         // Update price
         const price = data.price || 399;
@@ -927,14 +938,16 @@
         bottomTotal.textContent = `₹${total}`;
 
         // Update avatar
-        if (data.photo && data.photo.length > 20) {
-            workerAvatar.innerHTML = `<img src="${data.photo}" alt="${data.name}" onerror="this.style.display='none'">`;
+        if (data.photo && data.photo.length > 20 && data.photo.startsWith('http')) {
+            workerAvatar.innerHTML = `<img src="${data.photo}" alt="${data.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-user-hard-hat\\'></i>'">`;
         } else {
             workerAvatar.innerHTML = `<i class="fas fa-user-hard-hat"></i>`;
         }
 
         // Save to localStorage for persistence
         localStorage.setItem('quickfix_booking_worker', JSON.stringify(data));
+        
+        console.log('✅ UI Updated with worker data:', data);
     }
 
     // ==========================================
@@ -1140,7 +1153,7 @@
     document.getElementById('scheduleTime').value = '10:00';
 
     // ==========================================
-    // INIT
+    // INIT - LOAD WORKER DATA ON PAGE LOAD
     // ==========================================
     loadWorkerData();
 
