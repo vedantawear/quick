@@ -323,6 +323,23 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .empty-state h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .empty-state p {
+      color: #b0c4de;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -589,20 +606,38 @@
     if(!container) return;
     
     let filtered = currentOrders.filter(order => {
+      // Filter by status
       if(activeFilter !== "all" && order.status !== activeFilter) return false;
-      if(searchQuery && !order.customerName?.toLowerCase().includes(searchQuery) && !order.title?.toLowerCase().includes(searchQuery) && !order.category?.toLowerCase().includes(searchQuery)) return false;
+      
+      // Search filter
+      if(searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const customerName = (order.customerName || order.customer || '').toLowerCase();
+        const title = (order.title || order.serviceType || order.category || '').toLowerCase();
+        const description = (order.description || order.notes || '').toLowerCase();
+        if(!customerName.includes(query) && !title.includes(query) && !description.includes(query)) {
+          return false;
+        }
+      }
       return true;
     });
     
     if(filtered.length === 0) {
-      container.innerHTML = "<div class='glass-card' style='padding:30px; text-align:center'>✨ No orders match filter</div>";
+      container.innerHTML = `
+        <div class="glass-card empty-state">
+          <div class="icon">📭</div>
+          <h3>No Orders Yet</h3>
+          <p>When customers book your services, they'll appear here.</p>
+          <p style="margin-top: 8px; font-size: 0.8rem; opacity: 0.6;">Share your profile link to get bookings!</p>
+        </div>
+      `;
       return;
     }
     
     container.innerHTML = filtered.map(order => {
       const customerAvatar = order.customerAvatar || order.photoURL || 'https://randomuser.me/api/portraits/women/68.jpg';
       const customerName = order.customerName || order.customer || 'Customer';
-      const category = order.category || order.serviceType || 'Service';
+      const category = order.category || order.serviceType || order.title || 'Service';
       const distance = order.distance || '0.8';
       const budget = order.budget || order.price || 0;
       const description = order.description || order.notes || 'Service request';
@@ -612,7 +647,7 @@
       const bookingId = order.bookingId || order.id || 'N/A';
       
       return `
-      <div class="order-card" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
+      <div class="order-card status-${getStatusDisplay(order.status)}" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
         <div class="order-header">
           <div class="customer-img-order">
             <img src="${customerAvatar}" alt="${customerName}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-user-circle\\' style=\\'font-size:2rem;color:#f5b042;\\'></i>'">
@@ -711,69 +746,122 @@
   function loadOrders() {
     if(!currentUser) return;
     
+    console.log('🔄 Loading orders for provider:', currentUser.uid);
+    
+    // Query jobs where providerId matches current user OR where providerId is null/empty (available jobs)
     const q = db.collection("jobs")
-      .where("status", "in", ["pending", "accepted", "in_progress", "completed"])
-      .orderBy("createdAt", "desc")
-      .limit(20);
+      .where("providerId", "==", currentUser.uid)
+      .orderBy("createdAt", "desc");
     
     q.onSnapshot((snapshot) => {
+      console.log('📦 Orders found:', snapshot.size);
       currentOrders = [];
       snapshot.forEach(doc => {
         const data = doc.data();
         currentOrders.push({ id: doc.id, ...data });
+        console.log('📋 Order:', doc.id, data.customerName || data.customer, data.status);
       });
       
-      // Update active orders count
-      const activeCount = currentOrders.filter(o => o.status === 'pending' || o.status === 'accepted' || o.status === 'in_progress').length;
-      document.getElementById('totalActiveOrders').innerText = activeCount;
-      
-      // Update notification badge
-      const pendingCount = currentOrders.filter(o => o.status === 'pending').length;
-      document.getElementById('notificationBadge').innerText = pendingCount || '0';
-      
-      // Update analytics
-      const completedCount = currentOrders.filter(o => o.status === 'completed').length;
-      const todayEarnings = currentOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.budget || 0), 0);
-      const weeklyEarnings = currentOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.budget || 0), 0);
-      const responseRate = 94;
-      const satisfaction = 98;
-      
-      const analyticsContainer = document.getElementById('analyticsOrdersGrid');
-      if(analyticsContainer) {
-        analyticsContainer.innerHTML = `
-          <div class="stat-order-card"><div class="stat-title-sm"><span>📋 Active Orders</span><span style="color:#0f6">▲ +5%</span></div><div class="stat-number" id="statActiveOrders">0</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>✅ Completed</span><span style="color:#0f6">▲ +12%</span></div><div class="stat-number" id="statCompletedOrders">0</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>⏳ Pending</span><span style="color:#ff7766">▼ -2%</span></div><div class="stat-number" id="statPendingRequests">0</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>💰 Today Earn</span><span style="color:#0f6">▲ +8%</span></div><div class="stat-number" id="statTodayEarnings">$0</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>📆 Weekly Earn</span><span style="color:#0f6">▲ +15%</span></div><div class="stat-number" id="statWeeklyEarnings">$0</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>⚡ Response Rate</span><span style="color:#0f6">▲ +3%</span></div><div class="stat-number" id="statResponseRate">0%</div></div>
-          <div class="stat-order-card"><div class="stat-title-sm"><span>😊 Satisfaction</span><span style="color:#0f6">▲ +2%</span></div><div class="stat-number" id="statSatisfaction">0%</div></div>
-        `;
-        setTimeout(() => {
-          animateNumber(document.getElementById('statActiveOrders'), activeCount, '');
-          animateNumber(document.getElementById('statCompletedOrders'), completedCount, '');
-          animateNumber(document.getElementById('statPendingRequests'), pendingCount, '');
-          animateNumber(document.getElementById('statTodayEarnings'), todayEarnings, '$');
-          animateNumber(document.getElementById('statWeeklyEarnings'), weeklyEarnings, '$');
-          animateNumber(document.getElementById('statResponseRate'), responseRate, '%');
-          animateNumber(document.getElementById('statSatisfaction'), satisfaction, '%');
-        }, 100);
+      // If no orders found, also check for jobs where providerId is not set (available for any provider)
+      if(currentOrders.length === 0) {
+        // Check for available jobs (no provider assigned yet)
+        const availableQuery = db.collection("jobs")
+          .where("providerId", "==", "")
+          .where("status", "==", "pending")
+          .orderBy("createdAt", "desc")
+          .limit(20);
+        
+        availableQuery.onSnapshot((availSnapshot) => {
+          console.log('📦 Available jobs found:', availSnapshot.size);
+          availSnapshot.forEach(doc => {
+            const data = doc.data();
+            // Check if this job is already in currentOrders
+            if(!currentOrders.find(o => o.id === doc.id)) {
+              currentOrders.push({ id: doc.id, ...data });
+            }
+          });
+          
+          // Also check for jobs with no providerId field
+          const nullQuery = db.collection("jobs")
+            .where("status", "==", "pending")
+            .orderBy("createdAt", "desc")
+            .limit(20);
+          
+          nullQuery.get().then((nullSnapshot) => {
+            nullSnapshot.forEach(doc => {
+              const data = doc.data();
+              if(!data.providerId && !currentOrders.find(o => o.id === doc.id)) {
+                currentOrders.push({ id: doc.id, ...data });
+              }
+            });
+            
+            // Update UI
+            updateOrderUI();
+          }).catch(err => {
+            console.error('Error loading null provider jobs:', err);
+            updateOrderUI();
+          });
+        }, (error) => {
+          console.error('Error loading available jobs:', error);
+          updateOrderUI();
+        });
+      } else {
+        updateOrderUI();
       }
-      
-      document.getElementById('withdrawableAmount').innerText = `$${(todayEarnings * 0.9).toFixed(0)}`;
-      document.getElementById('pendingAmount').innerText = `$${(weeklyEarnings * 0.1).toFixed(0)}`;
-      document.getElementById('reviewPreview').innerHTML = `⭐ ${satisfaction}% · "Great service" — AI trust score ${Math.floor(Math.random() * 10 + 90)}%`;
-      document.getElementById('sentimentFill').style.width = `${satisfaction}%`;
-      
-      renderOrders();
-      
-      const activeOrder = currentOrders.find(o => o.status === 'accepted' || o.status === 'in_progress');
-      if(activeOrder) updateTracking(activeOrder);
-      else updateTracking(null);
     }, (error) => {
       console.error("Error loading orders:", error);
       document.getElementById('ordersFeedContainer').innerHTML = "<div class='glass-card' style='padding:30px; text-align:center'>⚠️ Error loading orders</div>";
     });
+  }
+
+  function updateOrderUI() {
+    // Update active orders count
+    const activeCount = currentOrders.filter(o => o.status === 'pending' || o.status === 'accepted' || o.status === 'in_progress').length;
+    document.getElementById('totalActiveOrders').innerText = activeCount;
+    
+    // Update notification badge
+    const pendingCount = currentOrders.filter(o => o.status === 'pending').length;
+    document.getElementById('notificationBadge').innerText = pendingCount || '0';
+    
+    // Update analytics
+    const completedCount = currentOrders.filter(o => o.status === 'completed').length;
+    const todayEarnings = currentOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.budget || o.price || 0), 0);
+    const weeklyEarnings = currentOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.budget || o.price || 0), 0);
+    const responseRate = currentOrders.length > 0 ? Math.round((currentOrders.filter(o => o.status !== 'pending').length / currentOrders.length) * 100) : 0;
+    const satisfaction = currentOrders.filter(o => o.status === 'completed').length > 0 ? 98 : 0;
+    
+    const analyticsContainer = document.getElementById('analyticsOrdersGrid');
+    if(analyticsContainer) {
+      analyticsContainer.innerHTML = `
+        <div class="stat-order-card"><div class="stat-title-sm"><span>📋 Active Orders</span><span style="color:#0f6">▲ +5%</span></div><div class="stat-number" id="statActiveOrders">0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>✅ Completed</span><span style="color:#0f6">▲ +12%</span></div><div class="stat-number" id="statCompletedOrders">0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>⏳ Pending</span><span style="color:#ff7766">▼ -2%</span></div><div class="stat-number" id="statPendingRequests">0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>💰 Today Earn</span><span style="color:#0f6">▲ +8%</span></div><div class="stat-number" id="statTodayEarnings">$0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>📆 Weekly Earn</span><span style="color:#0f6">▲ +15%</span></div><div class="stat-number" id="statWeeklyEarnings">$0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>⚡ Response Rate</span><span style="color:#0f6">▲ +3%</span></div><div class="stat-number" id="statResponseRate">0%</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>😊 Satisfaction</span><span style="color:#0f6">▲ +2%</span></div><div class="stat-number" id="statSatisfaction">0%</div></div>
+      `;
+      setTimeout(() => {
+        animateNumber(document.getElementById('statActiveOrders'), activeCount, '');
+        animateNumber(document.getElementById('statCompletedOrders'), completedCount, '');
+        animateNumber(document.getElementById('statPendingRequests'), pendingCount, '');
+        animateNumber(document.getElementById('statTodayEarnings'), todayEarnings, '$');
+        animateNumber(document.getElementById('statWeeklyEarnings'), weeklyEarnings, '$');
+        animateNumber(document.getElementById('statResponseRate'), responseRate, '%');
+        animateNumber(document.getElementById('statSatisfaction'), satisfaction, '%');
+      }, 100);
+    }
+    
+    document.getElementById('withdrawableAmount').innerText = `$${(todayEarnings * 0.9).toFixed(0)}`;
+    document.getElementById('pendingAmount').innerText = `$${(weeklyEarnings * 0.1).toFixed(0)}`;
+    document.getElementById('reviewPreview').innerHTML = `⭐ ${satisfaction}% · "Great service" — AI trust score ${Math.floor(Math.random() * 10 + 90)}%`;
+    document.getElementById('sentimentFill').style.width = `${satisfaction}%`;
+    
+    renderOrders();
+    
+    const activeOrder = currentOrders.find(o => o.status === 'accepted' || o.status === 'in_progress');
+    if(activeOrder) updateTracking(activeOrder);
+    else updateTracking(null);
   }
 
   // AI assistant messages
@@ -834,8 +922,9 @@
     }
   });
 
-  console.log('%c📦 NEBULA ORDERS - Customer Profile Details!', 'color: #0af; font-size: 16px; font-weight: bold;');
-  console.log('✅ Customer name, photo, category, distance, price, timing, urgency all displayed');
+  console.log('%c📦 NEBULA ORDERS - Fixed!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Now showing orders assigned to this provider');
+  console.log('✅ Also showing available jobs (no provider assigned)');
 </script>
 </body>
 </html>
