@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Order Details | NEBULA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #000000;
+      background-image: radial-gradient(circle at 20% 30%, rgba(5, 15, 25, 0.9) 0%, #020408 100%);
+      font-family: 'Inter', 'Poppins', system-ui, -apple-system, 'SF Pro Display', sans-serif;
+      color: white;
+      overflow-x: hidden;
+      padding-bottom: 90px;
+      position: relative;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px 14px 90px 14px;
+    }
+
+    .glass-card {
+      background: rgba(8, 12, 22, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 2rem;
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(0, 255, 255, 0.1) inset;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid cyan;
+      border-radius: 40px;
+      padding: 10px 20px;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+    .back-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      transform: scale(1.02);
+    }
+
+    .order-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .order-detail-header .big-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid cyan;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .order-detail-header .big-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .order-detail-header .customer-info h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    .order-detail-header .customer-info .sub-info {
+      color: #b0c4de;
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-row .label {
+      color: #b0c4de;
+      font-size: 0.85rem;
+    }
+    .detail-row .value {
+      font-weight: 500;
+      text-align: right;
+      max-width: 60%;
+    }
+    .detail-row .value.highlight {
+      color: #0af;
+      font-weight: 600;
+    }
+    .detail-row .value.price {
+      color: #4caf50;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .status-badge-large {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .status-badge-large.pending { background: #ffaa3320; color: #ffaa33; border: 1px solid #ffaa33; }
+    .status-badge-large.accepted { background: #0af20; color: #0af; border: 1px solid #0af; }
+    .status-badge-large.in_progress { background: #b624ff20; color: #b624ff; border: 1px solid #b624ff; }
+    .status-badge-large.completed { background: #0f620; color: #0f6; border: 1px solid #0f6; }
+    .status-badge-large.cancelled { background: #ff336620; color: #ff3366; border: 1px solid #ff3366; }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .media-grid .media-item {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #111;
+      border: 1px solid rgba(0, 255, 255, 0.1);
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .media-grid .media-item:hover {
+      transform: scale(1.05);
+      border-color: cyan;
+    }
+    .media-grid .media-item img,
+    .media-grid .media-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .media-grid .media-item .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.8;
+      text-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+    .media-grid .media-item .file-type {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.7);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.6rem;
+      color: #aaa;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, cyan, magenta);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+      padding-left: 16px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -22px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: cyan;
+      border: 2px solid #000;
+    }
+    .timeline-item .time {
+      font-size: 0.7rem;
+      color: #888;
+    }
+    .timeline-item .desc {
+      font-size: 0.9rem;
+      margin-top: 2px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .action-buttons button {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 20px;
+      border-radius: 40px;
+      border: 1px solid cyan;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+      backdrop-filter: blur(4px);
+    }
+    .action-buttons button:hover {
+      background: rgba(0, 255, 255, 0.15);
+      transform: scale(1.02);
+    }
+    .action-buttons button.primary {
+      background: linear-gradient(135deg, #0af, #b624ff);
+      border: none;
+      color: white;
+    }
+    .action-buttons button.primary:hover {
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+    .action-buttons button.danger {
+      border-color: #ff3366;
+      color: #ff3366;
+    }
+    .action-buttons button.danger:hover {
+      background: #ff336620;
+    }
+    .action-buttons button.success {
+      border-color: #0f6;
+      color: #0f6;
+    }
+    .action-buttons button.success:hover {
+      background: #0f620;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      border-top-color: cyan;
+      animation: spin 0.8s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(12px);
+      padding: 12px 24px;
+      border-radius: 60px;
+      border: 1px solid cyan;
+      z-index: 2000;
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .chat-message {
+      background: rgba(0, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-left: 3px solid cyan;
+    }
+    .chat-message .sender {
+      font-size: 0.75rem;
+      color: #0af;
+      font-weight: 600;
+    }
+    .chat-message .msg-text {
+      margin-top: 4px;
+      font-size: 0.9rem;
+    }
+    .chat-message .msg-time {
+      font-size: 0.6rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 460px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(28px);
+      border-radius: 48px;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 255, 255, 0.7);
+      z-index: 100;
+    }
+    .nav-item {
+      text-align: center;
+      padding: 10px 0;
+      flex: 1;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: 0.2s;
+      border-radius: 60px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+    .nav-item.active { 
+      background: rgba(0, 255, 255, 0.2); 
+      text-shadow: 0 0 8px cyan; 
+      color: white;
+    }
+    .post-btn { 
+      background: linear-gradient(45deg, #00c6ff, #b624ff) !important; 
+      transform: scale(1.1); 
+      box-shadow: 0 0 15px cyan;
+      color: white !important;
+    }
+  </style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+<div class="app-container">
+  
+  <!-- Back Button -->
+  <button class="back-btn" onclick="goBack()">← Back to Orders</button>
+
+  <!-- Loading State -->
+  <div id="loadingState" style="text-align:center; padding: 60px 0;">
+    <div class="loading-spinner"></div>
+    <p style="margin-top: 16px; color: #888;">Loading order details...</p>
+  </div>
+
+  <!-- Order Details -->
+  <div id="orderDetails" style="display: none;">
+    
+    <!-- Header -->
+    <div class="glass-card">
+      <div class="order-detail-header">
+        <div class="big-avatar">
+          <img id="customerAvatar" src="" alt="Customer">
+        </div>
+        <div class="customer-info">
+          <h2 id="customerName">Customer Name</h2>
+          <div class="sub-info">
+            <span id="customerRating">⭐ 4.9</span> · 
+            <span id="customerCategory">Category</span>
+          </div>
+          <div style="margin-top: 6px;">
+            <span class="status-badge-large" id="orderStatusBadge">Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Details -->
+    <div class="glass-card">
+      <div class="section-title">📋 Order Details</div>
+      <div class="detail-row"><span class="label">Order ID</span><span class="value" id="orderId">-</span></div>
+      <div class="detail-row"><span class="label">Booking ID</span><span class="value" id="bookingId">-</span></div>
+      <div class="detail-row"><span class="label">Service</span><span class="value" id="serviceTitle">-</span></div>
+      <div class="detail-row"><span class="label">Category</span><span class="value" id="serviceCategory">-</span></div>
+      <div class="detail-row"><span class="label">Description</span><span class="value" id="serviceDescription" style="text-align:left; max-width:60%;">-</span></div>
+      <div class="detail-row"><span class="label">Budget</span><span class="value price" id="orderBudget">₹0</span></div>
+      <div class="detail-row"><span class="label">Payment Status</span><span class="value" id="paymentStatus">-</span></div>
+      <div class="detail-row"><span class="label">Distance</span><span class="value" id="orderDistance">-</span></div>
+      <div class="detail-row"><span class="label">Scheduled Date</span><span class="value" id="scheduledDate">-</span></div>
+      <div class="detail-row"><span class="label">Scheduled Time</span><span class="value" id="scheduledTime">-</span></div>
+      <div class="detail-row"><span class="label">Urgency</span><span class="value" id="urgencyLevel">-</span></div>
+      <div class="detail-row"><span class="label">AI Trust Score</span><span class="value highlight" id="aiTrust">98%</span></div>
+      <div class="detail-row"><span class="label">Created At</span><span class="value" id="createdAt">-</span></div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="glass-card">
+      <div class="section-title">👤 Customer Information</div>
+      <div class="detail-row"><span class="label">Name</span><span class="value" id="customerFullName">-</span></div>
+      <div class="detail-row"><span class="label">Email</span><span class="value" id="customerEmail">-</span></div>
+      <div class="detail-row"><span class="label">Customer ID</span><span class="value" id="customerId" style="font-size:0.7rem;">-</span></div>
+      <div class="detail-row"><span class="label">Provider</span><span class="value" id="providerName">-</span></div>
+      <div class="detail-row"><span class="label">Provider ID</span><span class="value" id="providerId" style="font-size:0.7rem;">-</span></div>
+    </div>
+
+    <!-- Photos & Videos -->
+    <div class="glass-card" id="mediaSection">
+      <div class="section-title">📸 Photos & Videos</div>
+      <div id="mediaGrid" class="media-grid">
+        <p style="grid-column: 1/-1; color: #888; text-align: center; padding: 20px 0;">No media attached</p>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="glass-card">
+      <div class="section-title">⏱️ Order Timeline</div>
+      <div id="timelineContainer" class="timeline">
+        <p style="color: #888;">No timeline events</p>
+      </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="glass-card">
+      <div class="section-title">💬 Chat Messages</div>
+      <div id="chatContainer">
+        <p style="color: #888;">No messages yet</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="glass-card">
+      <div class="section-title">🎯 Actions</div>
+      <div class="action-buttons" id="actionButtons">
+        <button class="primary" id="acceptBtn" onclick="updateStatus('accepted')">✅ Accept</button>
+        <button class="success" id="startBtn" onclick="updateStatus('in_progress')" style="display:none;">🚀 Start Work</button>
+        <button class="success" id="completeBtn" onclick="updateStatus('completed')" style="display:none;">✔️ Complete</button>
+        <button class="danger" id="cancelBtn" onclick="updateStatus('cancelled')">❌ Cancel</button>
+        <button onclick="showToast('📞 Calling customer...')">📞 Call</button>
+        <button onclick="showToast('💬 Opening chat...')">💬 Chat</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="handleNavClick('home')">🏠 Home</button>
+  <button class="nav-item active" onclick="handleNavClick('orders')">📦 Orders</button>
+  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
+  <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
+</div>
+
+<script>
+  // ==========================================
+  // UTILITY FUNCTIONS
+  // ==========================================
+  function goBack() {
+    window.location.href = 'provider-orders.html';
+  }
+
+  function showToast(message, isError = false) {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = isError ? '#dc3545' : '#1a5f7a';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function handleNavClick(type) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    switch(type) {
+      case 'home':
+        window.location.href = 'provider-dashboard.html';
+        break;
+      case 'orders':
+        window.location.href = 'provider-orders.html';
+        break;
+      case 'post':
+        window.location.href = 'provider-postjob.html';
+        break;
+      case 'profile':
+        window.location.href = 'provider-profile.html';
+        break;
+    }
+  }
+
+  function getStatusDisplay(status) {
+    const map = {
+      'pending': 'Pending',
+      'accepted': 'Accepted',
+      'in_progress': 'In Progress',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled'
+    };
+    return map[status] || status;
+  }
+
+  function getStatusClass(status) {
+    return status || 'pending';
+  }
+
+  function formatDate(timestamp) {
+    if(!timestamp) return 'N/A';
+    if(timestamp.toDate) {
+      return timestamp.toDate().toLocaleString();
+    }
+    return new Date(timestamp).toLocaleString();
+  }
+
+  // ==========================================
+  // FIREBASE CONFIG
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+    authDomain: "quickfix-907c0.firebaseapp.com",
+    projectId: "quickfix-907c0",
+    storageBucket: "quickfix-907c0.firebasestorage.app",
+    messagingSenderId: "539102384460",
+    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+    measurementId: "G-B548C8R9WV"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // ==========================================
+  // PARTICLE BACKGROUND
+  // ==========================================
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  for(let i=0;i<70;i++){ particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, rad:Math.random()*2+1, dx:(Math.random()-0.5)*0.2, dy:(Math.random()-0.5)*0.2, color:`hsl(${Math.random()*60+180},80%,60%)`});}
+  function animateParticles() { if(!ctx) return; ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; if(p.x<0) p.x=canvas.width; if(p.x>canvas.width) p.x=0; if(p.y<0) p.y=canvas.height; if(p.y>canvas.height) p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2); ctx.fillStyle=p.color; ctx.shadowBlur=6; ctx.fill(); }); requestAnimationFrame(animateParticles);}
+  animateParticles();
+
+  // ==========================================
+  // LOAD ORDER DETAILS
+  // ==========================================
+  async function loadOrderDetails(orderId) {
+    try {
+      const docRef = db.collection('jobs').doc(orderId);
+      const docSnap = await docRef.get();
+
+      if(!docSnap.exists) {
+        document.getElementById('loadingState').innerHTML = `
+          <div style="text-align:center; padding: 40px 0;">
+            <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+            <h3>Order Not Found</h3>
+            <p style="color: #888;">The order you're looking for doesn't exist.</p>
+            <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
+          </div>
+        `;
+        return;
+      }
+
+      const order = { id: docSnap.id, ...docSnap.data() };
+      displayOrderDetails(order);
+
+    } catch(error) {
+      console.error('Error loading order:', error);
+      document.getElementById('loadingState').innerHTML = `
+        <div style="text-align:center; padding: 40px 0;">
+          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+          <h3>Error Loading Order</h3>
+          <p style="color: #888;">${error.message}</p>
+          <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
+        </div>
+      `;
+    }
+  }
+
+  function displayOrderDetails(order) {
+    console.log('📦 Order details:', order);
+
+    // Show details, hide loading
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('orderDetails').style.display = 'block';
+
+    // Customer Avatar
+    const avatarImg = document.getElementById('customerAvatar');
+    const customerAvatar = order.customerAvatar || order.photoURL || 'https://randomuser.me/api/portraits/women/68.jpg';
+    avatarImg.src = customerAvatar;
+    avatarImg.onerror = () => { avatarImg.src = 'https://randomuser.me/api/portraits/women/68.jpg'; };
+
+    // Customer Name & Rating
+    document.getElementById('customerName').textContent = order.customerName || order.customer || 'Customer';
+    document.getElementById('customerRating').textContent = `⭐ ${order.customerRating || '4.9'}`;
+    document.getElementById('customerCategory').textContent = order.category || order.serviceType || 'General';
+
+    // Status Badge
+    const status = order.status || 'pending';
+    const badge = document.getElementById('orderStatusBadge');
+    badge.textContent = getStatusDisplay(status);
+    badge.className = `status-badge-large ${getStatusClass(status)}`;
+
+    // Order Details
+    document.getElementById('orderId').textContent = order.id || '-';
+    document.getElementById('bookingId').textContent = order.bookingId || '-';
+    document.getElementById('serviceTitle').textContent = order.title || order.serviceType || '-';
+    document.getElementById('serviceCategory').textContent = order.category || '-';
+    document.getElementById('serviceDescription').textContent = order.description || order.notes || 'No description';
+    document.getElementById('orderBudget').textContent = `₹${order.budget || order.price || 0}`;
+    document.getElementById('paymentStatus').textContent = order.paymentStatus || 'pending';
+    document.getElementById('orderDistance').textContent = order.distance ? `${order.distance} km` : '-';
+    document.getElementById('scheduledDate').textContent = order.scheduledDate || order.date || 'ASAP';
+    document.getElementById('scheduledTime').textContent = order.scheduledTime || order.time || 'ASAP';
+    document.getElementById('urgencyLevel').textContent = order.urgency || 'Medium';
+    document.getElementById('aiTrust').textContent = `${order.aiTrust || '98'}%`;
+    document.getElementById('createdAt').textContent = formatDate(order.createdAt);
+
+    // Customer Info
+    document.getElementById('customerFullName').textContent = order.customerName || order.customer || '-';
+    document.getElementById('customerEmail').textContent = order.customerEmail || 'Not provided';
+    document.getElementById('customerId').textContent = order.customerId || '-';
+    document.getElementById('providerName').textContent = order.providerName || 'Not assigned';
+    document.getElementById('providerId').textContent = order.providerId || 'Not assigned';
+
+    // Media (Photos & Videos)
+    const mediaGrid = document.getElementById('mediaGrid');
+    const mediaFiles = order.mediaFiles || order.attachments || order.photos || [];
+    
+    if(mediaFiles && mediaFiles.length > 0) {
+      mediaGrid.innerHTML = mediaFiles.map(file => {
+        const isVideo = file.type?.startsWith('video/') || file.url?.match(/\.(mp4|webm|mov)/i);
+        return `
+          <div class="media-item" onclick="viewMedia('${file.url}', '${isVideo}')">
+            ${isVideo ? `
+              <video src="${file.url}" muted></video>
+              <div class="play-icon">▶️</div>
+              <span class="file-type">Video</span>
+            ` : `
+              <img src="${file.url}" alt="Media">
+              <span class="file-type">Photo</span>
+            `}
+          </div>
+        `;
+      }).join('');
+    } else {
+      mediaGrid.innerHTML = `<p style="grid-column: 1/-1; color: #888; text-align: center; padding: 20px 0;">📷 No photos or videos attached</p>`;
+    }
+
+    // Timeline
+    const timelineContainer = document.getElementById('timelineContainer');
+    const timeline = order.timeline || [];
+    if(timeline && timeline.length > 0) {
+      timelineContainer.innerHTML = timeline.map(event => `
+        <div class="timeline-item">
+          <div class="time">${formatDate(event.timestamp)}</div>
+          <div class="desc">${event.description || event.status || 'Status updated'}</div>
+        </div>
+      `).join('');
+    } else {
+      timelineContainer.innerHTML = `<p style="color: #888;">No timeline events</p>`;
+    }
+
+    // Chat Messages
+    const chatContainer = document.getElementById('chatContainer');
+    const messages = order.messages || [];
+    if(messages && messages.length > 0) {
+      chatContainer.innerHTML = messages.map(msg => `
+        <div class="chat-message">
+          <div class="sender">${msg.sender || 'User'}</div>
+          <div class="msg-text">${msg.text || msg.message || ''}</div>
+          <div class="msg-time">${formatDate(msg.timestamp)}</div>
+        </div>
+      `).join('');
+    } else {
+      chatContainer.innerHTML = `<p style="color: #888;">💬 No messages yet</p>`;
+    }
+
+    // Action Buttons
+    document.getElementById('acceptBtn').style.display = status === 'pending' ? 'block' : 'none';
+    document.getElementById('startBtn').style.display = status === 'accepted' ? 'block' : 'none';
+    document.getElementById('completeBtn').style.display = status === 'in_progress' ? 'block' : 'none';
+    document.getElementById('cancelBtn').style.display = (status !== 'completed' && status !== 'cancelled') ? 'block' : 'none';
+  }
+
+  // ==========================================
+  // UPDATE ORDER STATUS
+  // ==========================================
+  async function updateStatus(newStatus) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');
+    
+    if(!orderId) {
+      showToast('❌ Order ID not found', true);
+      return;
+    }
+
+    try {
+      await db.collection('jobs').doc(orderId).update({
+        status: newStatus,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast(`✅ Order ${getStatusDisplay(newStatus)} successfully!`);
+      
+      // Reload to show updated status
+      setTimeout(() => {
+        loadOrderDetails(orderId);
+      }, 1000);
+      
+    } catch(error) {
+      console.error('Error updating status:', error);
+      showToast('❌ Error updating order status', true);
+    }
+  }
+
+  // ==========================================
+  // VIEW MEDIA
+  // ==========================================
+  function viewMedia(url, isVideo) {
+    if(isVideo) {
+      window.open(url, '_blank');
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  // ==========================================
+  // AUTH CHECK & INIT
+  // ==========================================
+  auth.onAuthStateChanged((user) => {
+    if(!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');
+    
+    if(!orderId) {
+      document.getElementById('loadingState').innerHTML = `
+        <div style="text-align:center; padding: 40px 0;">
+          <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+          <h3>No Order Selected</h3>
+          <p style="color: #888;">Please select an order from the orders page.</p>
+          <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
+        </div>
+      `;
+      return;
+    }
+
+    loadOrderDetails(orderId);
+  });
+
+  console.log('%c📦 VIEW ORDER - Full Details Page', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Shows customer details, photos, videos, timeline, chat, and actions');
+</script>
+</body>
+</html>
