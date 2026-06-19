@@ -219,7 +219,13 @@
       to { opacity: 1; transform: translateY(0);}
     }
     .order-header { display: flex; gap: 14px; align-items: center; margin-bottom: 12px;}
-    .customer-img-order { width: 54px; height: 54px; border-radius: 40px; background-size: cover; box-shadow: 0 0 10px magenta;}
+    .customer-img-order { width: 54px; height: 54px; border-radius: 40px; background-size: cover; box-shadow: 0 0 10px magenta; border: 2px solid #f5b042; flex-shrink: 0;}
+    .customer-img-order img { width: 100%; height: 100%; object-fit: cover; border-radius: 40px; }
+    .customer-info { flex: 1; }
+    .customer-info .name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .customer-info .name-row strong { font-size: 1.05rem; }
+    .customer-info .customer-meta { font-size: 0.7rem; color: #b0c4de; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .customer-info .customer-meta i { color: #f5b042; width: 16px; }
     .status-badge { font-size: 0.7rem; padding: 4px 12px; border-radius: 60px; background: rgba(0,0,0,0.6); display: inline-block; font-weight: bold; margin-left: 8px;}
     .status-Pending { border-left-color: #ffaa33; color: #ffaa33; text-shadow: 0 0 4px orange;}
     .status-Accepted { border-left-color: #0af; }
@@ -584,7 +590,7 @@
     
     let filtered = currentOrders.filter(order => {
       if(activeFilter !== "all" && order.status !== activeFilter) return false;
-      if(searchQuery && !order.customerName?.toLowerCase().includes(searchQuery) && !order.title?.toLowerCase().includes(searchQuery)) return false;
+      if(searchQuery && !order.customerName?.toLowerCase().includes(searchQuery) && !order.title?.toLowerCase().includes(searchQuery) && !order.category?.toLowerCase().includes(searchQuery)) return false;
       return true;
     });
     
@@ -594,7 +600,6 @@
     }
     
     container.innerHTML = filtered.map(order => {
-      // Customer avatar
       const customerAvatar = order.customerAvatar || order.photoURL || 'https://randomuser.me/api/portraits/women/68.jpg';
       const customerName = order.customerName || order.customer || 'Customer';
       const category = order.category || order.serviceType || 'Service';
@@ -602,31 +607,43 @@
       const budget = order.budget || order.price || 0;
       const description = order.description || order.notes || 'Service request';
       const scheduledDate = order.scheduledDate || order.date || 'Today';
+      const scheduledTime = order.scheduledTime || order.time || 'ASAP';
       const urgency = order.urgency || 'Medium';
+      const bookingId = order.bookingId || order.id || 'N/A';
       
       return `
       <div class="order-card" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
         <div class="order-header">
-          <div class="customer-img-order" style="background: url('${customerAvatar}') center/cover; width:52px; height:52px;"></div>
-          <div>
-            <strong>${customerName}</strong> ⭐ ${order.customerRating || '4.9'} 
-            <span style="color:#0af">AI Trust ${order.aiTrust || '98'}%</span>
-            <br>
-            ${category} • ${distance} km away • 💰 $${budget}
-            <div>
+          <div class="customer-img-order">
+            <img src="${customerAvatar}" alt="${customerName}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-user-circle\\' style=\\'font-size:2rem;color:#f5b042;\\'></i>'">
+          </div>
+          <div class="customer-info">
+            <div class="name-row">
+              <strong>${customerName}</strong>
+              <span style="font-size:0.6rem; background:rgba(245,176,66,0.15); color:#f5b042; padding:2px 8px; border-radius:12px;">⭐ ${order.customerRating || '4.9'}</span>
+              <span style="font-size:0.6rem; background:rgba(0,170,255,0.15); color:#0af; padding:2px 8px; border-radius:12px;">AI ${order.aiTrust || '98'}%</span>
+            </div>
+            <div class="customer-meta">
+              <span><i class="fas fa-tag"></i> ${category}</span>
+              <span><i class="fas fa-map-marker-alt"></i> ${distance} km away</span>
+              <span><i class="fas fa-rupee-sign"></i> $${budget}</span>
+            </div>
+            <div class="customer-meta" style="margin-top:4px;">
+              <span><i class="fas fa-clock"></i> ${scheduledDate}${scheduledTime && scheduledTime !== 'ASAP' ? ' at ' + scheduledTime : ''}</span>
+              <span><i class="fas fa-hashtag"></i> ${bookingId}</span>
+              ${urgency === 'High' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;">🔥 Urgent</span>' : ''}
+              ${urgency === 'Emergency' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;">🚨 Emergency</span>' : ''}
+            </div>
+            <div style="margin-top:6px;">
               <span class="status-badge" style="background:${statusColor(order.status)}20; border-color:${statusColor(order.status)};">
                 ${getStatusDisplay(order.status)}
               </span>
-              ${order.paymentStatus === 'paid' ? '✅ Paid' : '💵 Pending'}
-              ${urgency === 'High' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;"> 🔥 Urgent</span>' : ''}
-              ${urgency === 'Emergency' ? '<span style="color:#ff3366;font-size:0.6rem;font-weight:bold;"> 🚨 Emergency</span>' : ''}
+              ${order.paymentStatus === 'paid' ? '<span style="color:#4caf50;font-size:0.6rem;"> ✅ Paid</span>' : '<span style="color:#ffaa33;font-size:0.6rem;"> 💵 Pending</span>'}
             </div>
           </div>
         </div>
-        <div>📝 ${description}</div>
-        <div style="display:flex; gap:12px; margin:10px 0;">
-          <div style="width:60px; height:60px; background:#333; border-radius:20px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-image"></i></div>
-          <span>📅 ${scheduledDate}</span>
+        <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.05); margin:6px 0;">
+          <div style="font-size:0.8rem; color:#b0c4de;">📝 ${description}</div>
         </div>
         <div class="progress-track"><div class="progress-fill" style="width: ${getProgressWidth(order.status)}%;"></div></div>
         <div class="order-buttons">
@@ -817,9 +834,8 @@
     }
   });
 
-  console.log('%c📦 NEBULA ORDERS - Fully Real-time Working!', 'color: #0af; font-size: 16px; font-weight: bold;');
-  console.log('✅ Orders load from Firestore in real-time');
-  console.log('✅ Customer name, distance, price, urgency all displayed');
+  console.log('%c📦 NEBULA ORDERS - Customer Profile Details!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Customer name, photo, category, distance, price, timing, urgency all displayed');
 </script>
 </body>
 </html>
