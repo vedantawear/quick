@@ -376,6 +376,23 @@
       box-shadow: 0 0 15px cyan;
       color: white !important;
     }
+
+    .error-state {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .error-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .error-state h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .error-state p {
+      color: #b0c4de;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -490,7 +507,34 @@
   <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
+<!-- ==========================================
+     FIREBASE SDK + INIT (LOADED FIRST)
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
+  // ==========================================
+  // FIREBASE CONFIG
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+    authDomain: "quickfix-907c0.firebaseapp.com",
+    projectId: "quickfix-907c0",
+    storageBucket: "quickfix-907c0.firebasestorage.app",
+    messagingSenderId: "539102384460",
+    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+    measurementId: "G-B548C8R9WV"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  console.log('✅ Firebase initialized in view-orders page');
+
   // ==========================================
   // UTILITY FUNCTIONS
   // ==========================================
@@ -547,25 +591,11 @@
     if(timestamp.toDate) {
       return timestamp.toDate().toLocaleString();
     }
+    if(timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleString();
+    }
     return new Date(timestamp).toLocaleString();
   }
-
-  // ==========================================
-  // FIREBASE CONFIG
-  // ==========================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
-    authDomain: "quickfix-907c0.firebaseapp.com",
-    projectId: "quickfix-907c0",
-    storageBucket: "quickfix-907c0.firebasestorage.app",
-    messagingSenderId: "539102384460",
-    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
-    measurementId: "G-B548C8R9WV"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
 
   // ==========================================
   // PARTICLE BACKGROUND
@@ -585,15 +615,17 @@
   // ==========================================
   async function loadOrderDetails(orderId) {
     try {
+      console.log('📦 Loading order:', orderId);
+      
       const docRef = db.collection('jobs').doc(orderId);
       const docSnap = await docRef.get();
 
       if(!docSnap.exists) {
         document.getElementById('loadingState').innerHTML = `
-          <div style="text-align:center; padding: 40px 0;">
-            <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+          <div class="error-state">
+            <div class="icon">❌</div>
             <h3>Order Not Found</h3>
-            <p style="color: #888;">The order you're looking for doesn't exist.</p>
+            <p>The order you're looking for doesn't exist.</p>
             <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
           </div>
         `;
@@ -601,15 +633,16 @@
       }
 
       const order = { id: docSnap.id, ...docSnap.data() };
+      console.log('✅ Order data loaded:', order);
       displayOrderDetails(order);
 
     } catch(error) {
       console.error('Error loading order:', error);
       document.getElementById('loadingState').innerHTML = `
-        <div style="text-align:center; padding: 40px 0;">
-          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+        <div class="error-state">
+          <div class="icon">⚠️</div>
           <h3>Error Loading Order</h3>
-          <p style="color: #888;">${error.message}</p>
+          <p>${error.message}</p>
           <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
         </div>
       `;
@@ -617,7 +650,7 @@
   }
 
   function displayOrderDetails(order) {
-    console.log('📦 Order details:', order);
+    console.log('📦 Displaying order:', order);
 
     // Show details, hide loading
     document.getElementById('loadingState').style.display = 'none';
@@ -668,15 +701,16 @@
     
     if(mediaFiles && mediaFiles.length > 0) {
       mediaGrid.innerHTML = mediaFiles.map(file => {
-        const isVideo = file.type?.startsWith('video/') || file.url?.match(/\.(mp4|webm|mov)/i);
+        const url = file.url || file;
+        const isVideo = file.type?.startsWith('video/') || url?.match(/\.(mp4|webm|mov)/i);
         return `
-          <div class="media-item" onclick="viewMedia('${file.url}', '${isVideo}')">
+          <div class="media-item" onclick="viewMedia('${url}', '${isVideo}')">
             ${isVideo ? `
-              <video src="${file.url}" muted></video>
+              <video src="${url}" muted></video>
               <div class="play-icon">▶️</div>
               <span class="file-type">Video</span>
             ` : `
-              <img src="${file.url}" alt="Media">
+              <img src="${url}" alt="Media" onerror="this.parentElement.innerHTML='<span style=\\'color:#888;text-align:center;padding:20px;\\'>📷</span>'">
               <span class="file-type">Photo</span>
             `}
           </div>
@@ -697,7 +731,30 @@
         </div>
       `).join('');
     } else {
-      timelineContainer.innerHTML = `<p style="color: #888;">No timeline events</p>`;
+      // Create default timeline from order data
+      let defaultTimeline = [];
+      if(order.createdAt) {
+        defaultTimeline.push({ timestamp: order.createdAt, description: 'Order created' });
+      }
+      if(order.status === 'accepted') {
+        defaultTimeline.push({ timestamp: order.updatedAt || new Date(), description: 'Order accepted by provider' });
+      }
+      if(order.status === 'in_progress') {
+        defaultTimeline.push({ timestamp: order.updatedAt || new Date(), description: 'Work started' });
+      }
+      if(order.status === 'completed') {
+        defaultTimeline.push({ timestamp: order.updatedAt || new Date(), description: 'Order completed' });
+      }
+      if(defaultTimeline.length > 0) {
+        timelineContainer.innerHTML = defaultTimeline.map(event => `
+          <div class="timeline-item">
+            <div class="time">${formatDate(event.timestamp)}</div>
+            <div class="desc">${event.description}</div>
+          </div>
+        `).join('');
+      } else {
+        timelineContainer.innerHTML = `<p style="color: #888;">No timeline events</p>`;
+      }
     }
 
     // Chat Messages
@@ -756,10 +813,10 @@
   // VIEW MEDIA
   // ==========================================
   function viewMedia(url, isVideo) {
-    if(isVideo) {
+    if(url) {
       window.open(url, '_blank');
     } else {
-      window.open(url, '_blank');
+      showToast('📷 Media not available', true);
     }
   }
 
@@ -775,12 +832,15 @@
     const urlParams = new URLSearchParams(window.location.search);
     const orderId = urlParams.get('orderId');
     
+    console.log('🔑 User authenticated:', user.uid);
+    console.log('📋 Order ID from URL:', orderId);
+    
     if(!orderId) {
       document.getElementById('loadingState').innerHTML = `
-        <div style="text-align:center; padding: 40px 0;">
-          <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+        <div class="error-state">
+          <div class="icon">❌</div>
           <h3>No Order Selected</h3>
-          <p style="color: #888;">Please select an order from the orders page.</p>
+          <p>Please select an order from the orders page.</p>
           <button onclick="goBack()" style="margin-top: 16px; padding: 10px 30px; border-radius: 40px; background: cyan; color: black; border: none; cursor: pointer;">Go Back</button>
         </div>
       `;
