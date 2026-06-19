@@ -158,6 +158,12 @@
             align-items: center;
             justify-content: center;
             border: 2px solid #F5B042;
+            overflow: hidden;
+        }
+        .worker-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .worker-img i {
             font-size: 2.2rem;
@@ -184,6 +190,7 @@
         .info-item {
             text-align: center;
             flex: 1;
+            min-width: 60px;
         }
         .info-item i {
             color: #F5B042;
@@ -213,6 +220,7 @@
             gap: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 0.8rem;
         }
         .btn-glow:active {
             transform: scale(0.96);
@@ -245,10 +253,14 @@
             gap: 16px;
             transition: all 0.25s;
             border: 1px solid rgba(255,215,0,0.1);
+            cursor: pointer;
         }
         .booking-card:hover {
             transform: translateX(6px);
             border-color: #F5B042;
+        }
+        .booking-card:active {
+            transform: scale(0.98);
         }
         .card-img {
             width: 60px;
@@ -258,6 +270,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .card-img i {
             font-size: 1.8rem;
@@ -265,9 +284,13 @@
         }
         .card-details {
             flex: 1;
+            min-width: 0;
         }
         .card-details h4 {
             font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .card-details p {
             font-size: 0.7rem;
@@ -276,12 +299,14 @@
         .price {
             font-weight: 700;
             color: #F5B042;
+            flex-shrink: 0;
         }
         .badge-completed {
             background: #2E7D32;
             padding: 4px 12px;
             border-radius: 40px;
             font-size: 0.6rem;
+            flex-shrink: 0;
         }
         .badge-active {
             background: #F5B042;
@@ -289,17 +314,27 @@
             padding: 4px 12px;
             border-radius: 40px;
             font-size: 0.6rem;
+            flex-shrink: 0;
         }
         .badge-pending {
             background: #FF9800;
             padding: 4px 12px;
             border-radius: 40px;
             font-size: 0.6rem;
+            flex-shrink: 0;
+        }
+        .badge-cancelled {
+            background: #dc3545;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.6rem;
+            flex-shrink: 0;
         }
         .card-actions {
             display: flex;
             gap: 8px;
             margin-top: 8px;
+            flex-wrap: wrap;
         }
         .small-btn {
             background: transparent;
@@ -309,10 +344,19 @@
             font-size: 0.65rem;
             cursor: pointer;
             color: #F5B042;
+            transition: 0.2s;
         }
         .small-btn:active {
             background: #F5B042;
             color: #0a0f1e;
+        }
+        .small-btn.danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .small-btn.danger:active {
+            background: #dc3545;
+            color: white;
         }
 
         .timeline-card {
@@ -331,7 +375,7 @@
             flex: 1;
             position: relative;
             z-index: 2;
-            min-width: 60px;
+            min-width: 50px;
         }
         .step-dot {
             width: 12px;
@@ -347,7 +391,7 @@
             transform: scale(1.3);
         }
         .step span {
-            font-size: 0.6rem;
+            font-size: 0.5rem;
             color: #BDD9FF;
         }
         .progress-line {
@@ -425,6 +469,10 @@
             cursor: pointer;
             transition: all 0.2s;
             opacity: 0.6;
+            background: none;
+            border: none;
+            color: #C0D4F0;
+            font-family: inherit;
         }
         .nav-item.active {
             opacity: 1;
@@ -432,7 +480,6 @@
         }
         .nav-item i {
             font-size: 1.5rem;
-            color: #C0D4F0;
         }
         .nav-item.active i {
             color: #F5B042;
@@ -473,6 +520,21 @@
             margin-bottom: 12px;
             opacity: 0.5;
         }
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: #F5B042;
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -480,16 +542,18 @@
     <div class="top-header">
         <div class="header-text">
             <h1>My Bookings</h1>
-            <p>Track all your service bookings</p>
+            <p id="userGreeting">Track all your service bookings</p>
         </div>
         <div class="notification-icon" id="notifyBtn">
             <i class="fas fa-bell"></i>
+            <span id="notificationDot" style="position:absolute; top:8px; right:8px; width:10px; height:10px; background:#FF3B30; border-radius:50%; border:2px solid #0a1128; display:none;"></span>
         </div>
     </div>
 
     <div class="filter-tabs" id="filterTabs">
         <div class="filter-pill active" data-filter="all">All</div>
         <div class="filter-pill" data-filter="active">Active</div>
+        <div class="filter-pill" data-filter="upcoming">Upcoming</div>
         <div class="filter-pill" data-filter="completed">Completed</div>
     </div>
 
@@ -497,7 +561,7 @@
         <div class="glass-card active-card" id="activeBookingCard">
             <div class="pulse-badge" id="activeBadge"><i class="fas fa-clock"></i> Loading...</div>
             <div class="worker-row">
-                <div class="worker-img"><i class="fas fa-user-tie"></i></div>
+                <div class="worker-img" id="activeWorkerImg"><i class="fas fa-user-tie"></i></div>
                 <div class="worker-details">
                     <h3 id="activeWorkerName">Loading...</h3>
                     <div class="rating" id="activeRating"><i class="fas fa-star"></i> Loading</div>
@@ -530,10 +594,10 @@
     </div>
 
     <div class="section-header"><h3>Upcoming Bookings</h3><span class="view-all-link" id="viewAllUpcoming">View All</span></div>
-    <div id="upcomingContainer"></div>
+    <div id="upcomingContainer"><div class="loading-spinner"></div></div>
 
     <div class="section-header"><h3>Completed Bookings</h3><span class="history-link" id="viewAllCompleted">History</span></div>
-    <div id="completedContainer"></div>
+    <div id="completedContainer"><div class="loading-spinner"></div></div>
 
     <div class="section-header"><h3>Quick Actions</h3><span class="more-link" id="moreLink">More</span></div>
     <div class="quick-grid">
@@ -545,19 +609,50 @@
 </div>
 
 <div class="bottom-nav">
-    <div class="nav-item" data-page="home"><i class="fas fa-home"></i><span>Home</span></div>
-    <div class="nav-item active" data-page="booking"><i class="fas fa-calendar-alt"></i><span>Booking</span></div>
-    <div class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></div>
+    <button class="nav-item" data-page="home"><i class="fas fa-home"></i><span>Home</span></button>
+    <button class="nav-item active" data-page="booking"><i class="fas fa-calendar-alt"></i><span>Booking</span></button>
+    <button class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Profile</span></button>
 </div>
+
+<!-- ==========================================
+     FIREBASE SDK + INIT
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
     // ==========================================
-    // STANDALONE BOOKINGS PAGE - WORKS WITH LOCALSTORAGE
+    // FIREBASE CONFIG
     // ==========================================
-    
-    let currentFilter = "all";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+        authDomain: "quickfix-907c0.firebaseapp.com",
+        projectId: "quickfix-907c0",
+        storageBucket: "quickfix-907c0.firebasestorage.app",
+        messagingSenderId: "539102384460",
+        appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+        measurementId: "G-B548C8R9WV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    console.log('✅ Firebase initialized - Bookings Page');
+
+    // ==========================================
+    // STATE VARIABLES
+    // ==========================================
+    let currentUser = null;
     let allBookings = [];
-    
+    let currentFilter = "all";
+    let activeBooking = null;
+    let unreadCount = 0;
+
+    // ==========================================
+    // UTILITY FUNCTIONS
+    // ==========================================
     function showToast(message, isError = false) {
         const existingToast = document.querySelector('.toast');
         if(existingToast) existingToast.remove();
@@ -574,82 +669,33 @@
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
-    
-    // Sample booking data
-    const sampleBookings = [
-        {
-            id: "book_1",
-            workerName: "Rajesh Kumar",
-            workerRating: 4.8,
-            serviceType: "Plumbing",
-            bookingDate: new Date().toISOString(),
-            location: "Sector 62, Noida",
-            amount: 399,
-            status: "confirmed",
-            phone: "+91-9876543210"
-        },
-        {
-            id: "book_2",
-            workerName: "Amit Sharma",
-            workerRating: 4.9,
-            serviceType: "Electrical",
-            bookingDate: new Date(Date.now() + 86400000).toISOString(),
-            location: "Sector 18, Noida",
-            amount: 449,
-            status: "upcoming",
-            phone: "+91-9876543211"
-        },
-        {
-            id: "book_3",
-            workerName: "Vikram Singh",
-            workerRating: 4.7,
-            serviceType: "AC Repair",
-            bookingDate: new Date(Date.now() - 86400000).toISOString(),
-            location: "Indirapuram, Ghaziabad",
-            amount: 599,
-            status: "completed",
-            phone: "+91-9876543212"
-        },
-        {
-            id: "book_4",
-            workerName: "Suresh Patel",
-            workerRating: 4.6,
-            serviceType: "Painting",
-            bookingDate: new Date(Date.now() + 172800000).toISOString(),
-            location: "Vaishali, Ghaziabad",
-            amount: 349,
-            status: "upcoming",
-            phone: "+91-9876543213"
-        }
-    ];
-    
-    function loadBookingsFromStorage() {
-        const storedBookings = localStorage.getItem('quickfix_bookings');
-        if (storedBookings) {
-            try {
-                allBookings = JSON.parse(storedBookings);
-            } catch(e) {
-                allBookings = sampleBookings;
-            }
-        } else {
-            // Initialize with sample bookings
-            allBookings = sampleBookings;
-            localStorage.setItem('quickfix_bookings', JSON.stringify(allBookings));
-        }
-        
-        // Add sample bookings if empty
-        if (allBookings.length === 0) {
-            allBookings = sampleBookings;
-            localStorage.setItem('quickfix_bookings', JSON.stringify(allBookings));
-        }
-        
-        return allBookings;
+
+    function getStatusDisplay(status) {
+        const map = {
+            'pending': 'Pending',
+            'accepted': 'Confirmed',
+            'in_progress': 'In Progress',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled',
+            'upcoming': 'Upcoming'
+        };
+        return map[status] || status;
     }
-    
-    function saveBookingsToStorage() {
-        localStorage.setItem('quickfix_bookings', JSON.stringify(allBookings));
+
+    function getStatusBadge(status) {
+        if (status === 'completed') return `<span class="badge-completed">Completed</span>`;
+        if (status === 'accepted' || status === 'in_progress') return `<span class="badge-active">Active</span>`;
+        if (status === 'pending') return `<span class="badge-pending">Pending</span>`;
+        if (status === 'cancelled') return `<span class="badge-cancelled">Cancelled</span>`;
+        return `<span class="badge-pending">${status}</span>`;
     }
-    
+
+    function getStatusStepIndex(status) {
+        const steps = ['pending', 'accepted', 'in_progress', 'completed'];
+        const index = steps.indexOf(status);
+        return index !== -1 ? index : 0;
+    }
+
     function getServiceIcon(serviceType) {
         const icons = {
             'Plumbing': 'fa-wrench',
@@ -657,40 +703,100 @@
             'AC Repair': 'fa-snowflake',
             'Carpentry': 'fa-hammer',
             'Painting': 'fa-paint-roller',
-            'Cleaning': 'fa-broom'
+            'Cleaning': 'fa-broom',
+            'Electrician': 'fa-bolt',
+            'Carpet Cleaning': 'fa-broom',
+            'Plumber': 'fa-wrench'
         };
         return icons[serviceType] || 'fa-tools';
     }
-    
-    function getStatusBadge(status) {
-        if (status === 'completed') return '<span class="badge-completed">Completed</span>';
-        if (status === 'confirmed') return '<span class="badge-active">Active</span>';
-        return '<span class="badge-pending">Pending</span>';
+
+    function formatDate(timestamp) {
+        if(!timestamp) return 'N/A';
+        if(timestamp.toDate) {
+            return timestamp.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        if(timestamp.seconds) {
+            return new Date(timestamp.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        return new Date(timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     }
-    
-    function getStatusStepIndex(status) {
-        const steps = ['confirmed', 'assigned', 'arriving', 'started', 'completed'];
-        const index = steps.indexOf(status);
-        return index !== -1 ? index : 0;
+
+    function formatTime(timestamp) {
+        if(!timestamp) return 'N/A';
+        if(timestamp.toDate) {
+            return timestamp.toDate().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+        if(timestamp.seconds) {
+            return new Date(timestamp.seconds * 1000).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+        return new Date(timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     }
-    
+
+    // ==========================================
+    // NAVIGATION
+    // ==========================================
+    function navigateTo(page) {
+        if (page === 'home') {
+            window.location.href = 'user-homepage.html';
+        } else if (page === 'profile') {
+            window.location.href = 'user-profile.html';
+        } else if (page === 'booking') {
+            // Already here
+        }
+    }
+
+    // ==========================================
+    // DISPLAY ACTIVE BOOKING
+    // ==========================================
     function displayActiveBooking() {
-        const activeBooking = allBookings.find(b => b.status === 'confirmed' || b.status === 'assigned' || b.status === 'arriving' || b.status === 'started');
+        const activeSection = document.getElementById('activeSection');
+        const activeBookingCard = document.getElementById('activeBookingCard');
+        const timelineCard = document.getElementById('timelineCard');
+        
+        // Find active booking (pending, accepted, in_progress)
+        activeBooking = allBookings.find(b => 
+            b.status === 'pending' || b.status === 'accepted' || b.status === 'in_progress'
+        );
         
         if (activeBooking) {
-            document.getElementById('activeSection').style.display = 'block';
-            document.getElementById('activeBadge').innerHTML = `<i class="fas fa-motorcycle"></i> ${activeBooking.status === 'confirmed' ? 'Booking Confirmed' : activeBooking.status === 'assigned' ? 'Worker Assigned' : activeBooking.status === 'arriving' ? 'On The Way' : 'Work In Progress'}`;
-            document.getElementById('activeWorkerName').innerText = activeBooking.workerName;
-            document.getElementById('activeRating').innerHTML = `<i class="fas fa-star"></i> ${activeBooking.workerRating} ⭐`;
-            document.getElementById('activeService').innerText = activeBooking.serviceType;
-            document.getElementById('activeDate').innerText = new Date(activeBooking.bookingDate).toLocaleDateString();
-            document.getElementById('activeLocation').innerText = activeBooking.location;
-            document.getElementById('activePrice').innerText = `₹${activeBooking.amount}`;
+            activeSection.style.display = 'block';
             
-            // Show timeline
-            document.getElementById('timelineCard').style.display = 'block';
+            // Badge
+            const badge = document.getElementById('activeBadge');
+            if (activeBooking.status === 'pending') {
+                badge.innerHTML = `<i class="fas fa-clock"></i> Awaiting Confirmation`;
+                badge.style.background = '#FF9800';
+            } else if (activeBooking.status === 'accepted') {
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> Confirmed`;
+                badge.style.background = '#2E7D32';
+            } else if (activeBooking.status === 'in_progress') {
+                badge.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Work In Progress`;
+                badge.style.background = '#F5B042';
+                badge.style.color = '#0a0f1e';
+            }
+            
+            // Worker info
+            const workerImg = document.getElementById('activeWorkerImg');
+            if (activeBooking.providerPhotoUrl) {
+                workerImg.innerHTML = `<img src="${activeBooking.providerPhotoUrl}" alt="Worker">`;
+            } else {
+                workerImg.innerHTML = `<i class="fas fa-user-tie"></i>`;
+            }
+            
+            document.getElementById('activeWorkerName').textContent = activeBooking.providerName || activeBooking.workerName || 'Worker';
+            document.getElementById('activeRating').innerHTML = `<i class="fas fa-star"></i> ${activeBooking.providerRating || activeBooking.workerRating || '4.9'} ⭐`;
+            
+            // Booking info
+            document.getElementById('activeService').textContent = activeBooking.category || activeBooking.serviceType || 'Service';
+            document.getElementById('activeDate').textContent = formatDate(activeBooking.scheduledDate || activeBooking.bookingDate || activeBooking.createdAt);
+            document.getElementById('activeLocation').textContent = activeBooking.address || activeBooking.location || 'Location';
+            document.getElementById('activePrice').textContent = `₹${activeBooking.budget || activeBooking.amount || 0}`;
+            
+            // Timeline
+            timelineCard.style.display = 'block';
             const stepIndex = getStatusStepIndex(activeBooking.status);
-            const progressPercent = (stepIndex / 4) * 100;
+            const progressPercent = (stepIndex / 3) * 100;
             document.getElementById('progressFill').style.width = `${progressPercent}%`;
             
             const stepElements = document.querySelectorAll('.step');
@@ -698,17 +804,24 @@
                 if (idx <= stepIndex) step.classList.add('active');
                 else step.classList.remove('active');
             });
+            
         } else {
-            document.getElementById('activeSection').style.display = 'none';
+            activeSection.style.display = 'none';
         }
     }
-    
+
+    // ==========================================
+    // DISPLAY UPCOMING BOOKINGS
+    // ==========================================
     function displayUpcomingBookings() {
         const container = document.getElementById('upcomingContainer');
-        const upcoming = allBookings.filter(b => b.status === 'upcoming');
+        const upcoming = allBookings.filter(b => 
+            b.status === 'upcoming' || 
+            (b.status === 'pending' && b.id !== activeBooking?.id)
+        );
         
         if (upcoming.length === 0) {
-            container.innerHTML = '<div class="glass-card empty-state"><i class="fas fa-calendar-check"></i><p>No upcoming bookings</p><small>Book a service to see it here</small></div>';
+            container.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-calendar-check"></i><p>No upcoming bookings</p><small>Book a service to see it here</small></div>`;
             return;
         }
         
@@ -716,177 +829,341 @@
         upcoming.forEach(booking => {
             const card = document.createElement('div');
             card.className = 'booking-card';
+            card.onclick = () => viewOrderDetail(booking.id);
+            
+            const avatar = booking.providerPhotoUrl || booking.customerAvatar || '';
+            
             card.innerHTML = `
-                <div class="card-img"><i class="fas ${getServiceIcon(booking.serviceType)}"></i></div>
+                <div class="card-img">
+                    ${avatar ? `<img src="${avatar}" alt="Worker">` : `<i class="fas ${getServiceIcon(booking.category || booking.serviceType)}"></i>`}
+                </div>
                 <div class="card-details">
-                    <h4>${booking.serviceType}</h4>
-                    <p>${new Date(booking.bookingDate).toLocaleDateString()} • ${booking.workerName}</p>
+                    <h4>${booking.category || booking.serviceType || 'Service'}</h4>
+                    <p>${booking.providerName || booking.workerName || 'Worker'} • ${formatDate(booking.scheduledDate || booking.bookingDate || booking.createdAt)}</p>
                     <div class="card-actions">
-                        <button class="small-btn reschedBtn" data-id="${booking.id}">Reschedule</button>
-                        <button class="small-btn cancelBtn" data-id="${booking.id}">Cancel</button>
+                        <button class="small-btn reschedBtn" data-id="${booking.id}" onclick="event.stopPropagation(); rescheduleBooking('${booking.id}')">Reschedule</button>
+                        <button class="small-btn danger cancelBtn" data-id="${booking.id}" onclick="event.stopPropagation(); cancelBooking('${booking.id}')">Cancel</button>
                     </div>
                 </div>
-                <div class="price">₹${booking.amount}</div>
+                <div class="price">₹${booking.budget || booking.amount || 0}</div>
+                ${getStatusBadge(booking.status)}
             `;
             container.appendChild(card);
         });
-        
-        // Add event listeners
-        document.querySelectorAll('.reschedBtn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showToast("📅 Reschedule request sent! We'll contact you soon.");
-            });
-        });
-        
-        document.querySelectorAll('.cancelBtn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                const bookingIndex = allBookings.findIndex(b => b.id === id);
-                if (bookingIndex !== -1) {
-                    allBookings[bookingIndex].status = 'cancelled';
-                    saveBookingsToStorage();
-                    showToast("❌ Booking cancelled successfully");
-                    loadAndDisplayBookings();
-                }
-            });
-        });
     }
-    
+
+    // ==========================================
+    // DISPLAY COMPLETED BOOKINGS
+    // ==========================================
     function displayCompletedBookings() {
         const container = document.getElementById('completedContainer');
         const completed = allBookings.filter(b => b.status === 'completed');
         
         if (completed.length === 0) {
-            container.innerHTML = '<div class="glass-card empty-state"><i class="fas fa-history"></i><p>No completed bookings yet</p><small>Your service history will appear here</small></div>';
+            container.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-history"></i><p>No completed bookings yet</p><small>Your service history will appear here</small></div>`;
             return;
         }
         
         container.innerHTML = '';
-        completed.forEach(booking => {
+        completed.slice(0, 5).forEach(booking => {
             const card = document.createElement('div');
             card.className = 'booking-card';
+            card.onclick = () => viewOrderDetail(booking.id);
+            
+            const avatar = booking.providerPhotoUrl || booking.customerAvatar || '';
+            
             card.innerHTML = `
-                <div class="card-img"><i class="fas ${getServiceIcon(booking.serviceType)}"></i></div>
+                <div class="card-img">
+                    ${avatar ? `<img src="${avatar}" alt="Worker">` : `<i class="fas ${getServiceIcon(booking.category || booking.serviceType)}"></i>`}
+                </div>
                 <div class="card-details">
-                    <h4>${booking.serviceType}</h4>
-                    <p>${new Date(booking.bookingDate).toLocaleDateString()} • ₹${booking.amount}</p>
+                    <h4>${booking.category || booking.serviceType || 'Service'}</h4>
+                    <p>${formatDate(booking.scheduledDate || booking.bookingDate || booking.createdAt)} • ₹${booking.budget || booking.amount || 0}</p>
                     <div class="card-actions">
-                        <button class="small-btn rebookBtn" data-service="${booking.serviceType}">Book Again</button>
-                        <button class="small-btn reviewBtn" data-id="${booking.id}">Write Review</button>
+                        <button class="small-btn rebookBtn" data-service="${booking.category || booking.serviceType}" onclick="event.stopPropagation(); rebookService('${booking.category || booking.serviceType}')">Book Again</button>
+                        <button class="small-btn reviewBtn" data-id="${booking.id}" onclick="event.stopPropagation(); writeReview('${booking.id}')">Write Review</button>
                     </div>
                 </div>
-                <div>${getStatusBadge(booking.status)}</div>
+                ${getStatusBadge(booking.status)}
             `;
             container.appendChild(card);
         });
         
-        document.querySelectorAll('.rebookBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const service = btn.getAttribute('data-service');
-                showToast(`🔄 Redirecting to book ${service}...`);
-                setTimeout(() => window.location.href = 'user-homepage.html', 1000);
-            });
-        });
+        // If more than 5, show view all
+        if (completed.length > 5) {
+            const moreCard = document.createElement('div');
+            moreCard.className = 'booking-card';
+            moreCard.style.justifyContent = 'center';
+            moreCard.innerHTML = `
+                <div style="text-align:center; color:#F5B042;">
+                    <i class="fas fa-chevron-down"></i>
+                    <p style="font-size:0.8rem;">View ${completed.length - 5} more completed bookings</p>
+                </div>
+            `;
+            moreCard.onclick = () => showToast('📜 Showing all completed bookings');
+            container.appendChild(moreCard);
+        }
+    }
+
+    // ==========================================
+    // BOOKING ACTIONS
+    // ==========================================
+    function viewOrderDetail(orderId) {
+        window.location.href = `view-orders.html?orderId=${orderId}`;
+    }
+
+    async function rescheduleBooking(bookingId) {
+        showToast('📅 Reschedule request sent! We\'ll contact you soon.');
+    }
+
+    async function cancelBooking(bookingId) {
+        if (!confirm('Are you sure you want to cancel this booking?')) return;
         
-        document.querySelectorAll('.reviewBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                showToast("⭐ Thanks for your feedback! Rating saved.");
+        try {
+            await db.collection('jobs').doc(bookingId).update({
+                status: 'cancelled',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            showToast('❌ Booking cancelled successfully');
+            loadBookings();
+        } catch(error) {
+            console.error('Error cancelling booking:', error);
+            showToast('❌ Error cancelling booking', true);
+        }
+    }
+
+    function rebookService(service) {
+        showToast(`🔄 Redirecting to book ${service}...`);
+        setTimeout(() => window.location.href = 'user-homepage.html', 1000);
+    }
+
+    function writeReview(bookingId) {
+        showToast('⭐ Thanks for your feedback! Rate your experience.');
+    }
+
+    // ==========================================
+    // LOAD BOOKINGS FROM FIRESTORE
+    // ==========================================
+    function loadBookings() {
+        if (!currentUser) {
+            console.log('⏳ Waiting for user authentication...');
+            return;
+        }
+        
+        console.log('🔄 Loading bookings for user:', currentUser.uid);
+        
+        // Query jobs where customerId matches current user
+        const q = db.collection("jobs")
+            .where("customerId", "==", currentUser.uid)
+            .orderBy("createdAt", "desc");
+        
+        q.onSnapshot((snapshot) => {
+            console.log('📦 Bookings found:', snapshot.size);
+            allBookings = [];
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                allBookings.push({ id: doc.id, ...data });
+                console.log('📋 Booking:', doc.id, data.category || data.serviceType, data.status);
+            });
+            
+            // Check for notifications
+            const pendingCount = allBookings.filter(b => b.status === 'pending').length;
+            unreadCount = pendingCount;
+            const dot = document.getElementById('notificationDot');
+            if (pendingCount > 0) {
+                dot.style.display = 'block';
+            } else {
+                dot.style.display = 'none';
+            }
+            
+            // Update greeting
+            const userName = localStorage.getItem('quickfix_user_name') || 'Customer';
+            document.getElementById('userGreeting').textContent = `Welcome back, ${userName}!`;
+            
+            // Update UI
+            applyFilterAndDisplay();
+            
+        }, (error) => {
+            console.error('Error loading bookings:', error);
+            showToast('⚠️ Error loading bookings', true);
         });
     }
-    
-    function applyFilter() {
+
+    function applyFilterAndDisplay() {
+        // Apply filter
+        const filtered = allBookings.filter(b => {
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'active') return b.status === 'pending' || b.status === 'accepted' || b.status === 'in_progress';
+            if (currentFilter === 'upcoming') return b.status === 'upcoming' || b.status === 'pending';
+            if (currentFilter === 'completed') return b.status === 'completed';
+            return true;
+        });
+        
+        // Update counts in filter tabs
+        const counts = {
+            'all': allBookings.length,
+            'active': allBookings.filter(b => b.status === 'pending' || b.status === 'accepted' || b.status === 'in_progress').length,
+            'upcoming': allBookings.filter(b => b.status === 'upcoming' || b.status === 'pending').length,
+            'completed': allBookings.filter(b => b.status === 'completed').length
+        };
+        
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            const filter = pill.getAttribute('data-filter');
+            const count = counts[filter] || 0;
+            pill.textContent = filter === 'all' ? `All (${count})` : 
+                               filter === 'active' ? `Active (${count})` :
+                               filter === 'upcoming' ? `Upcoming (${count})` :
+                               filter === 'completed' ? `Completed (${count})` : filter;
+        });
+        
+        // Display sections based on filter
+        const activeSection = document.getElementById('activeSection');
         const upcomingSection = document.getElementById('upcomingContainer');
         const completedSection = document.getElementById('completedContainer');
-        const activeSection = document.getElementById('activeSection');
         
         if (currentFilter === 'all') {
             activeSection.style.display = 'block';
-            upcomingSection.style.display = 'block';
-            completedSection.style.display = 'block';
+            displayActiveBooking();
+            displayUpcomingBookings();
+            displayCompletedBookings();
         } else if (currentFilter === 'active') {
             activeSection.style.display = 'block';
-            upcomingSection.style.display = 'block';
-            completedSection.style.display = 'none';
+            displayActiveBooking();
+            upcomingSection.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-filter"></i><p>Showing active bookings only</p><small>Switch to "All" to see all</small></div>`;
+            completedSection.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-filter"></i><p>Showing active bookings only</p><small>Switch to "All" to see all</small></div>`;
+        } else if (currentFilter === 'upcoming') {
+            activeSection.style.display = 'none';
+            upcomingSection.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-filter"></i><p>Showing upcoming bookings only</p></div>`;
+            displayUpcomingBookings();
+            completedSection.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-filter"></i><p>Showing upcoming bookings only</p><small>Switch to "All" to see all</small></div>`;
         } else if (currentFilter === 'completed') {
             activeSection.style.display = 'none';
-            upcomingSection.style.display = 'none';
-            completedSection.style.display = 'block';
+            upcomingSection.innerHTML = `<div class="glass-card empty-state"><i class="fas fa-filter"></i><p>Showing completed bookings only</p><small>Switch to "All" to see all</small></div>`;
+            displayCompletedBookings();
         }
     }
-    
-    function loadAndDisplayBookings() {
-        loadBookingsFromStorage();
-        displayActiveBooking();
-        displayUpcomingBookings();
-        displayCompletedBookings();
-        applyFilter();
-    }
-    
-    // Navigation
-    function navigateTo(page) {
-        if (page === 'home') {
-            window.location.href = 'user-homepage.html';
-        } else if (page === 'profile') {
-            window.location.href = 'user-profile.html';
-        }
-    }
-    
-    // Check login status
-    function checkLogin() {
-        const isLoggedIn = localStorage.getItem('quickfix_logged_in') === 'true';
-        if (!isLoggedIn) {
-            showToast('Please login to view bookings', true);
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1500);
-            return false;
-        }
-        return true;
-    }
-    
-    // Event Listeners
+
+    // ==========================================
+    // EVENT LISTENERS
+    // ==========================================
+    // Filter tabs
     document.querySelectorAll('.filter-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
+        pill.addEventListener('click', function() {
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-            currentFilter = pill.getAttribute('data-filter');
-            applyFilter();
+            this.classList.add('active');
+            currentFilter = this.getAttribute('data-filter');
+            applyFilterAndDisplay();
         });
     });
-    
-    document.getElementById('trackBtn')?.addEventListener('click', () => showToast("📍 Live tracking: Worker is 2km away • ETA 10 mins"));
-    document.getElementById('callBtn')?.addEventListener('click', () => showToast("📞 Calling worker... Connecting..."));
-    document.getElementById('chatBtn')?.addEventListener('click', () => showToast("💬 Chat feature coming soon"));
-    document.getElementById('notifyBtn')?.addEventListener('click', () => showToast("🔔 No new notifications"));
-    document.getElementById('emergencyQuick')?.addEventListener('click', () => showToast("🚨 Emergency SOS sent! Help is on the way."));
-    document.getElementById('bookAgainQuick')?.addEventListener('click', () => window.location.href = 'user-homepage.html');
-    document.getElementById('savedWorkers')?.addEventListener('click', () => showToast("👷 Saved workers list coming soon"));
-    document.getElementById('supportQuick')?.addEventListener('click', () => showToast("🎧 Connecting to customer support..."));
-    document.getElementById('viewAllUpcoming')?.addEventListener('click', () => showToast("📋 All upcoming bookings"));
-    document.getElementById('viewAllCompleted')?.addEventListener('click', () => showToast("📜 Viewing all completed bookings"));
-    document.getElementById('moreLink')?.addEventListener('click', () => showToast("✨ More features coming soon"));
-    
+
+    // Navigation
     document.querySelectorAll('.nav-item').forEach(nav => {
         nav.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
             navigateTo(page);
         });
     });
-    
-    // Initialize
-    if (checkLogin()) {
-        loadAndDisplayBookings();
-        console.log("✅ Bookings page loaded successfully!");
-        
-        // Display user name from localStorage
-        const userName = localStorage.getItem('quickfix_user_name');
-        if (userName) {
-            console.log(`Welcome back, ${userName}!`);
+
+    // Action buttons
+    document.getElementById('trackBtn')?.addEventListener('click', () => {
+        if (activeBooking) {
+            showToast(`📍 Tracking ${activeBooking.providerName || 'worker'}...`);
+        } else {
+            showToast('📍 No active booking to track');
         }
-    }
+    });
+    
+    document.getElementById('callBtn')?.addEventListener('click', () => {
+        if (activeBooking) {
+            showToast(`📞 Calling ${activeBooking.providerName || 'worker'}...`);
+        } else {
+            showToast('📞 No active booking to call');
+        }
+    });
+    
+    document.getElementById('chatBtn')?.addEventListener('click', () => {
+        if (activeBooking) {
+            showToast('💬 Chat feature coming soon');
+        } else {
+            showToast('💬 No active booking to chat about');
+        }
+    });
+    
+    document.getElementById('notifyBtn')?.addEventListener('click', () => {
+        const count = allBookings.filter(b => b.status === 'pending').length;
+        if (count > 0) {
+            showToast(`🔔 You have ${count} pending booking${count > 1 ? 's' : ''}`);
+        } else {
+            showToast('🔔 No new notifications');
+        }
+    });
+
+    // Quick actions
+    document.getElementById('emergencyQuick')?.addEventListener('click', () => {
+        showToast('🚨 Emergency SOS sent! Help is on the way.');
+    });
+    
+    document.getElementById('bookAgainQuick')?.addEventListener('click', () => {
+        window.location.href = 'user-homepage.html';
+    });
+    
+    document.getElementById('savedWorkers')?.addEventListener('click', () => {
+        showToast('👷 Saved workers list coming soon');
+    });
+    
+    document.getElementById('supportQuick')?.addEventListener('click', () => {
+        showToast('🎧 Connecting to customer support...');
+    });
+    
+    document.getElementById('viewAllUpcoming')?.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-filter="upcoming"]')?.classList.add('active');
+        currentFilter = 'upcoming';
+        applyFilterAndDisplay();
+    });
+    
+    document.getElementById('viewAllCompleted')?.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-filter="completed"]')?.classList.add('active');
+        currentFilter = 'completed';
+        applyFilterAndDisplay();
+    });
+    
+    document.getElementById('moreLink')?.addEventListener('click', () => {
+        showToast('✨ More features coming soon');
+    });
+
+    // ==========================================
+    // AUTH STATE LISTENER
+    // ==========================================
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            console.log('✅ User authenticated:', user.uid);
+            
+            // Store user info
+            localStorage.setItem('quickfix_user_id', user.uid);
+            if (user.displayName) {
+                localStorage.setItem('quickfix_user_name', user.displayName);
+                document.getElementById('userGreeting').textContent = `Welcome back, ${user.displayName}!`;
+            }
+            
+            loadBookings();
+        } else {
+            console.log('❌ No user authenticated');
+            showToast('Please login to view bookings', true);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        }
+    });
+
+    console.log('%c📦 MY BOOKINGS - Fully Working', 'color: #F5B042; font-size: 16px; font-weight: bold;');
+    console.log('✅ Connected to Firebase Firestore');
+    console.log('✅ Shows real bookings from jobs collection');
+    console.log('✅ Filter by All, Active, Upcoming, Completed');
+    console.log('✅ Click booking to view details');
 </script>
 </body>
 </html>
