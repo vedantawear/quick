@@ -213,6 +213,21 @@
       border-left: 5px solid;
       transition: all 0.3s;
       animation: fadeInUp 0.45s ease-out;
+      cursor: pointer;
+      position: relative;
+    }
+    .order-card:hover {
+      transform: scale(1.02);
+      border-color: cyan;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    }
+    .order-card .click-indicator {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 0.6rem;
+      opacity: 0.3;
+      color: cyan;
     }
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px);}
@@ -235,6 +250,9 @@
     .order-buttons button { background: rgba(0, 0, 0, 0.6); border: 1px solid cyan; border-radius: 40px; padding: 8px 14px; color: white; font-size: 0.7rem; backdrop-filter: blur(4px); transition: 0.1s; cursor: pointer;}
     .order-buttons button:active { transform: scale(0.96); background: cyan; color: black; }
     .order-buttons button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .order-buttons button:hover {
+      background: rgba(0, 255, 255, 0.2);
+    }
     .progress-track { margin: 12px 0; background: #222; border-radius: 20px; height: 6px; overflow: hidden;}
     .progress-fill { width: 0%; height: 6px; background: linear-gradient(90deg, #0af, #f0f); border-radius: 20px;}
 
@@ -354,6 +372,12 @@
       50% { opacity: 1; }
       100% { opacity: 0.7; }
     }
+
+    /* Prevent button clicks from triggering card click */
+    .order-buttons button {
+      position: relative;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
@@ -465,6 +489,13 @@
     toast.innerHTML = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2000);
+  }
+
+  // Function to navigate to order detail page
+  function openOrderDetail(orderId) {
+    if(orderId) {
+      window.location.href = `view-orders.html?orderId=${orderId}`;
+    }
   }
 </script>
 
@@ -621,16 +652,11 @@
     
     // Filter orders for this provider
     let filtered = currentOrders.filter(order => {
-      // IMPORTANT: Show orders where providerId matches current user
-      // OR where providerId is the same as customerId (if customer booked their own service - handle edge case)
-      // OR where providerId is empty/null
       const providerMatch = order.providerId === currentUser?.uid;
       const noProvider = !order.providerId || order.providerId === '';
       
-      // If status filter is active
       if(activeFilter !== "all" && order.status !== activeFilter) return false;
       
-      // Search filter
       if(searchQuery) {
         const query = searchQuery.toLowerCase();
         const customerName = (order.customerName || order.customer || '').toLowerCase();
@@ -641,7 +667,6 @@
         }
       }
       
-      // Show order if it matches provider OR has no provider assigned
       return providerMatch || noProvider;
     });
     
@@ -672,7 +697,8 @@
       const isNew = order.createdAt && (Date.now() - order.createdAt.toMillis?.() || Date.now() - order.createdAt) < 60000;
       
       return `
-      <div class="order-card status-${getStatusDisplay(order.status)}" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
+      <div class="order-card status-${getStatusDisplay(order.status)}" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}" onclick="window.openOrderDetail('${order.id}')">
+        <span class="click-indicator">👆 Click to view</span>
         <div class="order-header">
           <div class="customer-img-order">
             <img src="${customerAvatar}" alt="${customerName}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-user-circle\\' style=\\'font-size:2rem;color:#f5b042;\\'></i>'">
@@ -708,30 +734,46 @@
         </div>
         <div class="progress-track"><div class="progress-fill" style="width: ${getProgressWidth(order.status)}%;"></div></div>
         <div class="order-buttons">
-          ${order.status === 'pending' ? `<button class="acceptBtn" data-id="${order.id}">✅ Accept</button>` : ''}
-          ${order.status === 'accepted' ? `<button class="startWorkBtn" data-id="${order.id}">🚀 Start Work</button>` : ''}
-          ${order.status === 'in_progress' ? `<button class="completeBtn" data-id="${order.id}">✔️ Complete</button>` : ''}
-          ${order.status !== 'completed' && order.status !== 'cancelled' ? `<button class="cancelBtn" data-id="${order.id}">❌ Cancel</button>` : ''}
-          <button class="callBtn">📞 Call</button>
-          <button class="chatBtn">💬 Chat</button>
+          ${order.status === 'pending' ? `<button class="acceptBtn" data-id="${order.id}" onclick="event.stopPropagation();">✅ Accept</button>` : ''}
+          ${order.status === 'accepted' ? `<button class="startWorkBtn" data-id="${order.id}" onclick="event.stopPropagation();">🚀 Start Work</button>` : ''}
+          ${order.status === 'in_progress' ? `<button class="completeBtn" data-id="${order.id}" onclick="event.stopPropagation();">✔️ Complete</button>` : ''}
+          ${order.status !== 'completed' && order.status !== 'cancelled' ? `<button class="cancelBtn" data-id="${order.id}" onclick="event.stopPropagation();">❌ Cancel</button>` : ''}
+          <button class="callBtn" onclick="event.stopPropagation();">📞 Call</button>
+          <button class="chatBtn" onclick="event.stopPropagation();">💬 Chat</button>
         </div>
       </div>
     `}).join('');
     
+    // Attach event listeners to buttons
     document.querySelectorAll('.acceptBtn').forEach(btn => {
-      btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, 'accepted'));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateOrderStatus(btn.dataset.id, 'accepted');
+      });
     });
     document.querySelectorAll('.startWorkBtn').forEach(btn => {
-      btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, 'in_progress'));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateOrderStatus(btn.dataset.id, 'in_progress');
+      });
     });
     document.querySelectorAll('.completeBtn').forEach(btn => {
-      btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, 'completed'));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateOrderStatus(btn.dataset.id, 'completed');
+      });
     });
     document.querySelectorAll('.cancelBtn').forEach(btn => {
-      btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, 'cancelled'));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateOrderStatus(btn.dataset.id, 'cancelled');
+      });
     });
     document.querySelectorAll('.callBtn, .chatBtn').forEach(btn => {
-      btn.addEventListener('click', () => showToast('💬 Communication feature coming soon'));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showToast('💬 Communication feature coming soon');
+      });
     });
   }
 
@@ -947,10 +989,9 @@
     }
   });
 
-  console.log('%c📦 NEBULA ORDERS - Fixed Provider Orders!', 'color: #0af; font-size: 16px; font-weight: bold;');
-  console.log('✅ Now showing orders assigned to this provider');
-  console.log('✅ Also showing available jobs (no provider assigned)');
-  console.log('✅ Check console for debugging info');
+  console.log('%c📦 NEBULA ORDERS - Click to View Orders!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Click any order card to view details');
+  console.log('✅ Order ID passed via URL parameter: ?orderId=xxx');
 </script>
 </body>
 </html>
