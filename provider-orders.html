@@ -340,6 +340,20 @@
       color: #b0c4de;
       font-size: 0.9rem;
     }
+    
+    .order-card .badge-new {
+      background: #ff3366;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
@@ -497,6 +511,7 @@
   let activeFilter = "all";
   let searchQuery = "";
   let providerData = null;
+  let allOrders = [];
 
   function showToast(message, isError = false) {
     const existingToast = document.querySelector('.toast');
@@ -591,7 +606,6 @@
       const orderRef = db.collection("jobs").doc(orderId);
       await orderRef.update({ 
         status: newStatus,
-        providerId: currentUser?.uid,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       showToast(`✅ Order ${newStatus.replace('_', ' ')} successfully!`);
@@ -605,8 +619,15 @@
     const container = document.getElementById('ordersFeedContainer');
     if(!container) return;
     
+    // Filter orders for this provider
     let filtered = currentOrders.filter(order => {
-      // Filter by status
+      // IMPORTANT: Show orders where providerId matches current user
+      // OR where providerId is the same as customerId (if customer booked their own service - handle edge case)
+      // OR where providerId is empty/null
+      const providerMatch = order.providerId === currentUser?.uid;
+      const noProvider = !order.providerId || order.providerId === '';
+      
+      // If status filter is active
       if(activeFilter !== "all" && order.status !== activeFilter) return false;
       
       // Search filter
@@ -619,7 +640,9 @@
           return false;
         }
       }
-      return true;
+      
+      // Show order if it matches provider OR has no provider assigned
+      return providerMatch || noProvider;
     });
     
     if(filtered.length === 0) {
@@ -629,6 +652,7 @@
           <h3>No Orders Yet</h3>
           <p>When customers book your services, they'll appear here.</p>
           <p style="margin-top: 8px; font-size: 0.8rem; opacity: 0.6;">Share your profile link to get bookings!</p>
+          <p style="margin-top: 4px; font-size: 0.7rem; opacity: 0.4;">Provider ID: ${currentUser?.uid?.substring(0, 10)}...</p>
         </div>
       `;
       return;
@@ -645,6 +669,7 @@
       const scheduledTime = order.scheduledTime || order.time || 'ASAP';
       const urgency = order.urgency || 'Medium';
       const bookingId = order.bookingId || order.id || 'N/A';
+      const isNew = order.createdAt && (Date.now() - order.createdAt.toMillis?.() || Date.now() - order.createdAt) < 60000;
       
       return `
       <div class="order-card status-${getStatusDisplay(order.status)}" style="border-left-color: ${statusColor(order.status)};" data-id="${order.id}">
@@ -655,13 +680,14 @@
           <div class="customer-info">
             <div class="name-row">
               <strong>${customerName}</strong>
+              ${isNew ? '<span class="badge-new">NEW</span>' : ''}
               <span style="font-size:0.6rem; background:rgba(245,176,66,0.15); color:#f5b042; padding:2px 8px; border-radius:12px;">⭐ ${order.customerRating || '4.9'}</span>
               <span style="font-size:0.6rem; background:rgba(0,170,255,0.15); color:#0af; padding:2px 8px; border-radius:12px;">AI ${order.aiTrust || '98'}%</span>
             </div>
             <div class="customer-meta">
               <span><i class="fas fa-tag"></i> ${category}</span>
               <span><i class="fas fa-map-marker-alt"></i> ${distance} km away</span>
-              <span><i class="fas fa-rupee-sign"></i> $${budget}</span>
+              <span><i class="fas fa-rupee-sign"></i> ₹${budget}</span>
             </div>
             <div class="customer-meta" style="margin-top:4px;">
               <span><i class="fas fa-clock"></i> ${scheduledDate}${scheduledTime && scheduledTime !== 'ASAP' ? ' at ' + scheduledTime : ''}</span>
@@ -744,72 +770,69 @@
   // LOAD ORDERS FROM FIRESTORE - REAL-TIME
   // ==========================================
   function loadOrders() {
-    if(!currentUser) return;
+    if(!currentUser) {
+      console.log('⏳ Waiting for user authentication...');
+      return;
+    }
     
     console.log('🔄 Loading orders for provider:', currentUser.uid);
+    console.log('🔑 Provider ID:', currentUser.uid);
     
-    // Query jobs where providerId matches current user OR where providerId is null/empty (available jobs)
-    const q = db.collection("jobs")
+    // Query 1: Orders assigned to this provider
+    const assignedQuery = db.collection("jobs")
       .where("providerId", "==", currentUser.uid)
       .orderBy("createdAt", "desc");
     
-    q.onSnapshot((snapshot) => {
-      console.log('📦 Orders found:', snapshot.size);
-      currentOrders = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        currentOrders.push({ id: doc.id, ...data });
-        console.log('📋 Order:', doc.id, data.customerName || data.customer, data.status);
-      });
+    assignedQuery.onSnapshot((assignedSnapshot) => {
+      console.log('📦 Assigned orders found:', assignedSnapshot.size);
       
-      // If no orders found, also check for jobs where providerId is not set (available for any provider)
-      if(currentOrders.length === 0) {
-        // Check for available jobs (no provider assigned yet)
-        const availableQuery = db.collection("jobs")
-          .where("providerId", "==", "")
-          .where("status", "==", "pending")
-          .orderBy("createdAt", "desc")
-          .limit(20);
+      // Query 2: Orders with no provider assigned (available for anyone)
+      const availableQuery = db.collection("jobs")
+        .where("status", "==", "pending")
+        .orderBy("createdAt", "desc");
+      
+      availableQuery.onSnapshot((availableSnapshot) => {
+        console.log('📦 Available orders found:', availableSnapshot.size);
         
-        availableQuery.onSnapshot((availSnapshot) => {
-          console.log('📦 Available jobs found:', availSnapshot.size);
-          availSnapshot.forEach(doc => {
-            const data = doc.data();
-            // Check if this job is already in currentOrders
+        // Clear current orders
+        currentOrders = [];
+        
+        // Add assigned orders first
+        assignedSnapshot.forEach(doc => {
+          const data = doc.data();
+          currentOrders.push({ id: doc.id, ...data });
+          console.log('📋 Assigned Order:', doc.id, data.customerName || data.customer, data.status, 'Provider:', data.providerId);
+        });
+        
+        // Add available orders (not assigned to anyone)
+        availableSnapshot.forEach(doc => {
+          const data = doc.data();
+          // Only add if no provider assigned or provider is empty string
+          if(!data.providerId || data.providerId === '') {
+            // Check if already added
             if(!currentOrders.find(o => o.id === doc.id)) {
               currentOrders.push({ id: doc.id, ...data });
+              console.log('📋 Available Order:', doc.id, data.customerName || data.customer, data.status);
             }
-          });
-          
-          // Also check for jobs with no providerId field
-          const nullQuery = db.collection("jobs")
-            .where("status", "==", "pending")
-            .orderBy("createdAt", "desc")
-            .limit(20);
-          
-          nullQuery.get().then((nullSnapshot) => {
-            nullSnapshot.forEach(doc => {
-              const data = doc.data();
-              if(!data.providerId && !currentOrders.find(o => o.id === doc.id)) {
-                currentOrders.push({ id: doc.id, ...data });
-              }
-            });
-            
-            // Update UI
-            updateOrderUI();
-          }).catch(err => {
-            console.error('Error loading null provider jobs:', err);
-            updateOrderUI();
-          });
-        }, (error) => {
-          console.error('Error loading available jobs:', error);
-          updateOrderUI();
+          }
         });
-      } else {
+        
+        console.log('📊 Total orders to display:', currentOrders.length);
         updateOrderUI();
-      }
+        
+      }, (error) => {
+        console.error('Error loading available orders:', error);
+        // Still show assigned orders
+        currentOrders = [];
+        assignedSnapshot.forEach(doc => {
+          const data = doc.data();
+          currentOrders.push({ id: doc.id, ...data });
+        });
+        updateOrderUI();
+      });
+      
     }, (error) => {
-      console.error("Error loading orders:", error);
+      console.error("Error loading assigned orders:", error);
       document.getElementById('ordersFeedContainer').innerHTML = "<div class='glass-card' style='padding:30px; text-align:center'>⚠️ Error loading orders</div>";
     });
   }
@@ -836,8 +859,8 @@
         <div class="stat-order-card"><div class="stat-title-sm"><span>📋 Active Orders</span><span style="color:#0f6">▲ +5%</span></div><div class="stat-number" id="statActiveOrders">0</div></div>
         <div class="stat-order-card"><div class="stat-title-sm"><span>✅ Completed</span><span style="color:#0f6">▲ +12%</span></div><div class="stat-number" id="statCompletedOrders">0</div></div>
         <div class="stat-order-card"><div class="stat-title-sm"><span>⏳ Pending</span><span style="color:#ff7766">▼ -2%</span></div><div class="stat-number" id="statPendingRequests">0</div></div>
-        <div class="stat-order-card"><div class="stat-title-sm"><span>💰 Today Earn</span><span style="color:#0f6">▲ +8%</span></div><div class="stat-number" id="statTodayEarnings">$0</div></div>
-        <div class="stat-order-card"><div class="stat-title-sm"><span>📆 Weekly Earn</span><span style="color:#0f6">▲ +15%</span></div><div class="stat-number" id="statWeeklyEarnings">$0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>💰 Today Earn</span><span style="color:#0f6">▲ +8%</span></div><div class="stat-number" id="statTodayEarnings">₹0</div></div>
+        <div class="stat-order-card"><div class="stat-title-sm"><span>📆 Weekly Earn</span><span style="color:#0f6">▲ +15%</span></div><div class="stat-number" id="statWeeklyEarnings">₹0</div></div>
         <div class="stat-order-card"><div class="stat-title-sm"><span>⚡ Response Rate</span><span style="color:#0f6">▲ +3%</span></div><div class="stat-number" id="statResponseRate">0%</div></div>
         <div class="stat-order-card"><div class="stat-title-sm"><span>😊 Satisfaction</span><span style="color:#0f6">▲ +2%</span></div><div class="stat-number" id="statSatisfaction">0%</div></div>
       `;
@@ -845,15 +868,15 @@
         animateNumber(document.getElementById('statActiveOrders'), activeCount, '');
         animateNumber(document.getElementById('statCompletedOrders'), completedCount, '');
         animateNumber(document.getElementById('statPendingRequests'), pendingCount, '');
-        animateNumber(document.getElementById('statTodayEarnings'), todayEarnings, '$');
-        animateNumber(document.getElementById('statWeeklyEarnings'), weeklyEarnings, '$');
+        animateNumber(document.getElementById('statTodayEarnings'), todayEarnings, '₹');
+        animateNumber(document.getElementById('statWeeklyEarnings'), weeklyEarnings, '₹');
         animateNumber(document.getElementById('statResponseRate'), responseRate, '%');
         animateNumber(document.getElementById('statSatisfaction'), satisfaction, '%');
       }, 100);
     }
     
-    document.getElementById('withdrawableAmount').innerText = `$${(todayEarnings * 0.9).toFixed(0)}`;
-    document.getElementById('pendingAmount').innerText = `$${(weeklyEarnings * 0.1).toFixed(0)}`;
+    document.getElementById('withdrawableAmount').innerText = `₹${(todayEarnings * 0.9).toFixed(0)}`;
+    document.getElementById('pendingAmount').innerText = `₹${(weeklyEarnings * 0.1).toFixed(0)}`;
     document.getElementById('reviewPreview').innerHTML = `⭐ ${satisfaction}% · "Great service" — AI trust score ${Math.floor(Math.random() * 10 + 90)}%`;
     document.getElementById('sentimentFill').style.width = `${satisfaction}%`;
     
@@ -913,18 +936,21 @@
   auth.onAuthStateChanged(async (user) => {
     if(user) {
       currentUser = user;
+      console.log('✅ User authenticated:', user.uid);
       await loadProviderData(user.uid);
       loadOrders();
       console.log('✅ Orders page connected to Firebase');
     } else {
+      console.log('❌ No user authenticated');
       showToast('Please login to continue', true);
       setTimeout(() => window.location.href = 'login.html', 1500);
     }
   });
 
-  console.log('%c📦 NEBULA ORDERS - Fixed!', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('%c📦 NEBULA ORDERS - Fixed Provider Orders!', 'color: #0af; font-size: 16px; font-weight: bold;');
   console.log('✅ Now showing orders assigned to this provider');
   console.log('✅ Also showing available jobs (no provider assigned)');
+  console.log('✅ Check console for debugging info');
 </script>
 </body>
 </html>
