@@ -195,17 +195,8 @@
       text-shadow: 0 0 8px cyan; 
       color: white;
     }
-    .post-btn {
-      background: linear-gradient(45deg, #00c6ff, #b624ff) !important;
-      transform: scale(1.1);
-      box-shadow: 0 0 15px cyan;
-      color: white !important;
-    }
     .nav-item:hover {
       background: rgba(255,255,255,0.05);
-    }
-    .post-btn:hover {
-      transform: scale(1.15);
     }
     button, .action-chip, .settings-item {
       background: rgba(255,255,255,0.05);
@@ -423,7 +414,6 @@
 <div class="bottom-nav">
   <button class="nav-item" onclick="handleNavClick('home')">🏠 Home</button>
   <button class="nav-item" onclick="handleNavClick('orders')">📦 Orders</button>
-  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
   <button class="nav-item active" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
@@ -469,12 +459,6 @@
         showToastMessage('📦 Opening Orders...');
         setTimeout(() => {
           window.location.href = 'provider-orders.html';
-        }, 300);
-        break;
-      case 'post':
-        showToastMessage('✨ Opening Post Job...');
-        setTimeout(() => {
-          window.location.href = 'provider-postjob.html';
         }, 300);
         break;
       case 'profile':
