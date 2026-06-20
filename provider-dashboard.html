@@ -213,13 +213,8 @@
       text-shadow: 0 0 8px cyan; 
       color: white;
     }
-    .post-btn { 
-      background: linear-gradient(45deg, #00c6ff, #b624ff) !important; 
-      border-radius: 60px; 
-      padding: 4px 14px; 
-      transform: scale(1.1); 
-      box-shadow: 0 0 12px cyan;
-      color: white !important;
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
     }
 
     h3, h4 { font-weight: 500; letter-spacing: -0.3px; }
@@ -251,13 +246,6 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .nav-item:hover {
-      background: rgba(255,255,255,0.05);
-    }
-    .post-btn:hover {
-      transform: scale(1.15);
-    }
 
     .badge-status {
       display: inline-block;
@@ -420,7 +408,6 @@
 <div class="bottom-nav" id="bottomNav">
   <button class="nav-item active" onclick="handleNavClick('home')">🏠 Home</button>
   <button class="nav-item" onclick="handleNavClick('orders')">📦 Orders</button>
-  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
   <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
@@ -448,13 +435,6 @@
         showToastMessage('📦 Opening Orders...');
         setTimeout(() => {
           window.location.href = 'provider-orders.html';
-        }, 300);
-        break;
-        
-      case 'post':
-        showToastMessage('✨ Opening Post Job...');
-        setTimeout(() => {
-          window.location.href = 'provider-postjob.html';
         }, 300);
         break;
         
