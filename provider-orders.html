@@ -300,17 +300,8 @@
       text-shadow: 0 0 8px cyan; 
       color: white;
     }
-    .post-btn { 
-      background: linear-gradient(45deg, #00c6ff, #b624ff) !important; 
-      transform: scale(1.1); 
-      box-shadow: 0 0 15px cyan;
-      color: white !important;
-    }
     .nav-item:hover {
       background: rgba(255,255,255,0.05);
-    }
-    .post-btn:hover {
-      transform: scale(1.15);
     }
     h3, h4 { letter-spacing: -0.3px; font-weight: 500; margin-bottom: 12px; }
 
@@ -448,7 +439,6 @@
 <div class="bottom-nav">
   <button class="nav-item" onclick="handleNavClick('home')">🏠 Home</button>
   <button class="nav-item active" onclick="handleNavClick('orders')">📦 Orders</button>
-  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
   <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
@@ -466,10 +456,6 @@
           if(el.textContent.includes('Orders')) el.classList.add('active');
         });
         showToastMessage('📦 Orders Dashboard');
-        break;
-      case 'post':
-        showToastMessage('✨ Opening Post Job...');
-        setTimeout(() => window.location.href = 'provider-postjob.html', 300);
         break;
       case 'profile':
         showToastMessage('👤 Opening Profile...');
