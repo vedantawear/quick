@@ -510,7 +510,6 @@
             padding: 40px 20px;
         }
 
-        /* Pricing Type Badge */
         .pricing-badge {
             display: inline-block;
             padding: 2px 10px;
@@ -521,6 +520,22 @@
             border: 1px solid rgba(245, 176, 66, 0.3);
             color: #f5b042;
             margin-left: 6px;
+        }
+
+        .no-reviews {
+            text-align: center;
+            padding: 30px 20px;
+            color: #b0c4de;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+        .no-reviews i {
+            font-size: 2rem;
+            color: #4a5a6a;
+            margin-bottom: 8px;
+            display: block;
         }
 
         @media (max-width: 480px) {
@@ -710,7 +725,7 @@
     }
 
     // ==========================================
-    // LOAD PORTFOLIO FROM BOTH COLLECTIONS
+    // LOAD PORTFOLIO IMAGES
     // ==========================================
     async function loadPortfolioImages(workerId) {
         let allImages = [];
@@ -816,6 +831,66 @@
     }
 
     // ==========================================
+    // LOAD REAL REVIEWS FROM FIRESTORE
+    // ==========================================
+    async function loadReviews(workerId) {
+        try {
+            const reviewsSnapshot = await db.collection('reviews')
+                .where('providerId', '==', workerId)
+                .orderBy('createdAt', 'desc')
+                .limit(10)
+                .get();
+
+            const reviews = [];
+            reviewsSnapshot.forEach(doc => {
+                const data = doc.data();
+                reviews.push({
+                    id: doc.id,
+                    name: data.customerName || data.name || 'Customer',
+                    rating: data.rating || 5,
+                    date: data.createdAt ? formatReviewDate(data.createdAt) : 'Recently',
+                    comment: data.comment || data.text || 'Great service!',
+                    avatar: data.customerAvatar || data.avatar || ''
+                });
+            });
+
+            console.log('⭐ Real reviews loaded:', reviews.length);
+            return reviews;
+        } catch(error) {
+            console.error('Error loading reviews:', error);
+            return [];
+        }
+    }
+
+    // ==========================================
+    // FORMAT REVIEW DATE
+    // ==========================================
+    function formatReviewDate(timestamp) {
+        try {
+            let date;
+            if (timestamp.toDate) {
+                date = timestamp.toDate();
+            } else if (timestamp.seconds) {
+                date = new Date(timestamp.seconds * 1000);
+            } else {
+                date = new Date(timestamp);
+            }
+            
+            const now = new Date();
+            const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            if (diff < 7) return `${diff} days ago`;
+            if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+            if (diff < 365) return `${Math.floor(diff / 30)} months ago`;
+            return `${Math.floor(diff / 365)} years ago`;
+        } catch(e) {
+            return 'Recently';
+        }
+    }
+
+    // ==========================================
     // LOAD WORKER PROFILE FROM FIRESTORE
     // ==========================================
     async function loadWorkerProfile(workerId) {
@@ -832,7 +907,7 @@
                     try {
                         const data = JSON.parse(savedData);
                         workerNameTitle.textContent = data.name || 'Worker';
-                        renderProfile(data, []);
+                        renderProfile(data, [], []);
                         showToast('⚠️ Using cached profile data', true);
                         return;
                     } catch(e) {}
@@ -846,8 +921,13 @@
             console.log('✅ Profile loaded:', data.displayName || 'Worker');
             workerNameTitle.textContent = data.displayName || 'Worker';
 
-            const portfolioImages = await loadPortfolioImages(workerId);
-            renderProfile(data, portfolioImages);
+            // Load portfolio images and reviews in parallel
+            const [portfolioImages, reviews] = await Promise.all([
+                loadPortfolioImages(workerId),
+                loadReviews(workerId)
+            ]);
+
+            renderProfile(data, portfolioImages, reviews);
 
         } catch (error) {
             console.error('Error loading profile:', error);
@@ -866,19 +946,16 @@
     // ==========================================
     // RENDER PROFILE
     // ==========================================
-    function renderProfile(data, portfolioImages = []) {
+    function renderProfile(data, portfolioImages = [], reviews = []) {
         const hasPhoto = data.profilePhotoUrl && data.profilePhotoUrl.length > 20;
         const rating = data.rating || data.averageRating || 0;
-        const reviews = data.totalReviews || 0;
+        const reviewsCount = data.totalReviews || reviews.length || 0;
         const isOnline = data.isOnline !== undefined ? data.isOnline : true;
         const isVerified = data.verificationStatus === 'verified' || data.isVerified;
 
         const skills = data.skills || ['Expert Service', 'Professional', 'Trusted'];
         const starsHtml = generateStars(rating);
 
-        // ==========================================
-        // GET PRICING TYPE - FIXED
-        // ==========================================
         const pricingType = data.pricingType || data.priceType || 'hourly';
         const pricingLabel = getPricingTypeLabel(pricingType);
         const price = data.price || data.hourlyRate || 399;
@@ -917,11 +994,35 @@
             `;
         }
 
-        const reviewsData = data.reviews || [
-            { name: "Rahul Sharma", rating: 5, date: "2 days ago", comment: "Excellent service! Very professional and quick work. Highly recommended.", avatar: "" },
-            { name: "Priya Patel", rating: 4, date: "1 week ago", comment: "Good work but slightly overpriced. Overall satisfied.", avatar: "" },
-            { name: "Amit Kumar", rating: 5, date: "2 weeks ago", comment: "Best service I've ever hired. Will definitely book again.", avatar: "" }
-        ];
+        // ==========================================
+        // REVIEWS - ONLY REAL REVIEWS
+        // ==========================================
+        let reviewsHTML = '';
+        if (reviews && reviews.length > 0) {
+            reviewsHTML = reviews.map(review => `
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="review-avatar">
+                            ${review.avatar ? `<img src="${review.avatar}" alt="${review.name}">` : `<i class="fas fa-user-circle"></i>`}
+                        </div>
+                        <div>
+                            <div class="review-name">${review.name}</div>
+                            <div class="review-date">${review.date}</div>
+                        </div>
+                        <div class="review-stars">${generateStars(review.rating)}</div>
+                    </div>
+                    <div class="review-text">${review.comment}</div>
+                </div>
+            `).join('');
+        } else {
+            reviewsHTML = `
+                <div class="no-reviews">
+                    <i class="fas fa-star"></i>
+                    No reviews yet
+                    <div style="font-size:0.7rem; margin-top:6px; color:#6a7a8a;">Be the first to review this provider</div>
+                </div>
+            `;
+        }
 
         // ==========================================
         // GET REAL WORKER DATA FOR BOOK NOW
@@ -944,7 +1045,7 @@
                     <div class="profile-name-section">
                         <h2>${data.displayName || 'Provider'} ${isVerified ? '<span class="verified-badge-lg">✓ Verified</span>' : ''}</h2>
                         <div class="profession">${data.categoryName || data.category || 'Professional Service Provider'}</div>
-                        <div class="rating">${starsHtml} <span>${rating.toFixed(1)} (${reviews || 0} reviews)</span></div>
+                        <div class="rating">${starsHtml} <span>${rating.toFixed(1)} (${reviewsCount} reviews)</span></div>
                         <div>
                             <span class="status-badge ${isOnline ? 'online' : 'offline'}">
                                 ${isOnline ? '🟢 Online' : '🔴 Offline'}
@@ -1034,27 +1135,13 @@
                 ${portfolioHTML}
             </div>
 
-            <!-- Reviews -->
+            <!-- REAL Reviews - No Fake Reviews -->
             <div class="profile-card fade-in" style="margin-top:16px;">
                 <div class="section-title">
                     <i class="fas fa-star"></i> Reviews
-                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${reviewsData.length} reviews)</span>
+                    <span style="font-size:0.7rem; color:#b0c4de; font-weight:400; margin-left:8px;">(${reviews.length} reviews)</span>
                 </div>
-                ${reviewsData.map(review => `
-                    <div class="review-card">
-                        <div class="review-header">
-                            <div class="review-avatar">
-                                ${review.avatar ? `<img src="${review.avatar}" alt="${review.name}">` : `<i class="fas fa-user-circle"></i>`}
-                            </div>
-                            <div>
-                                <div class="review-name">${review.name}</div>
-                                <div class="review-date">${review.date}</div>
-                            </div>
-                            <div class="review-stars">${generateStars(review.rating)}</div>
-                        </div>
-                        <div class="review-text">${review.comment}</div>
-                    </div>
-                `).join('')}
+                ${reviewsHTML}
             </div>
         `;
 
@@ -1172,9 +1259,10 @@
         }
     }
 
-    console.log('%c👤 View Profile - Pricing Type Fixed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Now shows correct pricing type (Hourly/Daily/Per Visit/Fixed Rate)');
-    console.log('✅ Price displayed with proper label');
+    console.log('%c👤 View Profile - Real Reviews Only!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Reviews fetched from Firestore "reviews" collection');
+    console.log('✅ No fake reviews shown');
+    console.log('✅ Shows "No reviews yet" if no reviews exist');
 </script>
 </body>
 </html>
