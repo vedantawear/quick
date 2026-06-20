@@ -739,6 +739,38 @@
     }
 
     // ==========================================
+    // CALCULATE REAL RATING FROM REVIEWS
+    // ==========================================
+    async function calculateRealRating(providerId) {
+        try {
+            const reviewsSnapshot = await db.collection('reviews')
+                .where('providerId', '==', providerId)
+                .get();
+            
+            if (reviewsSnapshot.empty) {
+                return { rating: 0, count: 0 };
+            }
+            
+            let totalRating = 0;
+            let count = 0;
+            
+            reviewsSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.rating) {
+                    totalRating += data.rating;
+                    count++;
+                }
+            });
+            
+            const avgRating = count > 0 ? totalRating / count : 0;
+            return { rating: avgRating, count: count };
+        } catch (error) {
+            console.error('Error calculating rating:', error);
+            return { rating: 0, count: 0 };
+        }
+    }
+
+    // ==========================================
     // LOAD WORKERS FROM FIRESTORE
     // ==========================================
     async function loadWorkers() {
@@ -746,23 +778,28 @@
             const snapshot = await db.collection('providers').get();
             allWorkers = [];
 
-            snapshot.forEach(doc => {
+            for (const doc of snapshot.docs) {
                 const data = doc.data();
+                
+                // Calculate real rating from reviews
+                const ratingData = await calculateRealRating(doc.id);
+                
                 const worker = {
                     id: doc.id,
                     uid: doc.id,
                     name: data.displayName || data.fullName || 'Worker',
                     profession: getCategoryName(data.category),
                     category: data.category || 'general',
-                    rating: data.rating || data.averageRating || 4.5,
-                    reviews: data.totalReviews || 0,
+                    // REAL RATING FROM REVIEWS
+                    rating: ratingData.rating || 0,
+                    reviews: ratingData.count || 0,
                     distance: data.distance || (Math.random() * 3 + 0.5).toFixed(1) + ' km',
                     price: data.price || data.hourlyRate || data.rate || 399,
                     pricingType: data.pricingType || data.priceType || 'hourly',
                     experience: data.experience || '2+ years',
                     online: data.isOnline !== undefined ? data.isOnline : true,
                     verified: data.verificationStatus === 'verified' || data.isVerified || false,
-                    topRated: (data.rating || 0) >= 4.7,
+                    topRated: ratingData.rating >= 4.5,
                     photo: data.profilePhotoUrl || data.photoURL || '',
                     phone: data.phone || '',
                     location: data.location || data.city || '',
@@ -770,13 +807,11 @@
                     skills: data.skills || []
                 };
                 allWorkers.push(worker);
-            });
+            }
 
-            console.log('✅ Workers loaded:', allWorkers.length);
+            console.log('✅ Workers loaded with real ratings:', allWorkers.length);
             
-            // Update notification badge with pending jobs count
             await updateNotificationBadge();
-            
             applyFilters();
             updateStats(allWorkers);
 
@@ -810,13 +845,16 @@
     }
 
     // ==========================================
-    // UPDATE STATS
+    // UPDATE STATS WITH REAL DATA
     // ==========================================
     function updateStats(workers) {
         totalWorkersEl.textContent = workers.length;
         const online = workers.filter(w => w.online).length;
         onlineWorkersEl.textContent = online;
-        const avg = workers.reduce((sum, w) => sum + w.rating, 0) / (workers.length || 1);
+        
+        // Calculate real average rating from all workers
+        const totalRating = workers.reduce((sum, w) => sum + w.rating, 0);
+        const avg = workers.length > 0 ? totalRating / workers.length : 0;
         avgRatingEl.textContent = avg.toFixed(1);
         workerCountEl.textContent = `${workers.length} workers available`;
     }
@@ -827,7 +865,6 @@
     function applyFilters() {
         let result = [...allWorkers];
 
-        // Search filter
         if (currentSearch.trim()) {
             const q = currentSearch.trim().toLowerCase();
             result = result.filter(w =>
@@ -837,11 +874,10 @@
             );
         }
 
-        // Category filter
         if (currentFilter === 'online') {
             result = result.filter(w => w.online === true);
         } else if (currentFilter === 'toprated') {
-            result = result.filter(w => w.topRated === true);
+            result = result.filter(w => w.rating >= 4.5);
         } else if (currentFilter !== 'all') {
             result = result.filter(w =>
                 w.category.toLowerCase() === currentFilter.toLowerCase() ||
@@ -849,13 +885,16 @@
             );
         }
 
+        // Sort by rating (highest first) for better UX
+        result.sort((a, b) => b.rating - a.rating);
+
         filteredWorkers = result;
         renderWorkers(result);
         updateStats(allWorkers);
     }
 
     // ==========================================
-    // RENDER WORKERS
+    // RENDER WORKERS WITH REAL RATING
     // ==========================================
     function renderWorkers(workers) {
         if (workers.length === 0) {
@@ -879,12 +918,13 @@
                     <div class="name-row">
                         <h4>${w.name}</h4>
                         ${w.verified ? '<span class="verified"><i class="fas fa-check-circle"></i></span>' : ''}
-                        ${w.topRated ? '<span style="background:#fef1d6;color:#b06d0c;font-size:0.55rem;padding:2px 8px;border-radius:40px;font-weight:600;">⭐ Top</span>' : ''}
+                        ${w.rating >= 4.5 ? '<span style="background:#fef1d6;color:#b06d0c;font-size:0.55rem;padding:2px 8px;border-radius:40px;font-weight:600;">⭐ Top</span>' : ''}
                     </div>
                     <div class="profession">${getCategoryIcon(w.category)} ${w.profession}</div>
                     <div class="rating-row">
                         <span class="stars">${generateStars(w.rating)}</span>
-                        ${w.rating} (${w.reviews || 0} reviews)
+                        ${w.rating > 0 ? w.rating.toFixed(1) : 'No ratings'} 
+                        ${w.reviews > 0 ? `(${w.reviews} reviews)` : ''}
                     </div>
                     <div class="meta-row">
                         <span><i class="fas fa-map-marker-alt"></i> ${w.distance || '0.8 km'}</span>
@@ -916,17 +956,14 @@
             return;
         }
         
-        // Check if user is logged in
         if (!currentUser) {
             showToast('Please login to view profiles', true);
             setTimeout(() => window.location.href = 'login.html', 1000);
             return;
         }
         
-        // Save worker ID for profile page
         localStorage.setItem('quickfix_view_profile_id', workerId);
         
-        // Find worker data to pass
         const worker = allWorkers.find(w => w.id === workerId);
         if (worker) {
             localStorage.setItem('quickfix_view_worker_data', JSON.stringify({
@@ -986,12 +1023,10 @@
     // EVENT LISTENERS
     // ==========================================
 
-    // Back button
     backBtn.addEventListener('click', function() {
         window.location.href = 'user-homepage.html';
     });
 
-    // Notification
     notifBtn.addEventListener('click', function() {
         const count = parseInt(notificationBadge.textContent) || 0;
         if (count > 0) {
@@ -1001,13 +1036,11 @@
         }
     });
 
-    // Search
     searchInput.addEventListener('input', function() {
         currentSearch = this.value;
         applyFilters();
     });
 
-    // Filter chips
     filterChips.addEventListener('click', function(e) {
         const chip = e.target.closest('.chip');
         if (!chip) return;
@@ -1018,7 +1051,6 @@
         applyFilters();
     });
 
-    // Bottom navigation
     document.querySelectorAll('.nav-item').forEach(nav => {
         nav.addEventListener('click', function(e) {
             e.preventDefault();
@@ -1045,10 +1077,10 @@
         }
     });
 
-    console.log('%c👷 All Workers - Fully Working with Firebase!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Workers loaded from Firestore "providers" collection');
-    console.log('✅ Search, Filter, Book Now, View Profile - All working');
-    console.log('✅ Real-time data from Firebase');
+    console.log('%c👷 All Workers - Real Ratings from Reviews!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Ratings calculated from "reviews" collection');
+    console.log('✅ No fake ratings shown');
+    console.log('✅ Workers sorted by real rating');
 </script>
 </body>
 </html>
