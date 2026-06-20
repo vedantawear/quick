@@ -309,6 +309,35 @@
     }
     .dot.provider { background: #0af; box-shadow: 0 0 8px #0af; }
     .dot.user { background: #ffd200; box-shadow: 0 0 8px #ffd200; }
+
+    /* Edit Full Profile Button - New Style */
+    .edit-full-profile-btn {
+      background: linear-gradient(135deg, #00c6ff, #9d4eff) !important;
+      border: none !important;
+      color: white !important;
+      font-weight: 700 !important;
+      padding: 12px 20px !important;
+      border-radius: 40px !important;
+      box-shadow: 0 0 25px rgba(0, 200, 255, 0.4) !important;
+      transition: 0.3s !important;
+      width: 100%;
+      margin-top: 8px;
+      font-size: 0.9rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 10px !important;
+    }
+    .edit-full-profile-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px rgba(0, 200, 255, 0.6) !important;
+    }
+    .edit-full-profile-btn:active {
+      transform: scale(0.96);
+    }
+    .edit-full-profile-btn i {
+      font-size: 1.2rem;
+    }
   </style>
 </head>
 <body>
@@ -326,7 +355,14 @@
       <div style="font-size:0.85rem; margin: 6px 0;" id="providerBio">Loading profile...</div>
       <div id="providerLocation">📍 Loading location...</div>
       
-      <div style="margin-top: 16px;">
+      <!-- EDIT FULL PROFILE BUTTON - NEW -->
+      <div style="margin-top: 12px;">
+        <button class="edit-full-profile-btn" id="editFullProfileBtn">
+          <i>✎</i> Edit Full Profile <span style="font-size:0.6rem; opacity:0.7;">(All Details)</span>
+        </button>
+      </div>
+      
+      <div style="margin-top: 12px;">
         <button class="switch-mode-btn" id="switchToUserBtn">
           🔄 Switch to User Mode
         </button>
@@ -519,6 +555,19 @@
         switchModal.style.display = 'none';
       }
     });
+  });
+
+  // ===== EDIT FULL PROFILE BUTTON =====
+  document.addEventListener('DOMContentLoaded', function() {
+    const editFullBtn = document.getElementById('editFullProfileBtn');
+    if(editFullBtn) {
+      editFullBtn.addEventListener('click', function() {
+        showToastMessage('✎ Opening Full Profile Editor...');
+        setTimeout(() => {
+          window.location.href = 'provider-profile-edit.html';
+        }, 500);
+      });
+    }
   });
 </script>
 
@@ -952,6 +1001,7 @@
   console.log('%c👤 NEBULA PROVIDER PROFILE - Firebase Integrated!', 'color: #0af; font-size: 16px; font-weight: bold;');
   console.log('✅ Firebase Auth, Firestore, Storage configured');
   console.log('✅ Real-time profile data from Firestore');
+  console.log('✅ "Edit Full Profile" button added - redirects to provider-profile-edit.html');
 </script>
 </body>
 </html>
