@@ -289,7 +289,6 @@
       background: rgba(255, 51, 102, 0.25);
     }
 
-    /* Media Upload Styles */
     .media-upload-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -665,7 +664,36 @@
   <button class="nav-item active" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
+<!-- ==========================================
+     FIREBASE SDK + INIT (LOADED FIRST)
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
 <script>
+  // ==========================================
+  // FIREBASE CONFIG
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+    authDomain: "quickfix-907c0.firebaseapp.com",
+    projectId: "quickfix-907c0",
+    storageBucket: "quickfix-907c0.firebasestorage.app",
+    messagingSenderId: "539102384460",
+    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+    measurementId: "G-B548C8R9WV"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  console.log('✅ Firebase initialized successfully!');
+
   // ==========================================
   // NAVIGATION FUNCTIONS
   // ==========================================
@@ -721,7 +749,9 @@
   }
   function removeSkill(index) { skills.splice(index, 1); renderSkills(); }
   function renderSkills() {
-    document.getElementById('skillsContainer').innerHTML = skills.map((skill, i) => `
+    const container = document.getElementById('skillsContainer');
+    if(!container) return;
+    container.innerHTML = skills.map((skill, i) => `
       <span class="skill-tag">${skill}<span class="remove-skill" onclick="removeSkill(${i})">✕</span></span>
     `).join('');
   }
@@ -737,7 +767,9 @@
   }
   function removeLanguage(index) { languages.splice(index, 1); renderLanguages(); }
   function renderLanguages() {
-    document.getElementById('languagesContainer').innerHTML = languages.map((lang, i) => `
+    const container = document.getElementById('languagesContainer');
+    if(!container) return;
+    container.innerHTML = languages.map((lang, i) => `
       <span class="skill-tag">${lang}<span class="remove-skill" onclick="removeLanguage(${i})">✕</span></span>
     `).join('');
   }
@@ -753,7 +785,9 @@
   }
   function removeCertification(index) { certifications.splice(index, 1); renderCertifications(); }
   function renderCertifications() {
-    document.getElementById('certificationsContainer').innerHTML = certifications.map((cert, i) => `
+    const container = document.getElementById('certificationsContainer');
+    if(!container) return;
+    container.innerHTML = certifications.map((cert, i) => `
       <span class="skill-tag">${cert}<span class="remove-skill" onclick="removeCertification(${i})">✕</span></span>
     `).join('');
   }
@@ -819,6 +853,8 @@
 
   function renderWorkMedia() {
     const grid = document.getElementById('workMediaGrid');
+    if(!grid) return;
+    
     const mediaItems = workMedia.map((item, index) => {
       if(item.type === 'video') {
         return `
@@ -919,26 +955,8 @@
   }
 
   // ==========================================
-  // FIREBASE CONFIG
+  // PARTICLE BACKGROUND
   // ==========================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
-    authDomain: "quickfix-907c0.firebaseapp.com",
-    projectId: "quickfix-907c0",
-    storageBucket: "quickfix-907c0.firebasestorage.app",
-    messagingSenderId: "539102384460",
-    appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
-    measurementId: "G-B548C8R9WV"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-
-  console.log('✅ Firebase initialized - Profile Edit Page');
-
-  // Particle background
   const canvas = document.getElementById('particle-canvas');
   const ctx = canvas.getContext('2d');
   let particles = [];
@@ -964,19 +982,15 @@
         providerData = docSnap.data();
         console.log('📋 Provider data loaded:', providerData);
         
-        // Populate form
         populateForm(providerData);
-        
-        // Load work media
         await loadWorkMedia(uid);
         
-        // Hide loading, show form
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
         
         return true;
       } else {
-        showToast('No profile found', true);
+        showToast('No profile found. Please create one first.', true);
         return false;
       }
     } catch(error) {
@@ -1020,31 +1034,24 @@
   function populateForm(data) {
     console.log('🔄 Populating form with data...');
     
-    // Personal Information
     document.getElementById('editDisplayName').value = data.displayName || data.fullName || '';
     document.getElementById('editPhone').value = data.phone || data.phoneNumber || '';
     document.getElementById('editEmail').value = data.email || currentUser?.email || '';
     document.getElementById('editLocation').value = data.location || data.city || '';
-    
-    // Professional Details
     document.getElementById('editCategory').value = data.category || '';
     document.getElementById('editExperience').value = data.experience || '';
     document.getElementById('editRate').value = data.hourlyRate || data.price || data.rate || '';
     document.getElementById('editBio').value = data.bio || data.description || '';
     
-    // Skills
     skills = data.skills || [];
     renderSkills();
     
-    // Languages
     languages = data.languages || [];
     renderLanguages();
     
-    // Certifications
     certifications = data.certifications || [];
     renderCertifications();
     
-    // Toggles
     const toggleOnline = document.getElementById('toggleOnline');
     const toggleAutoAccept = document.getElementById('toggleAutoAccept');
     const toggleVacation = document.getElementById('toggleVacation');
@@ -1058,12 +1065,10 @@
     if(data.vacationMode) toggleVacation.classList.add('active');
     else toggleVacation.classList.remove('active');
     
-    // Radius
     const radius = data.serviceRadius || 10;
     document.getElementById('editRadius').value = radius;
     document.getElementById('radiusDisplay').textContent = radius + ' km';
     
-    // Profile Photo
     const photoUrl = data.profilePhotoUrl || data.photoURL || data.avatarUrl;
     if(photoUrl) {
       document.querySelector('.avatar-inner-edit').style.background = `url('${photoUrl}') center/cover`;
@@ -1085,10 +1090,8 @@
     saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
 
     try {
-      // Upload new work media
       await uploadWorkMediaFiles();
 
-      // Gather form data
       const data = {
         displayName: document.getElementById('editDisplayName').value.trim(),
         phone: document.getElementById('editPhone').value.trim(),
@@ -1107,7 +1110,6 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      // Validate
       if(!data.displayName) {
         showToast('Please enter your name', true);
         saveBtn.disabled = false;
@@ -1127,7 +1129,6 @@
         return;
       }
 
-      // Upload profile photo
       const photoInput = document.getElementById('photoInput');
       if(photoInput.files && photoInput.files[0]) {
         const file = photoInput.files[0];
