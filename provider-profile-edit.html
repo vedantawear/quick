@@ -165,11 +165,6 @@
       grid-template-columns: 1fr 1fr;
       gap: 14px;
     }
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
 
     .skill-tag {
       display: inline-flex;
@@ -588,12 +583,16 @@
           <input type="number" class="form-control" id="editExperience" placeholder="e.g., 5" min="0" max="50">
         </div>
         <div class="form-group">
-          <label>Price Amount <span class="required">*</span></label>
-          <input type="number" class="form-control" id="editRate" placeholder="e.g., 500" min="0" step="0.5">
+          <label>Skills</label>
+          <div id="skillsContainer" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; min-height: 30px;"></div>
+          <div class="skill-input-container">
+            <input type="text" class="form-control" id="skillInput" placeholder="Add a skill (e.g., Plumbing)" onkeypress="if(event.key==='Enter') addSkill()">
+            <button onclick="addSkill()">+ Add</button>
+          </div>
         </div>
       </div>
 
-      <!-- NEW: Pricing Type Selection -->
+      <!-- PRICING TYPE - MOVED ABOVE PRICE -->
       <div class="form-group">
         <label>Pricing Type <span class="required">*</span></label>
         <div class="pricing-type-group" id="pricingTypeGroup">
@@ -607,12 +606,12 @@
         </div>
       </div>
 
+      <!-- PRICE AMOUNT - NOW BELOW PRICING TYPE -->
       <div class="form-group">
-        <label>Skills <span class="required">*</span></label>
-        <div id="skillsContainer" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; min-height: 30px;"></div>
-        <div class="skill-input-container">
-          <input type="text" class="form-control" id="skillInput" placeholder="Add a skill (e.g., Plumbing)" onkeypress="if(event.key==='Enter') addSkill()">
-          <button onclick="addSkill()">+ Add</button>
+        <label>Price Amount <span class="required">*</span></label>
+        <input type="number" class="form-control" id="editRate" placeholder="e.g., 500" min="0" step="0.5">
+        <div style="font-size:0.65rem; color:#666; margin-top:4px;">
+          <i class="fas fa-rupee-sign"></i> Enter your rate based on the pricing type selected above
         </div>
       </div>
 
@@ -1117,11 +1116,11 @@
     document.getElementById('editCategory').value = data.category || '';
     document.getElementById('editExperience').value = data.experience || '';
     
-    // Load price
-    const price = data.price || data.hourlyRate || data.rate || 0;
-    document.getElementById('editRate').value = price;
+    // Load skills
+    skills = data.skills || [];
+    renderSkills();
     
-    // Load pricing type
+    // Load pricing type FIRST
     const pricingType = data.pricingType || data.priceType || 'hourly';
     selectedPricingType = pricingType;
     document.querySelectorAll('.pricing-type-btn').forEach(btn => {
@@ -1131,10 +1130,11 @@
       }
     });
     
-    document.getElementById('editBio').value = data.bio || data.description || '';
+    // Load price amount
+    const price = data.price || data.hourlyRate || data.rate || 0;
+    document.getElementById('editRate').value = price;
     
-    skills = data.skills || [];
-    renderSkills();
+    document.getElementById('editBio').value = data.bio || data.description || '';
     
     languages = data.languages || [];
     renderLanguages();
@@ -1167,7 +1167,7 @@
   }
 
   // ==========================================
-  // SAVE PROFILE - FIXED PRICE UPDATE
+  // SAVE PROFILE
   // ==========================================
   async function saveProfile() {
     if(!currentUser) {
@@ -1190,7 +1190,7 @@
         location: document.getElementById('editLocation').value.trim(),
         category: document.getElementById('editCategory').value,
         experience: document.getElementById('editExperience').value || '0',
-        // Save price in multiple fields for compatibility
+        // Save price with pricing type
         price: priceValue,
         hourlyRate: priceValue,
         rate: priceValue,
@@ -1239,7 +1239,7 @@
       await db.collection("providers").doc(currentUser.uid).update(data);
       localStorage.setItem('quickfix_provider_name', data.displayName);
       
-      // Store pricing info in localStorage for other pages
+      // Store pricing info in localStorage
       localStorage.setItem('quickfix_provider_price', data.price);
       localStorage.setItem('quickfix_provider_pricing_type', selectedPricingType);
 
@@ -1301,10 +1301,9 @@
   });
 
   console.log('%c✎ NEBULA PROVIDER - Full Profile Edit with Pricing Types', 'color: #0af; font-size: 16px; font-weight: bold;');
+  console.log('✅ Pricing Type is now ABOVE Price Amount');
   console.log('✅ Price updates will reflect in user mode');
   console.log('✅ Pricing Types: Hourly, Daily, Per Visit, Fixed Rate');
-  console.log('✅ All existing data loads automatically');
-  console.log('✅ Upload/Delete work photos and videos');
 </script>
 </body>
 </html>
