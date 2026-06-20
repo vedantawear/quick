@@ -317,6 +317,11 @@
             border: 1px solid rgba(255,255,255,0.05);
             position: relative;
             cursor: pointer;
+            transition: 0.3s;
+        }
+        .portfolio-item:hover {
+            transform: scale(1.03);
+            border-color: #f5b042;
         }
         .portfolio-item img {
             width: 100%;
@@ -347,11 +352,12 @@
             position: absolute;
             bottom: 6px;
             right: 6px;
-            background: rgba(0,0,0,0.6);
-            padding: 2px 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 10px;
             border-radius: 12px;
             font-size: 0.55rem;
             color: white;
+            backdrop-filter: blur(4px);
         }
         .portfolio-empty {
             grid-column: span 3;
@@ -678,6 +684,121 @@
     }
 
     // ==========================================
+    // LOAD PORTFOLIO FROM BOTH COLLECTIONS
+    // ==========================================
+    async function loadPortfolioImages(workerId) {
+        let allImages = [];
+        let allVideos = [];
+        
+        try {
+            // Method 1: Check portfolio collection
+            const portfolioSnapshot = await db.collection('providers').doc(workerId).collection('portfolio').get();
+            portfolioSnapshot.forEach(doc => {
+                const data = doc.data();
+                const url = data.imageUrl || data.url || '';
+                if (url) {
+                    const isVideo = url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') || 
+                                   url.includes('video') || data.type === 'video';
+                    if (isVideo) {
+                        allVideos.push(url);
+                    } else {
+                        allImages.push(url);
+                    }
+                }
+            });
+            console.log('📸 Portfolio collection items:', allImages.length + allVideos.length);
+        } catch(e) {
+            console.log('No portfolio collection found');
+        }
+
+        try {
+            // Method 2: Check workMedia collection
+            const mediaSnapshot = await db.collection('providers').doc(workerId).collection('workMedia').get();
+            mediaSnapshot.forEach(doc => {
+                const data = doc.data();
+                const url = data.url || data.imageUrl || '';
+                if (url) {
+                    const isVideo = data.type === 'video' || url.includes('.mp4') || url.includes('.mov') || url.includes('.webm');
+                    if (isVideo) {
+                        if (!allVideos.includes(url)) allVideos.push(url);
+                    } else {
+                        if (!allImages.includes(url)) allImages.push(url);
+                    }
+                }
+            });
+            console.log('📸 WorkMedia collection items:', allImages.length + allVideos.length);
+        } catch(e) {
+            console.log('No workMedia collection found');
+        }
+
+        // Method 3: Check provider document for direct arrays
+        try {
+            const docRef = db.collection('providers').doc(workerId);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                const data = docSnap.data();
+                
+                // Check portfolioUrls
+                if (data.portfolioUrls && data.portfolioUrls.length > 0) {
+                    data.portfolioUrls.forEach(url => {
+                        if (url) {
+                            const isVideo = url.includes('.mp4') || url.includes('.mov') || url.includes('.webm');
+                            if (isVideo) {
+                                if (!allVideos.includes(url)) allVideos.push(url);
+                            } else {
+                                if (!allImages.includes(url)) allImages.push(url);
+                            }
+                        }
+                    });
+                }
+                
+                // Check workImages
+                if (data.workImages && data.workImages.length > 0) {
+                    data.workImages.forEach(url => {
+                        if (url && !allImages.includes(url) && !allVideos.includes(url)) {
+                            allImages.push(url);
+                        }
+                    });
+                }
+                
+                // Check imageUrls
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                    data.imageUrls.forEach(url => {
+                        if (url && !allImages.includes(url) && !allVideos.includes(url)) {
+                            allImages.push(url);
+                        }
+                    });
+                }
+                
+                // Check photos
+                if (data.photos && data.photos.length > 0) {
+                    data.photos.forEach(url => {
+                        if (url && !allImages.includes(url) && !allVideos.includes(url)) {
+                            allImages.push(url);
+                        }
+                    });
+                }
+                
+                // Check videos
+                if (data.videos && data.videos.length > 0) {
+                    data.videos.forEach(url => {
+                        if (url && !allVideos.includes(url)) {
+                            allVideos.push(url);
+                        }
+                    });
+                }
+            }
+        } catch(e) {
+            console.log('Error checking provider document arrays:', e);
+        }
+
+        // Combine images first, then videos
+        const combined = [...allImages, ...allVideos];
+        console.log('📸 Total portfolio items found:', combined.length);
+        return combined;
+    }
+
+    // ==========================================
     // LOAD WORKER PROFILE FROM FIRESTORE
     // ==========================================
     async function loadWorkerProfile(workerId) {
@@ -708,27 +829,8 @@
             console.log('✅ Profile loaded:', data.displayName || 'Worker');
             workerNameTitle.textContent = data.displayName || 'Worker';
 
-            let portfolioImages = [];
-            
-            if (data.portfolioUrls && data.portfolioUrls.length > 0) {
-                portfolioImages = data.portfolioUrls;
-            } else if (data.workImages && data.workImages.length > 0) {
-                portfolioImages = data.workImages;
-            }
-            
-            if (portfolioImages.length === 0) {
-                try {
-                    const portfolioSnapshot = await db.collection('providers').doc(workerId).collection('portfolio').get();
-                    portfolioSnapshot.forEach(doc => {
-                        const item = doc.data();
-                        if (item.imageUrl || item.url) {
-                            portfolioImages.push(item.imageUrl || item.url);
-                        }
-                    });
-                } catch(e) {
-                    console.log('No portfolio sub-collection found');
-                }
-            }
+            // Load portfolio images from all sources
+            const portfolioImages = await loadPortfolioImages(workerId);
 
             renderProfile(data, portfolioImages);
 
@@ -764,15 +866,16 @@
             portfolioHTML = `
                 <div class="portfolio-grid">
                     ${portfolioImages.map((url, index) => {
-                        const isVideo = url.includes('.mp4') || url.includes('.mov') || url.includes('.webm');
+                        const isVideo = url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') || 
+                                       url.includes('video') || url.includes('blob:');
                         return `
-                            <div class="portfolio-item" onclick="showToast('📸 Viewing portfolio item ${index + 1}')">
+                            <div class="portfolio-item" onclick="window.open('${url}', '_blank')">
                                 ${isVideo ? `
-                                    <video src="${url}" muted></video>
+                                    <video src="${url}" muted preload="metadata"></video>
                                     <div class="play-icon"><i class="fas fa-play"></i></div>
                                     <div class="media-type">🎬 Video</div>
                                 ` : `
-                                    <img src="${url}" alt="Work ${index + 1}" onerror="this.style.display='none'">
+                                    <img src="${url}" alt="Work ${index + 1}" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:#666;font-size:0.7rem;\\'>📷 Failed to load</div>'">
                                     <div class="media-type">📸 Photo</div>
                                 `}
                             </div>
@@ -802,7 +905,7 @@
         const workerId = data.uid || data.id || getWorkerIdFromURL() || 'unknown';
         const workerName = data.displayName || data.fullName || 'Worker';
         const workerProfession = data.categoryName || data.category || 'Service Provider';
-        const workerPrice = data.price || 399;
+        const workerPrice = data.price || data.hourlyRate || 399;
         const workerPhoto = data.profilePhotoUrl || data.photoURL || '';
         const workerRating = data.rating || data.averageRating || 4.5;
 
@@ -928,13 +1031,12 @@
         `;
 
         // ==========================================
-        // BOOK NOW BUTTON - FIXED
+        // BOOK NOW BUTTON
         // ==========================================
         document.querySelectorAll('.book-now-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 
-                // Get data from button attributes
                 const workerId = this.getAttribute('data-worker-id');
                 const workerName = this.getAttribute('data-worker-name');
                 const workerProfession = this.getAttribute('data-worker-profession');
@@ -944,7 +1046,6 @@
 
                 console.log('✅ Book Now clicked for:', { workerId, workerName, workerProfession, workerPrice, workerPhoto });
 
-                // Save worker data to localStorage
                 const workerData = {
                     id: workerId,
                     name: workerName,
@@ -959,7 +1060,6 @@
 
                 showToast(`📋 Opening booking for ${workerName}...`);
                 
-                // Redirect to booking details page
                 setTimeout(() => {
                     window.location.href = 'booking-details.html';
                 }, 400);
@@ -1037,7 +1137,8 @@
         }
     }
 
-    console.log('%c👤 View Profile - Book Now with Real Worker Data!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('%c👤 View Profile - Portfolio Images Fixed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Now fetches from: portfolio collection, workMedia collection, and direct arrays');
 </script>
 </body>
 </html>
