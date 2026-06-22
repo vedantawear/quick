@@ -616,9 +616,7 @@
         <h1>Booking Details</h1>
     </div>
 
-    <!-- ==========================================
-     SECTION 1: ADDRESS SELECTION
-     ========================================== -->
+    <!-- SECTION 1: ADDRESS -->
     <div class="section-card fade-in">
         <div class="section-title">
             <span class="step-badge">1</span>
@@ -638,9 +636,7 @@
         </div>
     </div>
 
-    <!-- ==========================================
-     SECTION 2: PROBLEM DESCRIPTION
-     ========================================== -->
+    <!-- SECTION 2: PROBLEM -->
     <div class="section-card fade-in">
         <div class="section-title">
             <span class="step-badge">2</span>
@@ -650,9 +646,7 @@
         <div class="char-counter"><span id="charCount">0</span> / 500 characters</div>
     </div>
 
-    <!-- ==========================================
-     SECTION 3: UPLOAD PHOTOS
-     ========================================== -->
+    <!-- SECTION 3: UPLOAD PHOTOS -->
     <div class="section-card fade-in">
         <div class="section-title">
             <span class="step-badge">3</span>
@@ -667,9 +661,7 @@
         <div class="image-preview-grid" id="imagePreviewGrid"></div>
     </div>
 
-    <!-- ==========================================
-     SECTION 4: SCHEDULE SERVICE
-     ========================================== -->
+    <!-- SECTION 4: SCHEDULE -->
     <div class="section-card fade-in">
         <div class="section-title">
             <span class="step-badge">4</span>
@@ -689,9 +681,7 @@
         </div>
     </div>
 
-    <!-- ==========================================
-     SECTION 5: PRICE SUMMARY - DYNAMIC
-     ========================================== -->
+    <!-- SECTION 5: PRICE -->
     <div class="section-card fade-in">
         <div class="section-title">
             <i class="fas fa-receipt"></i>
@@ -714,10 +704,6 @@
             <span class="amount" id="totalAmount">₹273</span>
         </div>
     </div>
-
-    <!-- ==========================================
-     SECTION 6: BOOKING SUMMARY - REMOVED
-     ========================================== -->
 
     <!-- BOTTOM FIXED BAR -->
     <div class="bottom-bar">
@@ -756,7 +742,35 @@
 <!-- TOAST -->
 <div class="toast" id="toastMsg"></div>
 
+<!-- ==========================================
+     FIREBASE SDK
+     ========================================== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
 <script>
+    // ==========================================
+    // FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcxSH7r6Ct1MuZMt5jf1tGKXSMHYTSEHw",
+        authDomain: "quickfix-907c0.firebaseapp.com",
+        projectId: "quickfix-907c0",
+        storageBucket: "quickfix-907c0.firebasestorage.app",
+        messagingSenderId: "539102384460",
+        appId: "1:539102384460:web:dd30f361033e16f8e63fe9",
+        measurementId: "G-B548C8R9WV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    console.log('✅ Firebase initialized successfully!');
+
     // ==========================================
     // DOM ELEMENTS
     // ==========================================
@@ -777,84 +791,49 @@
     const bookingIdSpan = document.getElementById('bookingId');
     const modalWorkerName = document.getElementById('modalWorkerName');
 
-    // Worker display elements
     const serviceCharge = document.getElementById('serviceCharge');
     const totalAmount = document.getElementById('totalAmount');
     const bottomTotal = document.getElementById('bottomTotal');
 
-    let uploadedImages = [];
+    let uploadedFiles = [];
+    let uploadedImageUrls = [];
     let workerData = null;
+    let currentUser = null;
 
     // ==========================================
-    // LOAD WORKER DATA FROM LOCALSTORAGE
+    // LOAD WORKER DATA
     // ==========================================
     function loadWorkerData() {
         let data = null;
         
         const savedData = localStorage.getItem('quickfix_booking_worker');
         if (savedData) {
-            try {
-                data = JSON.parse(savedData);
-                console.log('✅ Worker data loaded:', data);
-            } catch(e) {}
+            try { data = JSON.parse(savedData); } catch(e) {}
         }
         
         if (!data) {
             const fallbackData = localStorage.getItem('quickfix_view_worker_data');
             if (fallbackData) {
-                try {
-                    data = JSON.parse(fallbackData);
-                    console.log('✅ Worker data loaded from fallback:', data);
-                } catch(e) {}
-            }
-        }
-        
-        if (!data) {
-            const params = new URLSearchParams(window.location.search);
-            const name = params.get('name');
-            if (name) {
-                data = {
-                    id: params.get('id') || 'unknown',
-                    name: name,
-                    profession: params.get('profession') || 'Service Provider',
-                    price: parseInt(params.get('price')) || 399,
-                    photo: params.get('photo') || '',
-                    rating: parseFloat(params.get('rating')) || 4.5
-                };
-                console.log('✅ Worker data loaded from URL params:', data);
+                try { data = JSON.parse(fallbackData); } catch(e) {}
             }
         }
         
         if (data) {
             workerData = data;
-            updatePrice(data);
+            const price = data.price || 399;
+            const total = price + 49 + 25;
+            serviceCharge.textContent = `₹${price}`;
+            totalAmount.textContent = `₹${total}`;
+            bottomTotal.textContent = `₹${total}`;
             modalWorkerName.textContent = data.name || 'Worker';
+            console.log('✅ Worker data loaded:', data);
             return true;
         }
         
-        console.warn('⚠️ No worker data found, using default');
         workerData = { name: 'Worker', price: 399 };
-        updatePrice(workerData);
+        modalWorkerName.textContent = 'Worker';
         return false;
     }
-
-    // ==========================================
-    // UPDATE PRICE ONLY
-    // ==========================================
-    function updatePrice(data) {
-        const price = data.price || 399;
-        const total = price + 49 + 25;
-        serviceCharge.textContent = `₹${price}`;
-        totalAmount.textContent = `₹${total}`;
-        bottomTotal.textContent = `₹${total}`;
-    }
-
-    // ==========================================
-    // BACK BUTTON
-    // ==========================================
-    backBtn.addEventListener('click', () => {
-        window.history.back();
-    });
 
     // ==========================================
     // CHARACTER COUNTER
@@ -884,7 +863,7 @@
     });
 
     // ==========================================
-    // IMAGE UPLOAD
+    // IMAGE UPLOAD - STORE FILES FOR LATER UPLOAD
     // ==========================================
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', (e) => {
@@ -922,35 +901,97 @@
                 showToast('⚠️ Only image files allowed', true);
                 return;
             }
+            uploadedFiles.push(file);
             const reader = new FileReader();
             reader.onload = function(e) {
-                uploadedImages.push({ file, url: e.target.result });
-                renderImages();
+                renderImages(e.target.result);
             };
             reader.readAsDataURL(file);
         });
     }
 
-    function renderImages() {
-        if (uploadedImages.length === 0) {
+    function renderImages(url) {
+        if (uploadedFiles.length === 0) {
             imageGrid.innerHTML = '';
             return;
         }
-        imageGrid.innerHTML = uploadedImages.map((img, index) => `
-            <div class="image-preview-item">
-                <img src="${img.url}" alt="Upload ${index + 1}">
-                <button class="remove-img" data-index="${index}"><i class="fas fa-times"></i></button>
-            </div>
-        `).join('');
-
+        let html = '';
+        uploadedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgUrl = e.target.result;
+                // Rebuild grid
+                let allHtml = '';
+                uploadedFiles.forEach((f, i) => {
+                    const reader2 = new FileReader();
+                    reader2.onload = function(ev) {
+                        // This will be called async, but we'll rebuild properly
+                    };
+                    reader2.readAsDataURL(f);
+                });
+                // Simple approach: use object URLs
+                const url2 = URL.createObjectURL(file);
+                const items = uploadedFiles.map((f, idx) => {
+                    const u = URL.createObjectURL(f);
+                    return `
+                        <div class="image-preview-item">
+                            <img src="${u}" alt="Upload ${idx + 1}">
+                            <button class="remove-img" data-index="${idx}"><i class="fas fa-times"></i></button>
+                        </div>
+                    `;
+                }).join('');
+                imageGrid.innerHTML = items;
+                
+                document.querySelectorAll('.remove-img').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        uploadedFiles.splice(index, 1);
+                        renderImages();
+                        showToast('🗑️ Image removed');
+                    });
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+        // Initial render with object URLs
+        const items = uploadedFiles.map((f, idx) => {
+            const u = URL.createObjectURL(f);
+            return `
+                <div class="image-preview-item">
+                    <img src="${u}" alt="Upload ${idx + 1}">
+                    <button class="remove-img" data-index="${idx}"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+        }).join('');
+        imageGrid.innerHTML = items;
+        
         document.querySelectorAll('.remove-img').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                uploadedImages.splice(index, 1);
+                uploadedFiles.splice(index, 1);
                 renderImages();
                 showToast('🗑️ Image removed');
             });
         });
+    }
+
+    // ==========================================
+    // UPLOAD IMAGES TO FIREBASE STORAGE
+    // ==========================================
+    async function uploadImagesToStorage(jobId) {
+        const urls = [];
+        for (const file of uploadedFiles) {
+            try {
+                const storageRef = storage.ref(`jobs/${jobId}/${Date.now()}_${file.name}`);
+                const snapshot = await storageRef.put(file);
+                const downloadUrl = await snapshot.ref.getDownloadURL();
+                urls.push(downloadUrl);
+                console.log('✅ Image uploaded:', downloadUrl);
+            } catch(error) {
+                console.error('Error uploading image:', error);
+            }
+        }
+        return urls;
     }
 
     // ==========================================
@@ -959,12 +1000,8 @@
     document.getElementById('currentLocationBtn').addEventListener('click', () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                () => {
-                    showToast('📍 Location fetched successfully!');
-                },
-                () => {
-                    showToast('⚠️ Unable to fetch location. Please add manually.', true);
-                }
+                () => { showToast('📍 Location fetched successfully!'); },
+                () => { showToast('⚠️ Unable to fetch location.', true); }
             );
         } else {
             showToast('⚠️ Geolocation not supported', true);
@@ -976,9 +1013,9 @@
     });
 
     // ==========================================
-    // CONFIRM BOOKING
+    // CONFIRM BOOKING - FAST WITH FIREBASE
     // ==========================================
-    confirmBtn.addEventListener('click', function() {
+    confirmBtn.addEventListener('click', async function() {
         const desc = problemDesc.value.trim();
         if (!desc) {
             showToast('⚠️ Please describe your problem', true);
@@ -986,32 +1023,98 @@
             return;
         }
 
+        // Check if user is logged in
+        if (!currentUser) {
+            showToast('⚠️ Please login to book', true);
+            setTimeout(() => window.location.href = 'login.html', 1000);
+            return;
+        }
+
         this.disabled = true;
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-        const id = 'QFX-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
-        bookingIdSpan.textContent = '#' + id;
-        modalWorkerName.textContent = workerData?.name || 'Worker';
+        try {
+            // Generate booking ID
+            const bookingId = 'QFX-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+            
+            // Get schedule info
+            const isASAP = document.querySelector('input[name="schedule"]:checked').value === 'asap';
+            const scheduledDate = isASAP ? 'ASAP' : document.getElementById('scheduleDate').value;
+            const scheduledTime = isASAP ? 'Immediate' : document.getElementById('scheduleTime').value;
 
-        setTimeout(() => {
+            // Prepare booking data (without images first)
+            const bookingData = {
+                bookingId: bookingId,
+                customerId: currentUser.uid,
+                customerName: currentUser.displayName || 'Customer',
+                customerEmail: currentUser.email || '',
+                providerId: workerData?.id || '',
+                providerName: workerData?.name || 'Provider',
+                category: workerData?.profession || 'Service',
+                title: desc.substring(0, 100),
+                description: desc,
+                budget: workerData?.price || 399,
+                totalAmount: (workerData?.price || 399) + 49 + 25,
+                status: 'pending',
+                paymentStatus: 'pending',
+                scheduleType: isASAP ? 'asap' : 'scheduled',
+                scheduledDate: scheduledDate,
+                scheduledTime: scheduledTime,
+                urgency: 'Medium',
+                address: 'Sector 62, Noida, Uttar Pradesh 201301',
+                distance: '0.8',
+                customerRating: 4.9,
+                aiTrust: 98,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // First, save booking to Firestore
+            const docRef = await db.collection('jobs').add(bookingData);
+            console.log('✅ Booking saved to Firestore:', docRef.id);
+
+            // Then upload images and update with URLs
+            if (uploadedFiles.length > 0) {
+                const imageUrls = await uploadImagesToStorage(docRef.id);
+                if (imageUrls.length > 0) {
+                    await db.collection('jobs').doc(docRef.id).update({
+                        imageUrls: imageUrls,
+                        images: imageUrls.length
+                    });
+                    console.log('✅ Images uploaded and linked:', imageUrls.length);
+                }
+            }
+
+            // Update UI
+            bookingIdSpan.textContent = '#' + bookingId;
+            modalWorkerName.textContent = workerData?.name || 'Worker';
+
+            // Store in localStorage for quick access
+            const localBooking = {
+                id: docRef.id,
+                bookingId: bookingId,
+                workerName: workerData?.name || 'Worker',
+                date: new Date().toISOString(),
+                status: 'pending',
+                price: `₹${(workerData?.price || 399) + 49 + 25}`
+            };
+            const bookings = JSON.parse(localStorage.getItem('quickfix_bookings') || '[]');
+            bookings.unshift(localBooking);
+            localStorage.setItem('quickfix_bookings', JSON.stringify(bookings));
+
+            // Show success modal immediately
             successModal.classList.add('show');
             this.disabled = false;
             this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            
+            showToast('✅ Booking confirmed successfully!');
 
-            const bookingData = {
-                id: id,
-                workerName: workerData?.name || 'Worker',
-                workerId: workerData?.id || '',
-                date: new Date().toISOString(),
-                status: 'pending',
-                price: `₹${workerData?.price || 273}`,
-                description: desc,
-                images: uploadedImages.length
-            };
-            const bookings = JSON.parse(localStorage.getItem('quickfix_bookings') || '[]');
-            bookings.unshift(bookingData);
-            localStorage.setItem('quickfix_bookings', JSON.stringify(bookings));
-        }, 1500);
+        } catch (error) {
+            console.error('Error saving booking:', error);
+            showToast('❌ Error booking: ' + error.message, true);
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+        }
     });
 
     // ==========================================
@@ -1019,7 +1122,10 @@
     // ==========================================
     trackBtn.addEventListener('click', () => {
         successModal.classList.remove('show');
-        showToast('📍 Tracking page coming soon!');
+        showToast('📍 Redirecting to orders...');
+        setTimeout(() => {
+            window.location.href = 'user-booking.html';
+        }, 500);
     });
 
     homeBtn.addEventListener('click', () => {
@@ -1052,12 +1158,32 @@
     document.getElementById('scheduleTime').value = '10:00';
 
     // ==========================================
-    // INIT - LOAD WORKER DATA ON PAGE LOAD
+    // AUTH STATE LISTENER
     // ==========================================
-    loadWorkerData();
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            console.log('✅ User authenticated:', user.uid);
+            loadWorkerData();
+        } else {
+            currentUser = null;
+            console.log('❌ No user authenticated');
+            showToast('Please login to book', true);
+            setTimeout(() => window.location.href = 'login.html', 1500);
+        }
+    });
 
-    console.log('%c📋 Booking Details - Booking Summary Removed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Only Price Summary and Confirm Booking button');
+    // ==========================================
+    // BACK BUTTON
+    // ==========================================
+    backBtn.addEventListener('click', () => {
+        window.history.back();
+    });
+
+    console.log('%c📋 Booking Details - Fixed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Images uploaded to Firebase Storage (not as base64)');
+    console.log('✅ Booking saves instantly to Firestore');
+    console.log('✅ No array size limit error anymore');
 </script>
 </body>
 </html>
