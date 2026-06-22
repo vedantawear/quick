@@ -796,7 +796,6 @@
     const bottomTotal = document.getElementById('bottomTotal');
 
     let uploadedFiles = [];
-    let uploadedImageUrls = [];
     let workerData = null;
     let currentUser = null;
 
@@ -863,7 +862,7 @@
     });
 
     // ==========================================
-    // IMAGE UPLOAD - STORE FILES FOR LATER UPLOAD
+    // IMAGE UPLOAD - FIXED
     // ==========================================
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', (e) => {
@@ -902,60 +901,18 @@
                 return;
             }
             uploadedFiles.push(file);
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                renderImages(e.target.result);
-            };
-            reader.readAsDataURL(file);
+            renderImages();
         });
     }
 
-    function renderImages(url) {
+    function renderImages() {
         if (uploadedFiles.length === 0) {
             imageGrid.innerHTML = '';
             return;
         }
-        let html = '';
-        uploadedFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imgUrl = e.target.result;
-                // Rebuild grid
-                let allHtml = '';
-                uploadedFiles.forEach((f, i) => {
-                    const reader2 = new FileReader();
-                    reader2.onload = function(ev) {
-                        // This will be called async, but we'll rebuild properly
-                    };
-                    reader2.readAsDataURL(f);
-                });
-                // Simple approach: use object URLs
-                const url2 = URL.createObjectURL(file);
-                const items = uploadedFiles.map((f, idx) => {
-                    const u = URL.createObjectURL(f);
-                    return `
-                        <div class="image-preview-item">
-                            <img src="${u}" alt="Upload ${idx + 1}">
-                            <button class="remove-img" data-index="${idx}"><i class="fas fa-times"></i></button>
-                        </div>
-                    `;
-                }).join('');
-                imageGrid.innerHTML = items;
-                
-                document.querySelectorAll('.remove-img').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const index = parseInt(this.getAttribute('data-index'));
-                        uploadedFiles.splice(index, 1);
-                        renderImages();
-                        showToast('🗑️ Image removed');
-                    });
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-        // Initial render with object URLs
-        const items = uploadedFiles.map((f, idx) => {
-            const u = URL.createObjectURL(f);
+        
+        const items = uploadedFiles.map((file, idx) => {
+            const u = URL.createObjectURL(file);
             return `
                 <div class="image-preview-item">
                     <img src="${u}" alt="Upload ${idx + 1}">
@@ -982,7 +939,8 @@
         const urls = [];
         for (const file of uploadedFiles) {
             try {
-                const storageRef = storage.ref(`jobs/${jobId}/${Date.now()}_${file.name}`);
+                const fileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                const storageRef = storage.ref(`jobs/${jobId}/${fileName}`);
                 const snapshot = await storageRef.put(file);
                 const downloadUrl = await snapshot.ref.getDownloadURL();
                 urls.push(downloadUrl);
@@ -1013,7 +971,7 @@
     });
 
     // ==========================================
-    // CONFIRM BOOKING - FAST WITH FIREBASE
+    // CONFIRM BOOKING - FIXED
     // ==========================================
     confirmBtn.addEventListener('click', async function() {
         const desc = problemDesc.value.trim();
@@ -1023,7 +981,6 @@
             return;
         }
 
-        // Check if user is logged in
         if (!currentUser) {
             showToast('⚠️ Please login to book', true);
             setTimeout(() => window.location.href = 'login.html', 1000);
@@ -1034,15 +991,17 @@
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
         try {
-            // Generate booking ID
             const bookingId = 'QFX-' + Date.now().toString().slice(-6) + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
             
-            // Get schedule info
             const isASAP = document.querySelector('input[name="schedule"]:checked').value === 'asap';
             const scheduledDate = isASAP ? 'ASAP' : document.getElementById('scheduleDate').value;
             const scheduledTime = isASAP ? 'Immediate' : document.getElementById('scheduleTime').value;
 
-            // Prepare booking data (without images first)
+            // Get worker price
+            const workerPrice = workerData?.price || 399;
+            const totalAmount = workerPrice + 49 + 25;
+
+            // Save booking to Firestore WITHOUT images first
             const bookingData = {
                 bookingId: bookingId,
                 customerId: currentUser.uid,
@@ -1053,8 +1012,8 @@
                 category: workerData?.profession || 'Service',
                 title: desc.substring(0, 100),
                 description: desc,
-                budget: workerData?.price || 399,
-                totalAmount: (workerData?.price || 399) + 49 + 25,
+                budget: workerPrice,
+                totalAmount: totalAmount,
                 status: 'pending',
                 paymentStatus: 'pending',
                 scheduleType: isASAP ? 'asap' : 'scheduled',
@@ -1065,17 +1024,19 @@
                 distance: '0.8',
                 customerRating: 4.9,
                 aiTrust: 98,
+                images: 0,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // First, save booking to Firestore
+            // Save to Firestore
             const docRef = await db.collection('jobs').add(bookingData);
             console.log('✅ Booking saved to Firestore:', docRef.id);
 
-            // Then upload images and update with URLs
+            // Upload images AFTER booking is saved
+            let imageUrls = [];
             if (uploadedFiles.length > 0) {
-                const imageUrls = await uploadImagesToStorage(docRef.id);
+                imageUrls = await uploadImagesToStorage(docRef.id);
                 if (imageUrls.length > 0) {
                     await db.collection('jobs').doc(docRef.id).update({
                         imageUrls: imageUrls,
@@ -1089,20 +1050,20 @@
             bookingIdSpan.textContent = '#' + bookingId;
             modalWorkerName.textContent = workerData?.name || 'Worker';
 
-            // Store in localStorage for quick access
+            // Store in localStorage
             const localBooking = {
                 id: docRef.id,
                 bookingId: bookingId,
                 workerName: workerData?.name || 'Worker',
                 date: new Date().toISOString(),
                 status: 'pending',
-                price: `₹${(workerData?.price || 399) + 49 + 25}`
+                price: `₹${totalAmount}`
             };
             const bookings = JSON.parse(localStorage.getItem('quickfix_bookings') || '[]');
             bookings.unshift(localBooking);
             localStorage.setItem('quickfix_bookings', JSON.stringify(bookings));
 
-            // Show success modal immediately
+            // Show success modal
             successModal.classList.add('show');
             this.disabled = false;
             this.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
@@ -1180,10 +1141,11 @@
         window.history.back();
     });
 
-    console.log('%c📋 Booking Details - Fixed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
-    console.log('✅ Images uploaded to Firebase Storage (not as base64)');
-    console.log('✅ Booking saves instantly to Firestore');
+    console.log('%c📋 Booking Details - Completely Fixed!', 'color: #f5b042; font-size: 14px; font-weight: bold;');
+    console.log('✅ Images stored in Firebase Storage, NOT in Firestore');
+    console.log('✅ Only image URLs stored in Firestore');
     console.log('✅ No array size limit error anymore');
+    console.log('✅ Works with or without images');
 </script>
 </body>
 </html>
