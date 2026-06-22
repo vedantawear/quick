@@ -381,11 +381,8 @@
       text-shadow: 0 0 8px cyan; 
       color: white;
     }
-    .post-btn { 
-      background: linear-gradient(45deg, #00c6ff, #b624ff) !important; 
-      transform: scale(1.1); 
-      box-shadow: 0 0 15px cyan;
-      color: white !important;
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
     }
 
     .error-state {
@@ -600,7 +597,6 @@
 <div class="bottom-nav">
   <button class="nav-item" onclick="handleNavClick('home')">🏠 Home</button>
   <button class="nav-item active" onclick="handleNavClick('orders')">📦 Orders</button>
-  <button class="nav-item post-btn" onclick="handleNavClick('post')">✨ Post Job</button>
   <button class="nav-item" onclick="handleNavClick('profile')">👤 Profile</button>
 </div>
 
@@ -662,12 +658,11 @@
       case 'orders':
         window.location.href = 'provider-orders.html';
         break;
-      case 'post':
-        window.location.href = 'provider-postjob.html';
-        break;
       case 'profile':
         window.location.href = 'provider-profile.html';
         break;
+      default:
+        showToast('📍 ' + type + ' page coming soon');
     }
   }
 
@@ -846,22 +841,19 @@
     document.getElementById('providerId').textContent = order.providerId || 'Not assigned';
 
     // ==========================================
-    // MEDIA (Photos & Videos) - FIXED FOR BASE64
+    // MEDIA (Photos & Videos)
     // ==========================================
     const mediaGrid = document.getElementById('mediaGrid');
     const mediaCount = document.getElementById('mediaCount');
     
-    // Check for imageUrls array (contains base64 images)
     let imageUrls = order.imageUrls || [];
     
-    // Also check for other possible fields
     if(!imageUrls || imageUrls.length === 0) {
       if(order.mediaFiles) imageUrls = order.mediaFiles;
       else if(order.attachments) imageUrls = order.attachments;
       else if(order.photos) imageUrls = order.photos;
     }
     
-    // Filter out empty or invalid URLs
     imageUrls = imageUrls.filter(url => url && url.length > 10);
     
     console.log('📸 Images found:', imageUrls.length);
@@ -869,12 +861,10 @@
     if(imageUrls && imageUrls.length > 0) {
       mediaCount.textContent = `(${imageUrls.length} images)`;
       
-      // Show first 6 images in grid
       const displayImages = imageUrls.slice(0, 6);
       const hasMore = imageUrls.length > 6;
       
       mediaGrid.innerHTML = displayImages.map((url, index) => {
-        // Check if it's a video (based on URL or mime type)
         const isVideo = url.match(/\.(mp4|webm|mov|avi|mkv)$/i) || url.startsWith('data:video/');
         
         return `
@@ -891,7 +881,6 @@
         `;
       }).join('');
       
-      // Add "more" indicator if there are more images
       if(hasMore) {
         mediaGrid.innerHTML += `
           <div class="media-item" style="display:flex; justify-content:center; align-items:center; background:rgba(0,255,255,0.05);" onclick="openImageViewer(imageUrls, 0)">
@@ -900,7 +889,6 @@
         `;
       }
       
-      // Store images globally for viewer
       window.imageUrls = imageUrls;
       
     } else {
@@ -909,7 +897,7 @@
       window.imageUrls = [];
     }
 
-    // Timeline - Create from order data
+    // Timeline
     const timelineContainer = document.getElementById('timelineContainer');
     let timelineEvents = [];
     
